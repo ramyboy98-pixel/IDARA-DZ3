@@ -1,8 +1,8 @@
 import os
-import subprocess
 import sys
+import subprocess
 import customtkinter as ctk
-from tkinter import messagebox
+from tkinter import ttk
 
 from database import search_archive
 
@@ -13,10 +13,6 @@ def open_file(path):
             return
 
         if not os.path.exists(path):
-            messagebox.showerror(
-                "خطأ",
-                f"الملف غير موجود:\n{path}"
-            )
             return
 
         if sys.platform.startswith("win"):
@@ -26,11 +22,8 @@ def open_file(path):
         else:
             subprocess.call(["xdg-open", path])
 
-    except Exception as e:
-        messagebox.showerror(
-            "خطأ",
-            f"تعذر فتح الملف:\n{e}"
-        )
+    except Exception:
+        pass
 
 
 class ArchivePage(ctk.CTkFrame):
@@ -39,153 +32,165 @@ class ArchivePage(ctk.CTkFrame):
         super().__init__(parent, fg_color="transparent")
 
         self.build_ui()
+        self.load_archive()
 
     def build_ui(self):
 
-        header = ctk.CTkFrame(
-            self,
-            fg_color="transparent"
-        )
+        header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", pady=(10, 20))
 
         title = ctk.CTkLabel(
             header,
             text="🗂️ الأرشيف",
-            font=("Segoe UI", 30, "bold")
+            font=("Segoe UI", 30, "bold"),
+            text_color="#111827"
         )
         title.pack(side="right")
 
         self.search_entry = ctk.CTkEntry(
             header,
-            placeholder_text="بحث باسم الزبون أو الوثيقة...",
-            width=320,
-            height=40,
+            placeholder_text="بحث باسم الزبون أو نوع الوثيقة أو الهاتف...",
+            width=360,
+            height=42,
             font=("Segoe UI", 14)
         )
         self.search_entry.pack(side="left", padx=10)
 
-        search_btn = ctk.CTkButton(
-            header,
-            text="بحث",
-            width=90,
-            height=40,
-            command=self.refresh_archive
-        )
-        search_btn.pack(side="left")
+        self.search_entry.bind("<KeyRelease>", lambda e: self.load_archive())
 
-        self.stats_label = ctk.CTkLabel(
+        container = ctk.CTkFrame(
             self,
-            text="",
-            font=("Segoe UI", 14),
+            corner_radius=22,
+            fg_color="#FFFFFF"
+        )
+        container.pack(fill="both", expand=True)
+
+        style = ttk.Style()
+
+        try:
+            style.theme_use("default")
+        except:
+            pass
+
+        style.configure(
+            "Treeview",
+            rowheight=36,
+            font=("Segoe UI", 11),
+            background="#FFFFFF",
+            fieldbackground="#FFFFFF"
+        )
+
+        style.configure(
+            "Treeview.Heading",
+            font=("Segoe UI", 11, "bold")
+        )
+
+        columns = (
+            "customer",
+            "phone",
+            "document",
+            "template",
+            "date"
+        )
+
+        self.tree = ttk.Treeview(
+            container,
+            columns=columns,
+            show="headings"
+        )
+
+        self.tree.heading("customer", text="الزبون")
+        self.tree.heading("phone", text="الهاتف")
+        self.tree.heading("document", text="القسم")
+        self.tree.heading("template", text="النموذج")
+        self.tree.heading("date", text="التاريخ")
+
+        self.tree.column("customer", width=200, anchor="center")
+        self.tree.column("phone", width=120, anchor="center")
+        self.tree.column("document", width=150, anchor="center")
+        self.tree.column("template", width=200, anchor="center")
+        self.tree.column("date", width=180, anchor="center")
+
+        scrollbar = ttk.Scrollbar(
+            container,
+            orient="vertical",
+            command=self.tree.yview
+        )
+
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        self.tree.pack(side="left", fill="both", expand=True, padx=(18, 0), pady=18)
+        scrollbar.pack(side="right", fill="y", pady=18, padx=(0, 18))
+
+        self.tree.bind("<Double-1>", self.open_selected_document)
+
+        bottom = ctk.CTkFrame(self, fg_color="transparent")
+        bottom.pack(fill="x", pady=(10, 0))
+
+        info = ctk.CTkLabel(
+            bottom,
+            text="انقر مرتين على أي سطر لفتح ملف Word.",
+            font=("Segoe UI", 13),
             text_color="#6B7280"
         )
-        self.stats_label.pack(anchor="e", pady=(0, 10))
+        info.pack(side="right")
 
-        self.results_frame = ctk.CTkScrollableFrame(
-            self,
-            fg_color="transparent"
-        )
-        self.results_frame.pack(fill="both", expand=True)
+    def load_archive(self):
 
-        self.refresh_archive()
-
-    def clear_results(self):
-        for widget in self.results_frame.winfo_children():
-            widget.destroy()
-
-    def refresh_archive(self):
-
-        self.clear_results()
+        for item in self.tree.get_children():
+            self.tree.delete(item)
 
         keyword = self.search_entry.get().strip()
 
-        results = search_archive(keyword)
+        rows = search_archive(keyword)
 
-        self.stats_label.configure(
-            text=f"عدد النتائج: {len(results)}"
-        )
+        self.archive_rows = {}
 
-        if not results:
-            empty = ctk.CTkLabel(
-                self.results_frame,
-                text="لا توجد نتائج.",
-                font=("Segoe UI", 18),
-                text_color="#6B7280"
+        for row in rows:
+
+            (
+                archive_id,
+                customer_name,
+                phone,
+                document_type,
+                template_name,
+                word_path,
+                pdf_path,
+                created_at
+            ) = row
+
+            item_id = self.tree.insert(
+                "",
+                "end",
+                values=(
+                    customer_name,
+                    phone,
+                    document_type,
+                    template_name,
+                    created_at
+                )
             )
-            empty.pack(pady=100)
+
+            self.archive_rows[item_id] = row
+
+    def open_selected_document(self, event):
+
+        selected = self.tree.selection()
+
+        if not selected:
             return
 
-        for row in results:
+        item_id = selected[0]
 
-            archive_id = row[0]
-            customer_name = row[1]
-            phone = row[2]
-            document_type = row[3]
-            template_name = row[4]
-            word_path = row[5]
-            pdf_path = row[6]
-            created_at = row[7]
+        row = self.archive_rows.get(item_id)
 
-            card = ctk.CTkFrame(
-                self.results_frame,
-                corner_radius=18,
-                fg_color="#F3F4F6"
-            )
-            card.pack(fill="x", padx=10, pady=10)
+        if not row:
+            return
 
-            top = ctk.CTkFrame(card, fg_color="transparent")
-            top.pack(fill="x", padx=18, pady=(15, 8))
+        word_path = row[5]
+        pdf_path = row[6]
 
-            name_label = ctk.CTkLabel(
-                top,
-                text=f"👤 {customer_name or 'غير محدد'}",
-                font=("Segoe UI", 18, "bold"),
-                text_color="#111827"
-            )
-            name_label.pack(side="right")
-
-            date_label = ctk.CTkLabel(
-                top,
-                text=created_at,
-                font=("Segoe UI", 13),
-                text_color="#6B7280"
-            )
-            date_label.pack(side="left")
-
-            info = ctk.CTkLabel(
-                card,
-                text=(
-                    f"📄 نوع الوثيقة: {document_type}\n"
-                    f"🧩 النموذج: {template_name}\n"
-                    f"📞 الهاتف: {phone or 'غير متوفر'}"
-                ),
-                justify="right",
-                anchor="e",
-                font=("Segoe UI", 14)
-            )
-            info.pack(fill="x", padx=18)
-
-            actions = ctk.CTkFrame(
-                card,
-                fg_color="transparent"
-            )
-            actions.pack(fill="x", padx=18, pady=(12, 15))
-
-            open_word_btn = ctk.CTkButton(
-                actions,
-                text="📄 فتح Word",
-                width=140,
-                height=36,
-                command=lambda p=word_path: open_file(p)
-            )
-            open_word_btn.pack(side="right", padx=5)
-
-            if pdf_path:
-                open_pdf_btn = ctk.CTkButton(
-                    actions,
-                    text="📕 فتح PDF",
-                    width=140,
-                    height=36,
-                    command=lambda p=pdf_path: open_file(p)
-                )
-                open_pdf_btn.pack(side="right", padx=5)
+        if word_path and os.path.exists(word_path):
+            open_file(word_path)
+        elif pdf_path and os.path.exists(pdf_path):
+            open_file(pdf_path)
