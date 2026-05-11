@@ -2,7 +2,6 @@ import customtkinter as ctk
 from tkinter import messagebox
 
 from database import (
-    create_customers_table,
     save_customer,
     search_customers
 )
@@ -12,9 +11,6 @@ class CustomersPage(ctk.CTkFrame):
 
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
-
-        create_customers_table()
-
         self.build_ui()
 
     def build_ui(self):
@@ -28,7 +24,8 @@ class CustomersPage(ctk.CTkFrame):
         title = ctk.CTkLabel(
             header,
             text="👥 الزبائن",
-            font=("Segoe UI", 30, "bold")
+            font=("Segoe UI", 30, "bold"),
+            text_color="#111827"
         )
         title.pack(side="right")
 
@@ -50,7 +47,11 @@ class CustomersPage(ctk.CTkFrame):
         )
         search_btn.pack(side="left")
 
-        form = ctk.CTkFrame(self)
+        form = ctk.CTkFrame(
+            self,
+            fg_color="#FFFFFF",
+            corner_radius=22
+        )
         form.pack(fill="x", padx=10, pady=(0, 20))
 
         self.first_name = self.create_input(form, "الاسم")
@@ -80,7 +81,8 @@ class CustomersPage(ctk.CTkFrame):
             parent,
             text=label_text,
             anchor="e",
-            font=("Segoe UI", 14, "bold")
+            font=("Segoe UI", 14, "bold"),
+            text_color="#111827"
         )
         label.pack(fill="x", padx=20, pady=(14, 5))
 
@@ -101,18 +103,10 @@ class CustomersPage(ctk.CTkFrame):
         phone = self.phone.get().strip()
 
         if not first_name:
-            messagebox.showerror(
-                "خطأ",
-                "اكتب اسم الزبون"
-            )
+            messagebox.showerror("خطأ", "اكتب اسم الزبون")
             return
 
-        save_customer(
-            first_name,
-            last_name,
-            address,
-            phone
-        )
+        save_customer(first_name, last_name, address, phone)
 
         self.first_name.delete(0, "end")
         self.last_name.delete(0, "end")
@@ -127,30 +121,26 @@ class CustomersPage(ctk.CTkFrame):
             widget.destroy()
 
         keyword = self.search_entry.get().strip()
-
         customers = search_customers(keyword)
 
         if not customers:
             empty = ctk.CTkLabel(
                 self.results,
                 text="لا توجد بيانات.",
-                font=("Segoe UI", 18)
+                font=("Segoe UI", 18),
+                text_color="#6B7280"
             )
             empty.pack(pady=80)
             return
 
         for customer in customers:
 
-            customer_id = customer[0]
-            first_name = customer[1]
-            last_name = customer[2]
-            address = customer[3]
-            phone = customer[4]
+            customer_id, first_name, last_name, address, phone = customer
 
             card = ctk.CTkFrame(
                 self.results,
                 corner_radius=18,
-                fg_color="#F3F4F6"
+                fg_color="#FFFFFF"
             )
             card.pack(fill="x", padx=10, pady=10)
 
@@ -163,7 +153,8 @@ class CustomersPage(ctk.CTkFrame):
                 ),
                 justify="right",
                 anchor="e",
-                font=("Segoe UI", 15)
+                font=("Segoe UI", 15),
+                text_color="#111827"
             )
 
             info.pack(fill="x", padx=20, pady=20)
