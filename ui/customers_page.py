@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 
 from database import (
     save_customer,
@@ -11,14 +11,13 @@ class CustomersPage(ctk.CTkFrame):
 
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
+
         self.build_ui()
+        self.load_customers()
 
     def build_ui(self):
 
-        header = ctk.CTkFrame(
-            self,
-            fg_color="transparent"
-        )
+        header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", pady=(10, 20))
 
         title = ctk.CTkLabel(
@@ -33,26 +32,19 @@ class CustomersPage(ctk.CTkFrame):
             header,
             placeholder_text="بحث باسم الزبون أو الهاتف...",
             width=320,
-            height=40,
+            height=42,
             font=("Segoe UI", 14)
         )
         self.search_entry.pack(side="left", padx=10)
 
-        search_btn = ctk.CTkButton(
-            header,
-            text="بحث",
-            width=90,
-            height=40,
-            command=self.load_customers
-        )
-        search_btn.pack(side="left")
+        self.search_entry.bind("<KeyRelease>", lambda e: self.load_customers())
 
         form = ctk.CTkFrame(
             self,
-            fg_color="#FFFFFF",
-            corner_radius=22
+            corner_radius=22,
+            fg_color="#FFFFFF"
         )
-        form.pack(fill="x", padx=10, pady=(0, 20))
+        form.pack(fill="x", pady=(0, 20))
 
         self.first_name = self.create_input(form, "الاسم")
         self.last_name = self.create_input(form, "اللقب")
@@ -62,27 +54,80 @@ class CustomersPage(ctk.CTkFrame):
         save_btn = ctk.CTkButton(
             form,
             text="💾 حفظ الزبون",
-            height=42,
+            height=44,
+            font=("Segoe UI", 15, "bold"),
             command=self.save_customer_action
         )
         save_btn.pack(fill="x", padx=20, pady=20)
 
-        self.results = ctk.CTkScrollableFrame(
+        table_card = ctk.CTkFrame(
             self,
-            fg_color="transparent"
+            corner_radius=22,
+            fg_color="#FFFFFF"
         )
-        self.results.pack(fill="both", expand=True)
+        table_card.pack(fill="both", expand=True)
 
-        self.load_customers()
+        style = ttk.Style()
+
+        try:
+            style.theme_use("default")
+        except:
+            pass
+
+        style.configure(
+            "Treeview",
+            rowheight=34,
+            font=("Segoe UI", 11),
+            background="#FFFFFF",
+            fieldbackground="#FFFFFF"
+        )
+
+        style.configure(
+            "Treeview.Heading",
+            font=("Segoe UI", 11, "bold")
+        )
+
+        columns = (
+            "first_name",
+            "last_name",
+            "phone",
+            "address"
+        )
+
+        self.tree = ttk.Treeview(
+            table_card,
+            columns=columns,
+            show="headings"
+        )
+
+        self.tree.heading("first_name", text="الاسم")
+        self.tree.heading("last_name", text="اللقب")
+        self.tree.heading("phone", text="الهاتف")
+        self.tree.heading("address", text="العنوان")
+
+        self.tree.column("first_name", width=150, anchor="center")
+        self.tree.column("last_name", width=150, anchor="center")
+        self.tree.column("phone", width=140, anchor="center")
+        self.tree.column("address", width=350, anchor="center")
+
+        scrollbar = ttk.Scrollbar(
+            table_card,
+            orient="vertical",
+            command=self.tree.yview
+        )
+
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        self.tree.pack(side="left", fill="both", expand=True, padx=(18, 0), pady=18)
+        scrollbar.pack(side="right", fill="y", pady=18, padx=(0, 18))
 
     def create_input(self, parent, label_text):
 
         label = ctk.CTkLabel(
             parent,
             text=label_text,
-            anchor="e",
             font=("Segoe UI", 14, "bold"),
-            text_color="#111827"
+            anchor="e"
         )
         label.pack(fill="x", padx=20, pady=(14, 5))
 
@@ -98,15 +143,17 @@ class CustomersPage(ctk.CTkFrame):
     def save_customer_action(self):
 
         first_name = self.first_name.get().strip()
-        last_name = self.last_name.get().strip()
-        address = self.address.get().strip()
-        phone = self.phone.get().strip()
 
         if not first_name:
             messagebox.showerror("خطأ", "اكتب اسم الزبون")
             return
 
-        save_customer(first_name, last_name, address, phone)
+        save_customer(
+            first_name,
+            self.last_name.get().strip(),
+            self.address.get().strip(),
+            self.phone.get().strip()
+        )
 
         self.first_name.delete(0, "end")
         self.last_name.delete(0, "end")
@@ -117,44 +164,24 @@ class CustomersPage(ctk.CTkFrame):
 
     def load_customers(self):
 
-        for widget in self.results.winfo_children():
-            widget.destroy()
+        for item in self.tree.get_children():
+            self.tree.delete(item)
 
         keyword = self.search_entry.get().strip()
-        customers = search_customers(keyword)
 
-        if not customers:
-            empty = ctk.CTkLabel(
-                self.results,
-                text="لا توجد بيانات.",
-                font=("Segoe UI", 18),
-                text_color="#6B7280"
-            )
-            empty.pack(pady=80)
-            return
+        customers = search_customers(keyword)
 
         for customer in customers:
 
             customer_id, first_name, last_name, address, phone = customer
 
-            card = ctk.CTkFrame(
-                self.results,
-                corner_radius=18,
-                fg_color="#FFFFFF"
+            self.tree.insert(
+                "",
+                "end",
+                values=(
+                    first_name,
+                    last_name,
+                    phone,
+                    address
+                )
             )
-            card.pack(fill="x", padx=10, pady=10)
-
-            info = ctk.CTkLabel(
-                card,
-                text=(
-                    f"👤 {first_name} {last_name}\n"
-                    f"📞 {phone}\n"
-                    f"📍 {address}"
-                ),
-                justify="right",
-                anchor="e",
-                font=("Segoe UI", 15),
-                text_color="#111827"
-            )
-
-            info.pack(fill="x", padx=20, pady=20)
