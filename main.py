@@ -1,6 +1,13 @@
 import customtkinter as ctk
 from datetime import datetime
+
+from database import init_database
+from ui.dashboard_page import DashboardPage
 from ui.documents_page import DocumentsPage
+from ui.archive_page import ArchivePage
+from ui.customers_page import CustomersPage
+from ui.services_page import ServicesPage
+from ui.settings_page import SettingsPage
 
 APP_NAME = "IDARA DZ"
 
@@ -13,254 +20,253 @@ class IdaraDZApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
+        init_database()
+
         self.title(APP_NAME)
-        self.geometry("1200x750")
-        self.minsize(1000, 650)
+        self.geometry("1250x780")
+        self.minsize(1050, 680)
 
         self.dark_mode = False
+        self.current_page = None
 
         self.build_ui()
+        self.show_dashboard()
         self.update_clock()
 
-        self.bind("<F1>", lambda e: self.open_documents())
-        self.bind("<F2>", lambda e: self.search_entry.focus())
-        self.bind("<Alt-Key-1>", lambda e: self.open_documents())
-        self.bind("<Alt-Key-2>", lambda e: self.open_services())
-        self.bind("<Alt-Key-3>", lambda e: self.open_archive())
-        self.bind("<Escape>", lambda e: self.show_home())
+        self.bind("<F1>", lambda e: self.show_documents())
+        self.bind("<F2>", lambda e: self.global_search.focus())
+        self.bind("<Alt-Key-1>", lambda e: self.show_documents())
+        self.bind("<Alt-Key-2>", lambda e: self.show_services())
+        self.bind("<Alt-Key-3>", lambda e: self.show_archive())
+        self.bind("<Alt-Key-4>", lambda e: self.show_customers())
+        self.bind("<Control-p>", lambda e: self.show_archive())
+        self.bind("<Escape>", lambda e: self.show_dashboard())
 
     def build_ui(self):
 
-        self.main_frame = ctk.CTkFrame(
+        self.configure(fg_color="#F5F7FA")
+
+        self.root_frame = ctk.CTkFrame(
             self,
-            fg_color="transparent"
+            fg_color="#F5F7FA"
         )
-        self.main_frame.pack(
-            fill="both",
-            expand=True,
-            padx=25,
-            pady=20
-        )
+        self.root_frame.pack(fill="both", expand=True)
 
-        self.build_header()
+        self.sidebar = ctk.CTkFrame(
+            self.root_frame,
+            width=235,
+            corner_radius=0,
+            fg_color="#111827"
+        )
+        self.sidebar.pack(side="right", fill="y")
+        self.sidebar.pack_propagate(False)
 
-        self.search_entry = ctk.CTkEntry(
-            self.main_frame,
-            placeholder_text="بحث سريع...",
-            height=45,
-            font=("Segoe UI", 15),
-            corner_radius=14
+        self.content_wrapper = ctk.CTkFrame(
+            self.root_frame,
+            fg_color="#F5F7FA"
         )
-        self.search_entry.pack(
-            fill="x",
-            pady=(35, 20)
-        )
+        self.content_wrapper.pack(side="left", fill="both", expand=True)
+
+        self.build_sidebar()
+        self.build_topbar()
 
         self.content = ctk.CTkFrame(
-            self.main_frame,
-            fg_color="transparent"
+            self.content_wrapper,
+            fg_color="#F5F7FA"
         )
-        self.content.pack(
-            fill="both",
-            expand=True
-        )
+        self.content.pack(fill="both", expand=True, padx=24, pady=(8, 24))
 
-        self.show_home()
+    def build_sidebar(self):
 
-    def build_header(self):
-
-        self.header = ctk.CTkFrame(
-            self.main_frame,
-            fg_color="transparent"
-        )
-        self.header.pack(fill="x")
-
-        self.logo_label = ctk.CTkLabel(
-            self.header,
+        logo = ctk.CTkLabel(
+            self.sidebar,
             text="IDARA DZ",
-            font=("Segoe UI", 30, "bold"),
-            text_color="#111827"
+            font=("Segoe UI", 28, "bold"),
+            text_color="white"
         )
-        self.logo_label.pack(side="left")
+        logo.pack(pady=(28, 2))
 
-        self.clock_label = ctk.CTkLabel(
-            self.header,
-            text="",
-            font=("Segoe UI", 14),
-            text_color="#374151"
+        subtitle = ctk.CTkLabel(
+            self.sidebar,
+            text="نظام الوثائق والخدمات",
+            font=("Segoe UI", 13),
+            text_color="#9CA3AF"
         )
-        self.clock_label.pack(side="right", padx=10)
+        subtitle.pack(pady=(0, 25))
 
-        self.settings_btn = ctk.CTkButton(
-            self.header,
-            text="⚙️ الإعدادات",
-            width=120,
-            height=36,
-            command=self.open_settings
+        self.nav_buttons = {}
+
+        self.add_nav_button("dashboard", "🏠 الرئيسية", self.show_dashboard)
+        self.add_nav_button("documents", "📄 وثائق", self.show_documents)
+        self.add_nav_button("services", "🌐 خدمات إلكترونية", self.show_services)
+        self.add_nav_button("archive", "🗂️ أرشيف", self.show_archive)
+        self.add_nav_button("customers", "👥 زبائن", self.show_customers)
+
+        spacer = ctk.CTkFrame(
+            self.sidebar,
+            fg_color="transparent"
         )
-        self.settings_btn.pack(side="right", padx=10)
+        spacer.pack(fill="both", expand=True)
 
-        self.dark_btn = ctk.CTkButton(
-            self.header,
+        self.add_nav_button("settings", "⚙️ الإعدادات", self.show_settings)
+
+        self.theme_btn = ctk.CTkButton(
+            self.sidebar,
             text="🌙 الوضع الداكن",
-            width=140,
-            height=36,
+            height=42,
+            corner_radius=12,
+            font=("Segoe UI", 14, "bold"),
+            fg_color="#1F2937",
+            hover_color="#374151",
+            text_color="white",
             command=self.toggle_dark_mode
         )
-        self.dark_btn.pack(side="right", padx=10)
+        self.theme_btn.pack(fill="x", padx=16, pady=(8, 20))
 
-    def clear_content(self):
+    def add_nav_button(self, key, text, command):
 
-        for widget in self.content.winfo_children():
-            widget.destroy()
-
-    def show_home(self):
-
-        self.clear_content()
-
-        title = ctk.CTkLabel(
-            self.content,
-            text="الواجهة الرئيسية",
-            font=("Segoe UI", 24, "bold")
-        )
-        title.pack(
-            pady=(25, 35)
-        )
-
-        cards_frame = ctk.CTkFrame(
-            self.content,
-            fg_color="transparent"
-        )
-        cards_frame.pack(expand=True)
-
-        self.create_card(
-            cards_frame,
-            "📄",
-            "وثائق",
-            "استخراج الوثائق الإدارية",
-            self.open_documents,
-            0
-        )
-
-        self.create_card(
-            cards_frame,
-            "🌐",
-            "خدمات إلكترونية",
-            "روابط وخدمات رسمية",
-            self.open_services,
-            1
-        )
-
-        self.create_card(
-            cards_frame,
-            "🗂️",
-            "أرشيف",
-            "حفظ وبحث وإعادة طباعة",
-            self.open_archive,
-            2
-        )
-
-    def create_card(
-        self,
-        parent,
-        icon,
-        title,
-        subtitle,
-        command,
-        column
-    ):
-
-        card = ctk.CTkButton(
-            parent,
-            text=f"{icon}\n\n{title}\n{subtitle}",
-            font=("Segoe UI", 19, "bold"),
-            width=280,
-            height=230,
-            corner_radius=22,
-            fg_color="#F3F4F6",
-            hover_color="#E5E7EB",
-            text_color="#111827",
+        btn = ctk.CTkButton(
+            self.sidebar,
+            text=text,
+            height=44,
+            corner_radius=12,
+            font=("Segoe UI", 15, "bold"),
+            anchor="e",
+            fg_color="transparent",
+            hover_color="#1F2937",
+            text_color="#E5E7EB",
             command=command
         )
 
-        card.grid(
-            row=0,
-            column=column,
-            padx=25,
-            pady=20
+        btn.pack(fill="x", padx=16, pady=5)
+
+        self.nav_buttons[key] = btn
+
+    def build_topbar(self):
+
+        self.topbar = ctk.CTkFrame(
+            self.content_wrapper,
+            height=74,
+            fg_color="#F5F7FA"
         )
+        self.topbar.pack(fill="x", padx=24, pady=(18, 0))
+        self.topbar.pack_propagate(False)
 
-    def page_title(self, text):
-
-        label = ctk.CTkLabel(
-            self.content,
-            text=text,
-            font=("Segoe UI", 26, "bold")
+        self.page_title = ctk.CTkLabel(
+            self.topbar,
+            text="الرئيسية",
+            font=("Segoe UI", 26, "bold"),
+            text_color="#111827"
         )
-        label.pack(pady=30)
+        self.page_title.pack(side="right", padx=4)
 
-    def open_documents(self):
+        self.clock_label = ctk.CTkLabel(
+            self.topbar,
+            text="",
+            font=("Segoe UI", 13),
+            text_color="#6B7280"
+        )
+        self.clock_label.pack(side="left", padx=6)
 
+        self.global_search = ctk.CTkEntry(
+            self.topbar,
+            placeholder_text="بحث سريع...",
+            width=280,
+            height=40,
+            corner_radius=14,
+            font=("Segoe UI", 14)
+        )
+        self.global_search.pack(side="left", padx=14)
+
+    def clear_content(self):
+        for widget in self.content.winfo_children():
+            widget.destroy()
+
+    def set_active(self, key, title):
+
+        self.current_page = key
+        self.page_title.configure(text=title)
+
+        for name, button in self.nav_buttons.items():
+            if name == key:
+                button.configure(
+                    fg_color="#2563EB",
+                    hover_color="#1D4ED8",
+                    text_color="white"
+                )
+            else:
+                button.configure(
+                    fg_color="transparent",
+                    hover_color="#1F2937",
+                    text_color="#E5E7EB"
+                )
+
+    def show_dashboard(self):
         self.clear_content()
+        self.set_active("dashboard", "الرئيسية")
+        page = DashboardPage(self.content, app=self)
+        page.pack(fill="both", expand=True)
 
+    def show_documents(self):
+        self.clear_content()
+        self.set_active("documents", "وثائق")
         page = DocumentsPage(self.content)
         page.pack(fill="both", expand=True)
 
-    def open_services(self):
-
+    def show_services(self):
         self.clear_content()
+        self.set_active("services", "خدمات إلكترونية")
+        page = ServicesPage(self.content)
+        page.pack(fill="both", expand=True)
 
-        self.page_title("🌐 قسم الخدمات الإلكترونية")
-
-    def open_archive(self):
-
+    def show_archive(self):
         self.clear_content()
+        self.set_active("archive", "الأرشيف")
+        page = ArchivePage(self.content)
+        page.pack(fill="both", expand=True)
 
-        self.page_title("🗂️ قسم الأرشيف")
-
-    def open_settings(self):
-
+    def show_customers(self):
         self.clear_content()
+        self.set_active("customers", "الزبائن")
+        page = CustomersPage(self.content)
+        page.pack(fill="both", expand=True)
 
-        self.page_title("⚙️ الإعدادات")
+    def show_settings(self):
+        self.clear_content()
+        self.set_active("settings", "الإعدادات")
+        page = SettingsPage(self.content)
+        page.pack(fill="both", expand=True)
 
     def toggle_dark_mode(self):
 
         self.dark_mode = not self.dark_mode
 
         if self.dark_mode:
-
             ctk.set_appearance_mode("dark")
-
-            self.dark_btn.configure(
-                text="☀️ الوضع الفاتح"
-            )
-
+            self.configure(fg_color="#0B1220")
+            self.root_frame.configure(fg_color="#0B1220")
+            self.content_wrapper.configure(fg_color="#0B1220")
+            self.topbar.configure(fg_color="#0B1220")
+            self.content.configure(fg_color="#0B1220")
+            self.page_title.configure(text_color="white")
+            self.theme_btn.configure(text="☀️ الوضع الفاتح")
         else:
-
             ctk.set_appearance_mode("light")
-
-            self.dark_btn.configure(
-                text="🌙 الوضع الداكن"
-            )
+            self.configure(fg_color="#F5F7FA")
+            self.root_frame.configure(fg_color="#F5F7FA")
+            self.content_wrapper.configure(fg_color="#F5F7FA")
+            self.topbar.configure(fg_color="#F5F7FA")
+            self.content.configure(fg_color="#F5F7FA")
+            self.page_title.configure(text_color="#111827")
+            self.theme_btn.configure(text="🌙 الوضع الداكن")
 
     def update_clock(self):
 
-        now = datetime.now().strftime(
-            "%Y/%m/%d  -  %H:%M:%S"
-        )
-
-        self.clock_label.configure(
-            text=now
-        )
-
-        self.after(
-            1000,
-            self.update_clock
-        )
+        now = datetime.now().strftime("%Y/%m/%d  -  %H:%M:%S")
+        self.clock_label.configure(text=now)
+        self.after(1000, self.update_clock)
 
 
 if __name__ == "__main__":
-
     app = IdaraDZApp()
     app.mainloop()
