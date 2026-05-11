@@ -8,6 +8,8 @@ from ui.archive_page import ArchivePage
 from ui.customers_page import CustomersPage
 from ui.services_page import ServicesPage
 from ui.settings_page import SettingsPage
+from ui.splash_screen import SplashScreen
+from ui.ux_widgets import ToastNotification
 
 APP_NAME = "IDARA DZ"
 
@@ -33,6 +35,13 @@ class IdaraDZApp(ctk.CTk):
         self.show_dashboard()
         self.update_clock()
 
+        SplashScreen(self)
+
+        self.after(
+            1300,
+            lambda: self.toast("مرحبا بك في IDARA DZ", "info")
+        )
+
         self.bind("<F1>", lambda e: self.show_documents())
         self.bind("<F2>", lambda e: self.global_search.focus())
         self.bind("<Alt-Key-1>", lambda e: self.show_documents())
@@ -41,6 +50,9 @@ class IdaraDZApp(ctk.CTk):
         self.bind("<Alt-Key-4>", lambda e: self.show_customers())
         self.bind("<Control-p>", lambda e: self.show_archive())
         self.bind("<Escape>", lambda e: self.show_dashboard())
+
+    def toast(self, message, kind="success"):
+        ToastNotification(self, message, kind)
 
     def build_ui(self):
 
@@ -250,6 +262,7 @@ class IdaraDZApp(ctk.CTk):
             self.content.configure(fg_color="#0B1220")
             self.page_title.configure(text_color="white")
             self.theme_btn.configure(text="☀️ الوضع الفاتح")
+            self.toast("تم تفعيل الوضع الداكن", "info")
         else:
             ctk.set_appearance_mode("light")
             self.configure(fg_color="#F5F7FA")
@@ -259,6 +272,7 @@ class IdaraDZApp(ctk.CTk):
             self.content.configure(fg_color="#F5F7FA")
             self.page_title.configure(text_color="#111827")
             self.theme_btn.configure(text="🌙 الوضع الداكن")
+            self.toast("تم تفعيل الوضع الفاتح", "info")
 
     def update_clock(self):
 
