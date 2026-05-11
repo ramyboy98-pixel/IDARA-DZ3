@@ -3,14 +3,12 @@ import os
 from datetime import datetime
 from utils.paths import get_data_dir
 
-
 DATA_FOLDER = get_data_dir()
 DATABASE_PATH = os.path.join(DATA_FOLDER, "idara_dz.db")
 
 
 def ensure_data_folder():
-    if not os.path.exists(DATA_FOLDER):
-        os.makedirs(DATA_FOLDER)
+    os.makedirs(DATA_FOLDER, exist_ok=True)
 
 
 def connect_db():
@@ -18,7 +16,42 @@ def connect_db():
     return sqlite3.connect(DATABASE_PATH)
 
 
+def now_text():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def column_exists(cursor, table_name, column_name):
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    columns = cursor.fetchall()
+    return any(col[1] == column_name for col in columns)
+
+
+def make_field_key(field_label):
+    key = field_label.strip()
+
+    replacements = [
+        (" ", "_"),
+        ("-", "_"),
+        ("/", "_"),
+        ("\\", "_"),
+        (":", "_"),
+        ("؛", "_"),
+        (",", "_"),
+        ("،", "_")
+    ]
+
+    for old, new in replacements:
+        key = key.replace(old, new)
+
+    return key
+
+
+# =========================
+# إنشاء قاعدة البيانات
+# =========================
+
 def init_database():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -37,11 +70,17 @@ def init_database():
             category_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             template_path TEXT,
+            template_content TEXT,
             created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            FOREIGN KEY (category_id) REFERENCES document_categories(id)
+            updated_at TEXT NOT NULL
         )
     """)
+
+    if not column_exists(cursor, "document_templates", "template_content"):
+        cursor.execute("""
+            ALTER TABLE document_templates
+            ADD COLUMN template_content TEXT
+        """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS template_fields (
@@ -50,8 +89,7 @@ def init_database():
             field_label TEXT NOT NULL,
             field_key TEXT NOT NULL,
             field_order INTEGER NOT NULL,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (template_id) REFERENCES document_templates(id)
+            created_at TEXT NOT NULL
         )
     """)
 
@@ -68,18 +106,30 @@ def init_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT,
+            last_name TEXT,
+            address TEXT,
+            phone TEXT,
+            created_at TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
 
     seed_default_categories()
 
 
-def now_text():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+# =========================
+# الأقسام الافتراضية
+# =========================
 
 def seed_default_categories():
-    default_categories = [
+
+    categories = [
         ("طلب خطي", "📄"),
         ("تصريح شرفي", "🖋️"),
         ("سيرة ذاتية", "📑"),
@@ -90,17 +140,27 @@ def seed_default_categories():
     conn = connect_db()
     cursor = conn.cursor()
 
-    for name, icon in default_categories:
+    for name, icon in categories:
         cursor.execute("""
-            INSERT OR IGNORE INTO document_categories (name, icon, created_at)
+            INSERT OR IGNORE INTO document_categories
+            (name, icon, created_at)
             VALUES (?, ?, ?)
-        """, (name, icon, now_text()))
+        """, (
+            name,
+            icon,
+            now_text()
+        ))
 
     conn.commit()
     conn.close()
 
 
+# =========================
+# الأقسام
+# =========================
+
 def get_categories():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -111,39 +171,17 @@ def get_categories():
     """)
 
     rows = cursor.fetchall()
+
     conn.close()
 
     return rows
 
 
-def get_category_by_name(category_name):
-    conn = connect_db()
-    cursor = conn.cursor()
+# =========================
+# النماذج
+# =========================
 
-    cursor.execute("""
-        SELECT id, name, icon
-        FROM document_categories
-        WHERE name = ?
-    """, (category_name,))
-
-    row = cursor.fetchone()
-    conn.close()
-
-    return row
-
-
-def add_template(category_id, template_name, fields, template_path=None):
-    """
-    fields example:
-    [
-        "الاسم",
-        "اللقب",
-        "العنوان",
-        "الهاتف",
-        "المستوى الدراسي",
-        "الخبرة"
-    ]
-    """
+def add_template(category_id, template_name, fields, template_path=None, template_content=None):
 
     conn = connect_db()
     cursor = conn.cursor()
@@ -152,20 +190,32 @@ def add_template(category_id, template_name, fields, template_path=None):
 
     cursor.execute("""
         INSERT INTO document_templates
-        (category_id, name, template_path, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?)
-    """, (category_id, template_name, template_path, created, created))
+        (category_id, name, template_path, template_content, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        category_id,
+        template_name,
+        template_path,
+        template_content,
+        created,
+        created
+    ))
 
     template_id = cursor.lastrowid
 
     for index, field_label in enumerate(fields):
-        field_key = make_field_key(field_label)
 
         cursor.execute("""
             INSERT INTO template_fields
             (template_id, field_label, field_key, field_order, created_at)
             VALUES (?, ?, ?, ?, ?)
-        """, (template_id, field_label, field_key, index, created))
+        """, (
+            template_id,
+            field_label,
+            make_field_key(field_label),
+            index,
+            created
+        ))
 
     conn.commit()
     conn.close()
@@ -174,39 +224,44 @@ def add_template(category_id, template_name, fields, template_path=None):
 
 
 def get_templates_by_category(category_id):
+
     conn = connect_db()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, name, template_path, created_at, updated_at
+        SELECT id, name, template_path, created_at, updated_at, template_content
         FROM document_templates
         WHERE category_id = ?
         ORDER BY id DESC
     """, (category_id,))
 
     rows = cursor.fetchall()
+
     conn.close()
 
     return rows
 
 
 def get_template(template_id):
+
     conn = connect_db()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, category_id, name, template_path, created_at, updated_at
+        SELECT id, category_id, name, template_path, created_at, updated_at, template_content
         FROM document_templates
         WHERE id = ?
     """, (template_id,))
 
     row = cursor.fetchone()
+
     conn.close()
 
     return row
 
 
 def get_template_fields(template_id):
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -218,40 +273,14 @@ def get_template_fields(template_id):
     """, (template_id,))
 
     rows = cursor.fetchall()
+
     conn.close()
 
     return rows
 
 
-def update_template(template_id, template_name, fields, template_path=None):
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        UPDATE document_templates
-        SET name = ?, template_path = ?, updated_at = ?
-        WHERE id = ?
-    """, (template_name, template_path, now_text(), template_id))
-
-    cursor.execute("""
-        DELETE FROM template_fields
-        WHERE template_id = ?
-    """, (template_id,))
-
-    for index, field_label in enumerate(fields):
-        field_key = make_field_key(field_label)
-
-        cursor.execute("""
-            INSERT INTO template_fields
-            (template_id, field_label, field_key, field_order, created_at)
-            VALUES (?, ?, ?, ?, ?)
-        """, (template_id, field_label, field_key, index, now_text()))
-
-    conn.commit()
-    conn.close()
-
-
 def delete_template(template_id):
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -269,7 +298,12 @@ def delete_template(template_id):
     conn.close()
 
 
+# =========================
+# الأرشيف
+# =========================
+
 def save_archive(customer_name, phone, document_type, template_name, word_path=None, pdf_path=None):
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -292,6 +326,7 @@ def save_archive(customer_name, phone, document_type, template_name, word_path=N
 
 
 def search_archive(keyword=""):
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -305,27 +340,67 @@ def search_archive(keyword=""):
            OR document_type LIKE ?
            OR template_name LIKE ?
         ORDER BY id DESC
-    """, (like_keyword, like_keyword, like_keyword, like_keyword))
+    """, (
+        like_keyword,
+        like_keyword,
+        like_keyword,
+        like_keyword
+    ))
 
     rows = cursor.fetchall()
+
     conn.close()
 
     return rows
 
 
-def make_field_key(field_label):
-    key = field_label.strip()
-    key = key.replace(" ", "_")
-    key = key.replace("-", "_")
-    key = key.replace("/", "_")
-    key = key.replace("\\", "_")
-    key = key.replace(":", "_")
-    key = key.replace("؛", "_")
-    key = key.replace(",", "_")
-    key = key.replace("،", "_")
-    return key
+# =========================
+# الزبائن
+# =========================
+
+def save_customer(first_name, last_name, address, phone):
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO customers
+        (first_name, last_name, address, phone, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        first_name,
+        last_name,
+        address,
+        phone,
+        now_text()
+    ))
+
+    conn.commit()
+    conn.close()
 
 
-if __name__ == "__main__":
-    init_database()
-    print("تم إنشاء قاعدة بيانات IDARA DZ بنجاح")
+def search_customers(keyword=""):
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    like_keyword = f"%{keyword}%"
+
+    cursor.execute("""
+        SELECT id, first_name, last_name, address, phone
+        FROM customers
+        WHERE first_name LIKE ?
+           OR last_name LIKE ?
+           OR phone LIKE ?
+        ORDER BY id DESC
+    """, (
+        like_keyword,
+        like_keyword,
+        like_keyword
+    ))
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
