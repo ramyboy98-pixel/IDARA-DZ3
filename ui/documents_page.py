@@ -2,6 +2,7 @@ import customtkinter as ctk
 
 
 class DocumentsPage(ctk.CTkFrame):
+
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
 
@@ -16,7 +17,10 @@ class DocumentsPage(ctk.CTkFrame):
         )
         title.pack(pady=(20, 40))
 
-        grid = ctk.CTkFrame(self, fg_color="transparent")
+        grid = ctk.CTkFrame(
+            self,
+            fg_color="transparent"
+        )
         grid.pack(expand=True)
 
         documents = [
@@ -45,7 +49,12 @@ class DocumentsPage(ctk.CTkFrame):
                 command=lambda n=name: self.open_document_form(n)
             )
 
-            card.grid(row=row, column=col, padx=18, pady=18)
+            card.grid(
+                row=row,
+                column=col,
+                padx=18,
+                pady=18
+            )
 
             col += 1
 
@@ -68,7 +77,12 @@ class DocumentsPage(ctk.CTkFrame):
         title.pack(pady=20)
 
         form = ctk.CTkFrame(window)
-        form.pack(fill="both", expand=True, padx=25, pady=20)
+        form.pack(
+            fill="both",
+            expand=True,
+            padx=25,
+            pady=20
+        )
 
         fields = [
             "الاسم",
@@ -91,7 +105,10 @@ class DocumentsPage(ctk.CTkFrame):
                 anchor="e",
                 font=("Segoe UI", 15, "bold")
             )
-            label.pack(fill="x", pady=(12, 5))
+            label.pack(
+                fill="x",
+                pady=(12, 5)
+            )
 
             entry = ctk.CTkEntry(
                 form,
