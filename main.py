@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from utils.rtl import apply_rtl_patches
 from datetime import datetime
 
 from database import init_database
@@ -15,6 +16,7 @@ APP_NAME = "IDARA DZ"
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
+apply_rtl_patches(ctk)
 
 
 class IdaraDZApp(ctk.CTk):
