@@ -5,7 +5,6 @@ from database import (
     save_customer,
     search_customers
 )
-from utils.rtl import rtl_text
 
 
 class CustomersPage(ctk.CTkFrame):
@@ -101,10 +100,10 @@ class CustomersPage(ctk.CTkFrame):
             show="headings"
         )
 
-        self.tree.heading("first_name", text=rtl_text("الاسم"))
-        self.tree.heading("last_name", text=rtl_text("اللقب"))
-        self.tree.heading("phone", text=rtl_text("الهاتف"))
-        self.tree.heading("address", text=rtl_text("العنوان"))
+        self.tree.heading("first_name", text="الاسم")
+        self.tree.heading("last_name", text="اللقب")
+        self.tree.heading("phone", text="الهاتف")
+        self.tree.heading("address", text="العنوان")
 
         self.tree.column("first_name", width=150, anchor="center")
         self.tree.column("last_name", width=150, anchor="center")
