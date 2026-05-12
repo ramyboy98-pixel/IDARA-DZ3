@@ -4,7 +4,6 @@ from tkinter import ttk, messagebox
 
 from database import search_archive
 from print_manager import open_file, print_file
-from utils.rtl import rtl_text
 
 BG = "#F5F7FA"
 CARD = "#FFFFFF"
@@ -51,7 +50,7 @@ class ArchivePage(ctk.CTkFrame):
         action_bar = ctk.CTkFrame(self, fg_color="transparent")
         action_bar.pack(fill="x", pady=(0, 12))
 
-        ctk.CTkButton(action_bar, text="📄 فتح Word", width=130, height=38, command=self.open_selected_word).pack(side="right", padx=5)
+        ctk.CTkButton(action_bar, text="📄 فتح ملف وورد", width=130, height=38, command=self.open_selected_word).pack(side="right", padx=5)
         ctk.CTkButton(action_bar, text="📕 فتح PDF", width=130, height=38, command=self.open_selected_pdf).pack(side="right", padx=5)
         ctk.CTkButton(action_bar, text="🖨️ طباعة", width=130, height=38, fg_color=GREEN, hover_color="#047857", command=self.print_selected).pack(side="right", padx=5)
         self.count_label = ctk.CTkLabel(action_bar, text="", font=("Segoe UI", 13), text_color=MUTED)
@@ -78,7 +77,7 @@ class ArchivePage(ctk.CTkFrame):
             "date": "التاريخ",
         }
         for key, text in headings.items():
-            self.tree.heading(key, text=rtl_text(text))
+            self.tree.heading(key, text=text)
             self.tree.column(key, anchor="center")
         self.tree.column("customer", width=200)
         self.tree.column("phone", width=120)
@@ -92,7 +91,7 @@ class ArchivePage(ctk.CTkFrame):
         scrollbar.pack(side="right", fill="y", pady=18, padx=(0, 18))
         self.tree.bind("<Double-1>", lambda e: self.open_selected_word())
 
-        info = ctk.CTkLabel(self, text="النقر المزدوج يفتح ملف Word. استعمل صيغة التاريخ 2026-05-12 للفلترة.", font=("Segoe UI", 13), text_color=MUTED)
+        info = ctk.CTkLabel(self, text="النقر المزدوج يفتح ملف وورد. استعمل صيغة التاريخ 2026-05-12 للفلترة.", font=("Segoe UI", 13), text_color=MUTED)
         info.pack(anchor="e", pady=(10, 0))
 
     def clear_filters(self):
