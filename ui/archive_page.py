@@ -4,6 +4,7 @@ from tkinter import ttk, messagebox
 
 from database import search_archive
 from print_manager import open_file, print_file
+from utils.rtl import rtl_text
 
 BG = "#F5F7FA"
 CARD = "#FFFFFF"
@@ -77,7 +78,7 @@ class ArchivePage(ctk.CTkFrame):
             "date": "التاريخ",
         }
         for key, text in headings.items():
-            self.tree.heading(key, text=text)
+            self.tree.heading(key, text=rtl_text(text))
             self.tree.column(key, anchor="center")
         self.tree.column("customer", width=200)
         self.tree.column("phone", width=120)
