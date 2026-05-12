@@ -87,7 +87,7 @@ class DocumentsPage(ctk.CTkFrame):
         self.page_title(
             self,
             "📄 قسم الوثائق",
-            "اختر القسم، ثم أنشئ نماذج Word واستمارات خاصة بكل وثيقة."
+            "اختر القسم، ثم أنشئ نماذج وورد واستمارات خاصة بكل وثيقة."
         )
 
         grid = ctk.CTkFrame(self, fg_color="transparent")
@@ -133,7 +133,7 @@ class DocumentsPage(ctk.CTkFrame):
         header = self.page_title(
             self,
             f"{category_icon} {category_name}",
-            "أنشئ بطاقة لكل نموذج. كل بطاقة لها استمارة خاصة وملف Word أو محرر داخلي."
+            "أنشئ بطاقة لكل نموذج. كل بطاقة لها استمارة خاصة وملف وورد أو محرر داخلي."
         )
 
         back_btn = ctk.CTkButton(header, text="↩ رجوع", width=110, height=38, fg_color="#6B7280", hover_color="#4B5563", command=self.build_categories_ui)
@@ -208,7 +208,7 @@ class DocumentsPage(ctk.CTkFrame):
         ctk.CTkLabel(card, text="📄", font=("Segoe UI Emoji", 34)).pack(pady=(16, 4))
         ctk.CTkLabel(card, text=name, font=("Segoe UI", 18, "bold"), text_color=TEXT, wraplength=240).pack()
 
-        status_text = "قالب Word مرفوع" if template_path else "قالب داخلي" if template_content else "بدون قالب"
+        status_text = "قالب وورد مرفوع" if template_path else "قالب داخلي" if template_content else "بدون قالب"
         ctk.CTkLabel(card, text=f"{status_text}  •  {len(fields)} خانات", font=("Segoe UI", 12), text_color=MUTED).pack(pady=(6, 2))
         ctk.CTkLabel(card, text=f"آخر تعديل: {updated_at}", font=("Segoe UI", 11), text_color="#9CA3AF").pack(pady=(0, 10))
 
@@ -311,23 +311,23 @@ class DocumentsPage(ctk.CTkFrame):
         template_card.pack(fill="x", pady=(0, 14))
         ctk.CTkLabel(template_card, text="القالب", font=("Segoe UI", 16, "bold"), text_color=TEXT).pack(anchor="e", padx=18, pady=(18, 6))
 
-        path_label = ctk.CTkLabel(template_card, text=selected_template_path.get() or "لم يتم اختيار ملف Word بعد", font=("Segoe UI", 13), text_color=MUTED, wraplength=780, justify="right")
+        path_label = ctk.CTkLabel(template_card, text=selected_template_path.get() or "لم يتم اختيار ملف وورد بعد", font=("Segoe UI", 13), text_color=MUTED, wraplength=780, justify="right")
         path_label.pack(fill="x", padx=18, pady=(0, 8))
 
         def choose_word_template():
-            file_path = filedialog.askopenfilename(title="اختر نموذج Word", filetypes=[("Word files", "*.docx"), ("All files", "*.*")])
+            file_path = filedialog.askopenfilename(title="اختر نموذج وورد", filetypes=[("ملفات وورد", "*.docx"), ("كل الملفات", "*.*")])
             if file_path:
                 selected_template_path.set(file_path)
                 path_label.configure(text=file_path)
 
         def clear_word_template():
             selected_template_path.set("")
-            path_label.configure(text="لم يتم اختيار ملف Word بعد")
+            path_label.configure(text="لم يتم اختيار ملف وورد بعد")
 
         btns = ctk.CTkFrame(template_card, fg_color="transparent")
         btns.pack(fill="x", padx=18, pady=(0, 14))
-        ctk.CTkButton(btns, text="📎 رفع نموذج Word من الجهاز", height=40, command=choose_word_template).pack(side="right", fill="x", expand=True, padx=(0, 5))
-        ctk.CTkButton(btns, text="إزالة ملف Word واستعمال المحرر", height=40, fg_color="#6B7280", hover_color="#4B5563", command=clear_word_template).pack(side="left", fill="x", expand=True, padx=(5, 0))
+        ctk.CTkButton(btns, text="📎 رفع نموذج وورد من الجهاز", height=40, command=choose_word_template).pack(side="right", fill="x", expand=True, padx=(0, 5))
+        ctk.CTkButton(btns, text="إزالة ملف وورد واستعمال المحرر", height=40, fg_color="#6B7280", hover_color="#4B5563", command=clear_word_template).pack(side="left", fill="x", expand=True, padx=(5, 0))
 
         ctk.CTkLabel(template_card, text="المحرر الداخلي: استعمل الخانات بالشكل {{الاسم}} أو {{رقم_الهاتف}}", font=("Segoe UI", 13), text_color=MUTED).pack(anchor="e", padx=18)
         editor = ctk.CTkTextbox(template_card, height=250, font=("Segoe UI", 15))
@@ -356,7 +356,7 @@ class DocumentsPage(ctk.CTkFrame):
                     try:
                         shutil.copy2(source_path, final_path)
                     except Exception as e:
-                        messagebox.showerror("خطأ", f"تعذر نسخ ملف Word:\n{e}")
+                        messagebox.showerror("خطأ", f"تعذر نسخ ملف وورد:\n{e}")
                         return
                 template_content_to_save = None
             else:
@@ -364,7 +364,7 @@ class DocumentsPage(ctk.CTkFrame):
                 template_content_to_save = template_content
 
             if not final_path and not template_content_to_save:
-                messagebox.showerror("خطأ", "ارفع ملف Word أو اكتب النموذج داخل المحرر")
+                messagebox.showerror("خطأ", "ارفع ملف وورد أو اكتب النموذج داخل المحرر")
                 return
 
             try:
@@ -483,7 +483,7 @@ class DocumentsPage(ctk.CTkFrame):
         def create_document():
             data = collect_data()
             if not template_path and not template_content:
-                messagebox.showerror("خطأ", "هذا النموذج غير مرتبط بملف Word ولا يحتوي على نص داخلي.")
+                messagebox.showerror("خطأ", "هذا النموذج غير مرتبط بملف وورد ولا يحتوي على نص داخلي.")
                 return
             try:
                 if template_path:
@@ -502,7 +502,7 @@ class DocumentsPage(ctk.CTkFrame):
         buttons = ctk.CTkFrame(container, fg_color="transparent")
         buttons.pack(fill="x", pady=(4, 18))
         ctk.CTkButton(buttons, text="👁 معاينة", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color="#6B7280", hover_color="#4B5563", command=preview_data).pack(side="right", fill="x", expand=True, padx=(0, 6))
-        ctk.CTkButton(buttons, text="📄 إنشاء Word + PDF", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color=GREEN, hover_color="#047857", command=create_document).pack(side="left", fill="x", expand=True, padx=(6, 0))
+        ctk.CTkButton(buttons, text="📄 إنشاء وورد وبي دي إف", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color=GREEN, hover_color="#047857", command=create_document).pack(side="left", fill="x", expand=True, padx=(6, 0))
 
     def show_result_window(self, parent, output_path, pdf_path):
         result = self.make_modal("تم إنشاء الوثيقة", "680x400")
@@ -515,7 +515,7 @@ class DocumentsPage(ctk.CTkFrame):
         path_text.configure(state="disabled")
         buttons = ctk.CTkFrame(box, fg_color="transparent")
         buttons.pack(fill="x", pady=(18, 0))
-        ctk.CTkButton(buttons, text="📄 فتح Word", height=40, command=lambda: open_file(output_path)).pack(side="right", fill="x", expand=True, padx=5)
+        ctk.CTkButton(buttons, text="📄 فتح ملف وورد", height=40, command=lambda: open_file(output_path)).pack(side="right", fill="x", expand=True, padx=5)
         ctk.CTkButton(buttons, text="📕 فتح PDF", height=40, command=lambda: open_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
         ctk.CTkButton(buttons, text="🖨️ طباعة PDF", height=40, fg_color=GREEN, hover_color="#047857", command=lambda: print_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
 
