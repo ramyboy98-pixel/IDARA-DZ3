@@ -4,5 +4,4 @@ python-docx
 docxtpl
 reportlab
 pyinstaller
-arabic-reshaper
-python-bidi
+
