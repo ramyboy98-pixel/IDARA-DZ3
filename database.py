@@ -13,7 +13,9 @@ def ensure_data_folder():
 
 def connect_db():
     ensure_data_folder()
-    return sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
 
 
 def now_text():
@@ -22,36 +24,24 @@ def now_text():
 
 def column_exists(cursor, table_name, column_name):
     cursor.execute(f"PRAGMA table_info({table_name})")
-    columns = cursor.fetchall()
-    return any(col[1] == column_name for col in columns)
+    return any(col[1] == column_name for col in cursor.fetchall())
 
 
 def make_field_key(field_label):
-    key = field_label.strip()
-
+    key = str(field_label or "").strip()
     replacements = [
-        (" ", "_"),
-        ("-", "_"),
-        ("/", "_"),
-        ("\\", "_"),
-        (":", "_"),
-        ("؛", "_"),
-        (",", "_"),
-        ("،", "_")
+        (" ", "_"), ("-", "_"), ("/", "_"), ("\\", "_"),
+        (":", "_"), ("؛", "_"), (",", "_"), ("،", "_"),
+        (".", "_"), ("(", ""), (")", ""), ("[", ""), ("]", "")
     ]
-
     for old, new in replacements:
         key = key.replace(old, new)
+    while "__" in key:
+        key = key.replace("__", "_")
+    return key.strip("_")
 
-    return key
-
-
-# =========================
-# إنشاء قاعدة البيانات
-# =========================
 
 def init_database():
-
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -72,15 +62,13 @@ def init_database():
             template_path TEXT,
             template_content TEXT,
             created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(category_id) REFERENCES document_categories(id) ON DELETE CASCADE
         )
     """)
 
     if not column_exists(cursor, "document_templates", "template_content"):
-        cursor.execute("""
-            ALTER TABLE document_templates
-            ADD COLUMN template_content TEXT
-        """)
+        cursor.execute("ALTER TABLE document_templates ADD COLUMN template_content TEXT")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS template_fields (
@@ -89,7 +77,8 @@ def init_database():
             field_label TEXT NOT NULL,
             field_key TEXT NOT NULL,
             field_order INTEGER NOT NULL,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(template_id) REFERENCES document_templates(id) ON DELETE CASCADE
         )
     """)
 
@@ -113,294 +102,244 @@ def init_database():
             last_name TEXT,
             address TEXT,
             phone TEXT,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            updated_at TEXT
         )
     """)
 
+    if not column_exists(cursor, "customers", "updated_at"):
+        cursor.execute("ALTER TABLE customers ADD COLUMN updated_at TEXT")
+
     conn.commit()
     conn.close()
-
     seed_default_categories()
 
 
-# =========================
-# الأقسام الافتراضية
-# =========================
-
 def seed_default_categories():
-
     categories = [
         ("طلب خطي", "📄"),
         ("تصريح شرفي", "🖋️"),
         ("سيرة ذاتية", "📑"),
         ("فاتورة", "🧾"),
-        ("أخرى", "➕")
+        ("أخرى", "➕"),
     ]
-
     conn = connect_db()
     cursor = conn.cursor()
-
     for name, icon in categories:
         cursor.execute("""
-            INSERT OR IGNORE INTO document_categories
-            (name, icon, created_at)
+            INSERT OR IGNORE INTO document_categories (name, icon, created_at)
             VALUES (?, ?, ?)
-        """, (
-            name,
-            icon,
-            now_text()
-        ))
-
+        """, (name, icon, now_text()))
     conn.commit()
     conn.close()
 
 
-# =========================
-# الأقسام
-# =========================
-
 def get_categories():
-
     conn = connect_db()
     cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT id, name, icon
-        FROM document_categories
-        ORDER BY id ASC
-    """)
-
+    cursor.execute("SELECT id, name, icon FROM document_categories ORDER BY id ASC")
     rows = cursor.fetchall()
-
     conn.close()
-
     return rows
 
 
-# =========================
-# النماذج
-# =========================
-
 def add_template(category_id, template_name, fields, template_path=None, template_content=None):
-
     conn = connect_db()
     cursor = conn.cursor()
-
     created = now_text()
-
     cursor.execute("""
         INSERT INTO document_templates
         (category_id, name, template_path, template_content, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        category_id,
-        template_name,
-        template_path,
-        template_content,
-        created,
-        created
-    ))
-
+    """, (category_id, template_name, template_path, template_content, created, created))
     template_id = cursor.lastrowid
+    _replace_template_fields(cursor, template_id, fields, created)
+    conn.commit()
+    conn.close()
+    return template_id
 
-    for index, field_label in enumerate(fields):
 
+def _replace_template_fields(cursor, template_id, fields, created_at=None):
+    created_at = created_at or now_text()
+    cursor.execute("DELETE FROM template_fields WHERE template_id = ?", (template_id,))
+    clean_fields = []
+    seen = set()
+    for field_label in fields:
+        label = str(field_label).strip()
+        if not label:
+            continue
+        key = make_field_key(label)
+        if key in seen:
+            continue
+        seen.add(key)
+        clean_fields.append(label)
+    for index, field_label in enumerate(clean_fields):
         cursor.execute("""
             INSERT INTO template_fields
             (template_id, field_label, field_key, field_order, created_at)
             VALUES (?, ?, ?, ?, ?)
-        """, (
-            template_id,
-            field_label,
-            make_field_key(field_label),
-            index,
-            created
-        ))
+        """, (template_id, field_label, make_field_key(field_label), index, created_at))
 
+
+def update_template(template_id, template_name, fields, template_path=None, template_content=None):
+    conn = connect_db()
+    cursor = conn.cursor()
+    updated = now_text()
+    cursor.execute("""
+        UPDATE document_templates
+        SET name = ?, template_path = ?, template_content = ?, updated_at = ?
+        WHERE id = ?
+    """, (template_name, template_path, template_content, updated, template_id))
+    _replace_template_fields(cursor, template_id, fields, updated)
     conn.commit()
     conn.close()
 
-    return template_id
-
 
 def get_templates_by_category(category_id):
-
     conn = connect_db()
     cursor = conn.cursor()
-
     cursor.execute("""
         SELECT id, name, template_path, created_at, updated_at, template_content
         FROM document_templates
         WHERE category_id = ?
         ORDER BY id DESC
     """, (category_id,))
-
     rows = cursor.fetchall()
-
     conn.close()
+    return rows
 
+
+def search_templates(category_id, keyword=""):
+    conn = connect_db()
+    cursor = conn.cursor()
+    like_keyword = f"%{keyword}%"
+    cursor.execute("""
+        SELECT id, name, template_path, created_at, updated_at, template_content
+        FROM document_templates
+        WHERE category_id = ? AND name LIKE ?
+        ORDER BY id DESC
+    """, (category_id, like_keyword))
+    rows = cursor.fetchall()
+    conn.close()
     return rows
 
 
 def get_template(template_id):
-
     conn = connect_db()
     cursor = conn.cursor()
-
     cursor.execute("""
         SELECT id, category_id, name, template_path, created_at, updated_at, template_content
         FROM document_templates
         WHERE id = ?
     """, (template_id,))
-
     row = cursor.fetchone()
-
     conn.close()
-
     return row
 
 
 def get_template_fields(template_id):
-
     conn = connect_db()
     cursor = conn.cursor()
-
     cursor.execute("""
         SELECT id, field_label, field_key, field_order
         FROM template_fields
         WHERE template_id = ?
         ORDER BY field_order ASC
     """, (template_id,))
-
     rows = cursor.fetchall()
-
     conn.close()
-
     return rows
 
 
 def delete_template(template_id):
-
     conn = connect_db()
     cursor = conn.cursor()
-
-    cursor.execute("""
-        DELETE FROM template_fields
-        WHERE template_id = ?
-    """, (template_id,))
-
-    cursor.execute("""
-        DELETE FROM document_templates
-        WHERE id = ?
-    """, (template_id,))
-
+    cursor.execute("DELETE FROM template_fields WHERE template_id = ?", (template_id,))
+    cursor.execute("DELETE FROM document_templates WHERE id = ?", (template_id,))
     conn.commit()
     conn.close()
 
 
-# =========================
-# الأرشيف
-# =========================
-
 def save_archive(customer_name, phone, document_type, template_name, word_path=None, pdf_path=None):
-
     conn = connect_db()
     cursor = conn.cursor()
-
     cursor.execute("""
         INSERT INTO archive
         (customer_name, phone, document_type, template_name, word_path, pdf_path, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        customer_name,
-        phone,
-        document_type,
-        template_name,
-        word_path,
-        pdf_path,
-        now_text()
-    ))
-
+    """, (customer_name, phone, document_type, template_name, word_path, pdf_path, now_text()))
     conn.commit()
     conn.close()
 
 
-def search_archive(keyword=""):
-
+def search_archive(keyword="", date_from="", date_to=""):
     conn = connect_db()
     cursor = conn.cursor()
-
     like_keyword = f"%{keyword}%"
-
-    cursor.execute("""
+    query = """
         SELECT id, customer_name, phone, document_type, template_name, word_path, pdf_path, created_at
         FROM archive
-        WHERE customer_name LIKE ?
-           OR phone LIKE ?
-           OR document_type LIKE ?
-           OR template_name LIKE ?
-        ORDER BY id DESC
-    """, (
-        like_keyword,
-        like_keyword,
-        like_keyword,
-        like_keyword
-    ))
-
+        WHERE (customer_name LIKE ? OR phone LIKE ? OR document_type LIKE ? OR template_name LIKE ?)
+    """
+    params = [like_keyword, like_keyword, like_keyword, like_keyword]
+    if date_from:
+        query += " AND date(created_at) >= date(?)"
+        params.append(date_from)
+    if date_to:
+        query += " AND date(created_at) <= date(?)"
+        params.append(date_to)
+    query += " ORDER BY id DESC"
+    cursor.execute(query, params)
     rows = cursor.fetchall()
-
     conn.close()
-
     return rows
 
 
-# =========================
-# الزبائن
-# =========================
-
 def save_customer(first_name, last_name, address, phone):
+    first_name = (first_name or "").strip()
+    last_name = (last_name or "").strip()
+    address = (address or "").strip()
+    phone = (phone or "").strip()
+    if not (first_name or last_name or phone):
+        return None
 
     conn = connect_db()
     cursor = conn.cursor()
+    now = now_text()
+
+    if phone:
+        cursor.execute("SELECT id FROM customers WHERE phone = ? LIMIT 1", (phone,))
+        row = cursor.fetchone()
+        if row:
+            cursor.execute("""
+                UPDATE customers
+                SET first_name = ?, last_name = ?, address = ?, updated_at = ?
+                WHERE id = ?
+            """, (first_name, last_name, address, now, row[0]))
+            conn.commit()
+            conn.close()
+            return row[0]
 
     cursor.execute("""
-        INSERT INTO customers
-        (first_name, last_name, address, phone, created_at)
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        first_name,
-        last_name,
-        address,
-        phone,
-        now_text()
-    ))
-
+        INSERT INTO customers (first_name, last_name, address, phone, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (first_name, last_name, address, phone, now, now))
+    customer_id = cursor.lastrowid
     conn.commit()
     conn.close()
+    return customer_id
 
 
 def search_customers(keyword=""):
-
     conn = connect_db()
     cursor = conn.cursor()
-
     like_keyword = f"%{keyword}%"
-
     cursor.execute("""
         SELECT id, first_name, last_name, address, phone
         FROM customers
-        WHERE first_name LIKE ?
-           OR last_name LIKE ?
-           OR phone LIKE ?
+        WHERE first_name LIKE ? OR last_name LIKE ? OR phone LIKE ? OR address LIKE ?
         ORDER BY id DESC
-    """, (
-        like_keyword,
-        like_keyword,
-        like_keyword
-    ))
-
+    """, (like_keyword, like_keyword, like_keyword, like_keyword))
     rows = cursor.fetchall()
-
     conn.close()
-
     return rows
