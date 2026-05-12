@@ -113,7 +113,7 @@ class SettingsPage(ctk.CTkFrame):
             title="اختر ملف النسخة الاحتياطية",
             filetypes=[
                 ("Backup ZIP", "*.zip"),
-                ("All files", "*.*")
+                ("كل الملفات", "*.*")
             ]
         )
 
