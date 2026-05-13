@@ -89,29 +89,76 @@ def render_text_template(template_content, data):
 
 
 def replace_text_in_paragraph(paragraph, data):
-    original_text = paragraph.text
-    if "{{" not in original_text or "}}" not in original_text:
+    """
+    يستبدل المتغيرات داخل الفقرة بدون إعادة بناء الفقرة.
+
+    السبب:
+    عند إعادة كتابة paragraph.text أو مسح كل الـ runs يتغير شكل ملف وورد:
+    المحاذاة، المسافات، التبويبات، أماكن النص، وحجم الخط.
+
+    الحل هنا يعمل على مستوى الـ runs نفسها:
+    - إذا كان المتغير داخل Run واحد يتم استبداله داخل نفس الـ Run فقط.
+    - إذا كان المتغير مقسومًا بين أكثر من Run يتم وضع القيمة مكانه
+      بدون تغيير باقي النص أو خصائص الفقرة.
+    - لا نغيّر paragraph.alignment إطلاقًا.
+    """
+    if not paragraph.runs:
         return
 
-    new_text = render_text_template(original_text, data)
-    if new_text == original_text:
+    full_text = "".join(run.text for run in paragraph.runs)
+    if "{{" not in full_text or "}}" not in full_text:
         return
 
-    # نحافظ على تنسيق الفقرة العام قدر الإمكان، ونستبدل النص فقط.
-    for run in paragraph.runs:
-        run.text = ""
+    values = normalize_data(data)
+    matches = list(PLACEHOLDER_PATTERN.finditer(full_text))
+    if not matches:
+        return
 
-    if paragraph.runs:
-        run = paragraph.runs[0]
-        run.text = new_text
-    else:
-        run = paragraph.add_run(new_text)
+    def replacement_for(match):
+        original_key = match.group(1).strip()
+        safe_key = make_placeholder_key(original_key)
+        if original_key in values:
+            return values[original_key]
+        if safe_key in values:
+            return values[safe_key]
+        return match.group(0)
 
-    try:
-        paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    except Exception:
-        pass
+    # خريطة كل حرف إلى رقم الـ run ومكانه داخله.
+    char_map = []
+    for run_index, run in enumerate(paragraph.runs):
+        for char_index, _ in enumerate(run.text):
+            char_map.append((run_index, char_index))
 
+    # نعالج من آخر الفقرة إلى أولها حتى لا تتغير الإحداثيات أثناء الاستبدال.
+    for match in reversed(matches):
+        replacement = replacement_for(match)
+        if replacement == match.group(0):
+            continue
+
+        start = match.start()
+        end = match.end() - 1
+        if start >= len(char_map) or end >= len(char_map):
+            continue
+
+        start_run_index, start_char_index = char_map[start]
+        end_run_index, end_char_index = char_map[end]
+
+        if start_run_index == end_run_index:
+            run = paragraph.runs[start_run_index]
+            text = run.text
+            run.text = text[:start_char_index] + replacement + text[end_char_index + 1:]
+            continue
+
+        start_run = paragraph.runs[start_run_index]
+        end_run = paragraph.runs[end_run_index]
+
+        start_prefix = start_run.text[:start_char_index]
+        end_suffix = end_run.text[end_char_index + 1:]
+
+        start_run.text = start_prefix + replacement
+        for idx in range(start_run_index + 1, end_run_index):
+            paragraph.runs[idx].text = ""
+        end_run.text = end_suffix
 
 def replace_placeholders_in_document(document, data):
     for paragraph in document.paragraphs:
