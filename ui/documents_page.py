@@ -21,7 +21,7 @@ from database import (
 from document_engine import (
     generate_word_document,
     generate_word_from_text_template,
-    generate_simple_pdf,
+    convert_word_to_pdf,
     render_text_template,
 )
 from print_manager import open_file, print_file
@@ -491,11 +491,17 @@ class DocumentsPage(ctk.CTkFrame):
                 else:
                     output_path = generate_word_from_text_template(template_content, data, template_name)
 
-                pdf_path = generate_simple_pdf(data=data, template_name=template_name, template_content=template_content)
+                pdf_path = ""
+                pdf_error = ""
+                try:
+                    pdf_path = convert_word_to_pdf(output_path)
+                except Exception as pdf_exc:
+                    pdf_error = str(pdf_exc)
+
                 first_name, last_name, address, phone = save_customer_from_form(data)
                 customer_name = f"{first_name} {last_name}".strip()
                 save_archive(customer_name, phone, self.current_category_name, template_name, output_path, pdf_path)
-                self.show_result_window(window, output_path, pdf_path)
+                self.show_result_window(window, output_path, pdf_path, pdf_error)
             except Exception as e:
                 messagebox.showerror("خطأ", f"تعذر إنشاء الوثيقة:\n{e}")
 
@@ -504,20 +510,26 @@ class DocumentsPage(ctk.CTkFrame):
         ctk.CTkButton(buttons, text="👁 معاينة", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color="#6B7280", hover_color="#4B5563", command=preview_data).pack(side="right", fill="x", expand=True, padx=(0, 6))
         ctk.CTkButton(buttons, text="📄 إنشاء وورد وبي دي إف", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color=GREEN, hover_color="#047857", command=create_document).pack(side="left", fill="x", expand=True, padx=(6, 0))
 
-    def show_result_window(self, parent, output_path, pdf_path):
+    def show_result_window(self, parent, output_path, pdf_path, pdf_error=""):
         result = self.make_modal("تم إنشاء الوثيقة", "680x400")
         box = ctk.CTkFrame(result, fg_color=BG)
         box.pack(fill="both", expand=True, padx=20, pady=20)
         ctk.CTkLabel(box, text="✅ تم إنشاء الوثيقة وحفظها في الأرشيف", font=("Segoe UI", 22, "bold"), text_color=TEXT).pack(pady=(8, 14))
         path_text = ctk.CTkTextbox(box, height=105, font=("Segoe UI", 13))
         path_text.pack(fill="x", pady=8)
-        path_text.insert("end", f"Word:\n{output_path}\n\nPDF:\n{pdf_path}")
+        if pdf_path:
+            path_text.insert("end", f"Word:\n{output_path}\n\nPDF:\n{pdf_path}")
+        else:
+            path_text.insert("end", f"Word:\n{output_path}\n\nPDF:\nلم يتم إنشاء PDF.\n\nالسبب:\n{pdf_error}")
         path_text.configure(state="disabled")
         buttons = ctk.CTkFrame(box, fg_color="transparent")
         buttons.pack(fill="x", pady=(18, 0))
         ctk.CTkButton(buttons, text="📄 فتح ملف وورد", height=40, command=lambda: open_file(output_path)).pack(side="right", fill="x", expand=True, padx=5)
-        ctk.CTkButton(buttons, text="📕 فتح PDF", height=40, command=lambda: open_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
-        ctk.CTkButton(buttons, text="🖨️ طباعة PDF", height=40, fg_color=GREEN, hover_color="#047857", command=lambda: print_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
+        if pdf_path:
+            ctk.CTkButton(buttons, text="📕 فتح PDF", height=40, command=lambda: open_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
+            ctk.CTkButton(buttons, text="🖨️ طباعة PDF", height=40, fg_color=GREEN, hover_color="#047857", command=lambda: print_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
+        else:
+            ctk.CTkButton(buttons, text="📕 لم يتم إنشاء PDF", height=40, state="disabled").pack(side="right", fill="x", expand=True, padx=5)
 
     def confirm_delete_template(self, template_id):
         answer = messagebox.askyesno("تأكيد الحذف", "هل تريد حذف هذا النموذج؟\nسيتم حذف الاستمارة وربطها بالقالب، لكن الوثائق القديمة في الأرشيف لا تحذف.")
