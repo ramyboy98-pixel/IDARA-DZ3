@@ -4,4 +4,4 @@ python-docx
 docxtpl
 reportlab
 pyinstaller
-
+pywin32
