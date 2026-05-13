@@ -228,6 +228,60 @@ def generate_word_from_text_template(template_content, data, template_name="وث
     return output_path
 
 
+def convert_word_to_pdf(word_path):
+    """
+    يحوّل ملف Word الناتج إلى PDF باستعمال Microsoft Word نفسه.
+
+    لماذا؟
+    إنشاء PDF يدويًا عبر reportlab لا يحافظ على العربية ولا على شكل القالب،
+    لذلك تظهر حروف غريبة مثل ����. التحويل الصحيح هو أن نترك Word
+    يصدّر نفس الملف إلى PDF، فيحافظ على الخطوط، الاتجاه، الجداول، والهوامش.
+
+    ملاحظة: هذه الدالة تعمل على Windows عندما يكون Microsoft Word مثبتًا.
+    """
+    if not word_path or not os.path.exists(word_path):
+        raise FileNotFoundError("ملف وورد غير موجود للتحويل إلى PDF")
+
+    pdf_path = os.path.splitext(word_path)[0] + ".pdf"
+
+    if not os.name == "nt":
+        raise RuntimeError("تحويل وورد إلى PDF يحتاج Windows و Microsoft Word")
+
+    try:
+        import win32com.client
+    except Exception as exc:
+        raise RuntimeError("مكتبة pywin32 غير مثبتة. أضف pywin32 إلى requirements.txt ثم أعد البناء.") from exc
+
+    word_app = None
+    document = None
+    try:
+        word_app = win32com.client.DispatchEx("Word.Application")
+        word_app.Visible = False
+        word_app.DisplayAlerts = 0
+
+        abs_word_path = os.path.abspath(word_path)
+        abs_pdf_path = os.path.abspath(pdf_path)
+
+        document = word_app.Documents.Open(abs_word_path)
+        # 17 = wdFormatPDF
+        document.SaveAs(abs_pdf_path, FileFormat=17)
+        document.Close(False)
+        document = None
+        return abs_pdf_path
+
+    finally:
+        try:
+            if document is not None:
+                document.Close(False)
+        except Exception:
+            pass
+        try:
+            if word_app is not None:
+                word_app.Quit()
+        except Exception:
+            pass
+
+
 def generate_simple_pdf(data, template_name="وثيقة", template_content=None):
     ensure_output_folder()
 
