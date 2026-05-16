@@ -87,10 +87,8 @@ class ServicesPage(ctk.CTkFrame):
         )
         clear_btn.pack(side="left", padx=16, pady=14)
 
-        # طµظ†ط¯ظˆظ‚ ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ ظ„ط§ ظٹط¸ظ‡ط± ظˆظ‡ظˆ ظپط§ط±ط؛ ط­طھظ‰ ظ„ط§ ظٹطµظ†ط¹ ظپط±ط§ط؛ظ‹ط§ ظƒط¨ظٹط±ظ‹ط§ ظپظˆظ‚ ط§ظ„ط¨ط·ط§ظ‚ط§طھ.
-        self.suggestions_box = ctk.CTkFrame(self, fg_color="transparent", height=1)
+        self.suggestions_box = None
 
-        # ظ„ط§ ظ†ط³طھط¹ظ…ظ„ ط¥ط·ط§ط± طھظ…ط±ظٹط± ط¯ط§ط®ظ„ظٹ ظ‡ظ†ط§ ط­طھظ‰ ظ„ط§ طھط®طھظپظٹ ط§ظ„ط¨ط·ط§ظ‚ط§طھ ظپظٹ ط§ظ„ط£ط³ظپظ„.
         self.cards_grid = ctk.CTkFrame(self, fg_color="transparent")
         self.cards_grid.pack(fill="x", expand=False, anchor="n", pady=(0, 8))
         self.render_service_cards()
@@ -118,9 +116,8 @@ class ServicesPage(ctk.CTkFrame):
 
     def clear_suggestions(self):
         if self.suggestions_box:
-            for widget in self.suggestions_box.winfo_children():
-                widget.destroy()
-            self.suggestions_box.pack_forget()
+            self.suggestions_box.destroy()
+            self.suggestions_box = None
 
     def load_service_suggestions(self):
         self.clear_suggestions()
@@ -131,10 +128,8 @@ class ServicesPage(ctk.CTkFrame):
         recent = search_service_operations(keyword)[:4]
         if not matching and not recent:
             return
-        try:
-            self.suggestions_box.pack(fill="x", pady=(0, 6), anchor="n", before=self.cards_grid)
-        except Exception:
-            self.suggestions_box.pack(fill="x", pady=(0, 6), anchor="n")
+        self.suggestions_box = ctk.CTkFrame(self, fg_color="transparent")
+        self.suggestions_box.pack(fill="x", pady=(0, 6), anchor="n", before=self.cards_grid)
         box = ctk.CTkFrame(self.suggestions_box, fg_color=CARD, corner_radius=14, border_width=1, border_color=BORDER)
         box.pack(fill="x")
         for icon, name, url in matching:
