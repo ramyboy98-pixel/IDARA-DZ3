@@ -111,6 +111,10 @@ class DocumentsPage(ctk.CTkFrame):
             except Exception:
                 pass
 
+        def bind_hover(widget, on_enter, on_leave):
+            widget.bind("<Enter>", on_enter)
+            widget.bind("<Leave>", on_leave)
+
         for index, (category_id, name, icon) in enumerate(visible_categories):
             row, col = divmod(index, 4)
             card = ctk.CTkFrame(grid, corner_radius=24, fg_color=CARD, border_width=1, border_color=BORDER)
@@ -130,6 +134,27 @@ class DocumentsPage(ctk.CTkFrame):
             subtitle = ctk.CTkLabel(card, text="إدارة النماذج والاستمارات", font=("Segoe UI", 12), text_color=MUTED)
             subtitle.pack(pady=(7, 0))
             bind_open(subtitle, category_id, name, icon)
+
+            def make_enter(c=card, il=icon_label, nl=name_label, sl=subtitle):
+                def _enter(_event=None):
+                    c.configure(fg_color="#EFF6FF", border_color=BLUE)
+                    il.configure(font=("Segoe UI Emoji", 50), text_color=BLUE)
+                    nl.configure(text_color=BLUE)
+                    sl.configure(text_color="#374151")
+                return _enter
+
+            def make_leave(c=card, il=icon_label, nl=name_label, sl=subtitle):
+                def _leave(_event=None):
+                    c.configure(fg_color=CARD, border_color=BORDER)
+                    il.configure(font=("Segoe UI Emoji", 44), text_color=TEXT)
+                    nl.configure(text_color=TEXT)
+                    sl.configure(text_color=MUTED)
+                return _leave
+
+            on_enter = make_enter()
+            on_leave = make_leave()
+            for hover_widget in (card, icon_label, name_label, subtitle):
+                bind_hover(hover_widget, on_enter, on_leave)
 
     def open_category(self, category_id, category_name, category_icon):
         self.current_category_id = category_id
