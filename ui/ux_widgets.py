@@ -36,7 +36,7 @@ class ToastNotification(ctk.CTkFrame):
 
 
 class LoadingOverlay(ctk.CTkFrame):
-    def __init__(self, parent, text="جاري المعالجة..."):
+    def __init__(self, parent, text="ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½..."):
         super().__init__(
             parent,
             fg_color="#000000"
@@ -70,7 +70,7 @@ class LoadingOverlay(ctk.CTkFrame):
 
         sub = ctk.CTkLabel(
             box,
-            text="يرجى الانتظار قليلا",
+            text="ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½",
             font=("Segoe UI", 13),
             text_color="#6B7280"
         )
