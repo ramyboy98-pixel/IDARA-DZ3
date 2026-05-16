@@ -1,6 +1,12 @@
 import customtkinter as ctk
+from datetime import datetime
 
-from database import search_archive, search_customers
+from database import (
+    search_archive,
+    search_customers,
+    count_documents_today,
+    count_services_today,
+)
 
 
 class DashboardPage(ctk.CTkFrame):
@@ -13,7 +19,7 @@ class DashboardPage(ctk.CTkFrame):
     def build_ui(self):
 
         top = ctk.CTkFrame(self, fg_color="transparent")
-        top.pack(fill="x", pady=(0, 22))
+        top.pack(fill="x", pady=(4, 24))
 
         welcome = ctk.CTkFrame(
             top,
@@ -24,30 +30,32 @@ class DashboardPage(ctk.CTkFrame):
 
         title = ctk.CTkLabel(
             welcome,
-            text="مرحبا بك في IDARA DZ",
-            font=("Segoe UI", 26, "bold"),
+            text="IDARA DZ",
+            font=("Segoe UI", 28, "bold"),
             text_color="#111827"
         )
-        title.pack(anchor="e", padx=24, pady=(22, 6))
+        title.pack(anchor="e", padx=26, pady=(22, 6))
 
         subtitle = ctk.CTkLabel(
             welcome,
-            text="برنامج مكتبي لإدارة الوثائق، النماذج، الزبائن، الأرشيف والخدمات الإلكترونية.",
+            text="برنامج مكتبي لإدارة الوثائق، النماذج، الأرشيف والخدمات الإلكترونية.",
             font=("Segoe UI", 15),
             text_color="#6B7280"
         )
-        subtitle.pack(anchor="e", padx=24, pady=(0, 22))
+        subtitle.pack(anchor="e", padx=26, pady=(0, 22))
 
         stats = ctk.CTkFrame(self, fg_color="transparent")
-        stats.pack(fill="x", pady=(0, 22))
+        stats.pack(fill="x", pady=(0, 24))
 
         archive_count = len(search_archive(""))
         customers_count = len(search_customers(""))
+        documents_today = count_documents_today()
+        services_today = count_services_today()
 
-        self.stat_card(stats, "🗂️", "الأرشيف", str(archive_count), 0)
-        self.stat_card(stats, "👥", "الزبائن", str(customers_count), 1)
-        self.stat_card(stats, "📄", "وثائق", "ديناميكي", 2)
-        self.stat_card(stats, "🌐", "خدمات", "جاهز", 3)
+        self.stat_card(stats, "📄", "وثائق اليوم", str(documents_today), 0)
+        self.stat_card(stats, "🌐", "خدمات اليوم", str(services_today), 1)
+        self.stat_card(stats, "🗂️", "الأرشيف", str(archive_count), 2)
+        self.stat_card(stats, "👥", "الزبائن", str(customers_count), 3)
 
         shortcuts = ctk.CTkFrame(
             self,
@@ -62,15 +70,14 @@ class DashboardPage(ctk.CTkFrame):
             font=("Segoe UI", 22, "bold"),
             text_color="#111827"
         )
-        label.pack(anchor="e", padx=24, pady=(22, 18))
+        label.pack(anchor="e", padx=26, pady=(22, 18))
 
         grid = ctk.CTkFrame(shortcuts, fg_color="transparent")
-        grid.pack(fill="x", padx=20, pady=10)
+        grid.pack(fill="x", padx=22, pady=10)
 
         self.shortcut_button(grid, "📄 وثيقة جديدة", self.app.show_documents if self.app else None, 0)
         self.shortcut_button(grid, "🗂️ فتح الأرشيف", self.app.show_archive if self.app else None, 1)
-        self.shortcut_button(grid, "👥 إدارة الزبائن", self.app.show_customers if self.app else None, 2)
-        self.shortcut_button(grid, "🌐 الخدمات الإلكترونية", self.app.show_services if self.app else None, 3)
+        self.shortcut_button(grid, "🌐 الخدمات الإلكترونية", self.app.show_services if self.app else None, 2)
 
     def stat_card(self, parent, icon, title, value, col):
 
@@ -80,7 +87,7 @@ class DashboardPage(ctk.CTkFrame):
             corner_radius=22,
             fg_color="#FFFFFF"
         )
-        card.grid(row=0, column=col, sticky="nsew", padx=8)
+        card.grid(row=0, column=col, sticky="nsew", padx=9)
         parent.grid_columnconfigure(col, weight=1)
         card.grid_propagate(False)
 
@@ -120,5 +127,5 @@ class DashboardPage(ctk.CTkFrame):
             text_color="#111827",
             command=command
         )
-        btn.grid(row=0, column=col, sticky="nsew", padx=8, pady=10)
+        btn.grid(row=0, column=col, sticky="nsew", padx=10, pady=10)
         parent.grid_columnconfigure(col, weight=1)
