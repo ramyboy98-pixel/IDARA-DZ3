@@ -133,7 +133,6 @@ def seed_default_categories():
         ("تصريح شرفي", "🖋️"),
         ("سيرة ذاتية", "📑"),
         ("فاتورة", "🧾"),
-        ("أخرى", "➕"),
     ]
     conn = connect_db()
     cursor = conn.cursor()
@@ -149,7 +148,7 @@ def seed_default_categories():
 def get_categories():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, icon FROM document_categories ORDER BY id ASC")
+    cursor.execute("SELECT id, name, icon FROM document_categories WHERE name != ? ORDER BY id ASC", ("أخرى",))
     rows = cursor.fetchall()
     conn.close()
     return rows
