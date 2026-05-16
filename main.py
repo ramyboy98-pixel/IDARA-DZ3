@@ -263,7 +263,7 @@ class IdaraDZApp(ctk.CTk):
     def show_services(self):
         self.clear_content()
         self.set_active("services", "خدمات إلكترونية")
-        page = ServicesPage(self.content)
+        page = ServicesPage(self.content, app=self)
         page.pack(fill="both", expand=True)
 
     def show_archive(self):
