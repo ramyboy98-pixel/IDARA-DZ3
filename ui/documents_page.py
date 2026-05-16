@@ -200,7 +200,9 @@ class DocumentsPage(ctk.CTkFrame):
         self.template_suggestions_area = ctk.CTkFrame(self, fg_color="transparent")
         self.template_suggestions_area.pack(fill="x", pady=(0, 6))
 
-        self.templates_area = ctk.CTkScrollableFrame(self, fg_color="transparent", height=520)
+        # مساحة البطاقات: إطار عادي حتى تظهر البطاقات مباشرة تحت شريط البحث
+        # بدون أن تختفي خلف حاجز/تمرير داخلي.
+        self.templates_area = ctk.CTkFrame(self, fg_color="transparent")
         self.templates_area.pack(fill="both", expand=True, pady=(0, 0))
         self.load_templates_cards()
 
@@ -270,7 +272,7 @@ class DocumentsPage(ctk.CTkFrame):
             return
 
         grid = ctk.CTkFrame(self.templates_area, fg_color="transparent")
-        grid.pack(fill="x", anchor="n", pady=(0, 0))
+        grid.pack(fill="x", anchor="n", padx=6, pady=(0, 0))
         for col in range(2):
             grid.grid_columnconfigure(col, weight=1, uniform="template_cards")
 
@@ -279,11 +281,6 @@ class DocumentsPage(ctk.CTkFrame):
             row, col = divmod(index, 2)
             self.template_card(grid, template_id, name, template_path, template_content, updated_at, row, col)
 
-        # ابقِ بداية القائمة في الأعلى حتى لا تظهر البطاقات في أسفل الصفحة
-        try:
-            self.after(80, lambda: self.templates_area._parent_canvas.yview_moveto(0))
-        except Exception:
-            pass
 
     def template_card(self, parent, template_id, name, template_path, template_content, updated_at, row, col):
         fields = get_template_fields(template_id)
@@ -374,16 +371,6 @@ class DocumentsPage(ctk.CTkFrame):
         date_label.pack(fill="x", padx=16, pady=(0, 8))
         make_clickable(date_label)
 
-        hint = ctk.CTkLabel(
-            card,
-            text="اضغط على البطاقة للدخول إلى الاستمارة",
-            font=("Segoe UI", 10),
-            text_color="#9CA3AF",
-            anchor="center",
-        )
-        hint.pack(fill="x", padx=16, pady=(0, 8))
-        make_clickable(hint)
-
         make_clickable(card)
 
         def enter(_event=None):
@@ -396,7 +383,7 @@ class DocumentsPage(ctk.CTkFrame):
             icon_label.configure(text_color=TEXT)
             title_label.configure(text_color=TEXT)
 
-        for widget in (card, icon_label, title_label, info_label, date_label, hint):
+        for widget in (card, icon_label, title_label, info_label, date_label):
             widget.bind("<Enter>", enter)
             widget.bind("<Leave>", leave)
 
