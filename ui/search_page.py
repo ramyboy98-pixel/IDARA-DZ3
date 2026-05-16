@@ -2,7 +2,7 @@ import os
 import customtkinter as ctk
 from tkinter import messagebox
 
-from database import search_archive, search_customers, search_templates_all
+from database import search_archive, search_customers, search_templates_all, search_service_operations
 from print_manager import open_file
 
 BG = "#F5F7FA"
@@ -40,7 +40,7 @@ class SearchPage(ctk.CTkFrame):
 
         ctk.CTkLabel(
             header,
-            text="البحث يشمل النماذج، الأرشيف، والزبائن المحفوظين.",
+            text="البحث يشمل النماذج، الأرشيف، الخدمات الإلكترونية، والزبائن المحفوظين.",
             font=("Segoe UI", 14),
             text_color=MUTED,
         ).pack(anchor="e", pady=(6, 0))
@@ -55,8 +55,9 @@ class SearchPage(ctk.CTkFrame):
         templates = search_templates_all(self.query)
         archive = search_archive(self.query)
         customers = search_customers(self.query)
+        services = search_service_operations(self.query)
 
-        total = len(templates) + len(archive) + len(customers)
+        total = len(templates) + len(archive) + len(customers) + len(services)
         if total == 0:
             self.empty_state("لا توجد نتائج مطابقة.")
             return
@@ -74,6 +75,13 @@ class SearchPage(ctk.CTkFrame):
                 self.archive_result(results_box, row)
         else:
             self.small_note(results_box, "لا توجد وثائق محفوظة مطابقة.")
+
+        self.section_title(results_box, f"الخدمات الإلكترونية ({len(services)})")
+        if services:
+            for row in services[:20]:
+                self.service_result(results_box, row)
+        else:
+            self.small_note(results_box, "لا توجد خدمات إلكترونية مطابقة.")
 
         self.section_title(results_box, f"الزبائن ({len(customers)})")
         if customers:
@@ -131,6 +139,16 @@ class SearchPage(ctk.CTkFrame):
         if pdf_path:
             ctk.CTkButton(buttons, text="PDF", width=72, height=32, fg_color=GREEN, command=lambda p=pdf_path: self.safe_open(p)).pack(side="right", padx=3)
 
+    def service_result(self, parent, row):
+        operation_id, service_name, service_url, customer_name, phone, notes, created_at = row
+        card = self.result_card(parent)
+        body = ctk.CTkFrame(card, fg_color="transparent")
+        body.pack(side="right", fill="both", expand=True, padx=16, pady=12)
+        ctk.CTkLabel(body, text=f"🌐 {service_name}", font=("Segoe UI", 16, "bold"), text_color=TEXT).pack(anchor="e")
+        ctk.CTkLabel(body, text=f"التاريخ: {created_at}  |  الرابط: {service_url or '-'}", font=("Segoe UI", 13), text_color=MUTED).pack(anchor="e", pady=(4, 0))
+        if service_url:
+            ctk.CTkButton(card, text="فتح", width=90, height=34, fg_color=BLUE, command=lambda p=service_url: self.safe_open_url(p)).pack(side="left", padx=14, pady=12)
+
     def customer_result(self, parent, row):
         customer_id, first_name, last_name, address, phone = row
         card = self.result_card(parent)
@@ -139,6 +157,13 @@ class SearchPage(ctk.CTkFrame):
         body.pack(fill="x", padx=16, pady=12)
         ctk.CTkLabel(body, text=f"👥 {name}", font=("Segoe UI", 16, "bold"), text_color=TEXT).pack(anchor="e")
         ctk.CTkLabel(body, text=f"الهاتف: {phone or '-'}  |  العنوان: {address or '-'}", font=("Segoe UI", 13), text_color=MUTED).pack(anchor="e", pady=(4, 0))
+
+    def safe_open_url(self, url):
+        try:
+            import webbrowser
+            webbrowser.open(url)
+        except Exception as exc:
+            messagebox.showerror("خطأ", f"تعذر فتح الرابط:\n{exc}")
 
     def safe_open(self, path):
         try:
