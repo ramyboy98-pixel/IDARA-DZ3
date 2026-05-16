@@ -38,18 +38,18 @@ def safe_filename(name):
 
 def make_placeholder_key(label):
     """
-    يحول اسم الخانة إلى مفتاح موحد.
-    مثال:
-    تاريخ الطلب  => تاريخ_الطلب
-    رقم الهاتف   => رقم_الهاتف
+    ظٹط­ظˆظ„ ط§ط³ظ… ط§ظ„ط®ط§ظ†ط© ط¥ظ„ظ‰ ظ…ظپطھط§ط­ ظ…ظˆط­ط¯.
+    ظ…ط«ط§ظ„:
+    طھط§ط±ظٹط® ط§ظ„ط·ظ„ط¨  => طھط§ط±ظٹط®_ط§ظ„ط·ظ„ط¨
+    ط±ظ‚ظ… ط§ظ„ظ‡ط§طھظپ   => ط±ظ‚ظ…_ط§ظ„ظ‡ط§طھظپ
 
-    استعملنا هذه الدالة هنا بدل docxtpl لأن docxtpl لا يقبل متغيرات فيها فراغات عربية
-    مثل {{تاريخ الطلب}}، وهذا هو سبب الخطأ الذي ظهر عند إنشاء الوثيقة.
+    ط§ط³طھط¹ظ…ظ„ظ†ط§ ظ‡ط°ظ‡ ط§ظ„ط¯ط§ظ„ط© ظ‡ظ†ط§ ط¨ط¯ظ„ docxtpl ظ„ط£ظ† docxtpl ظ„ط§ ظٹظ‚ط¨ظ„ ظ…طھط؛ظٹط±ط§طھ ظپظٹظ‡ط§ ظپط±ط§ط؛ط§طھ ط¹ط±ط¨ظٹط©
+    ظ…ط«ظ„ {{طھط§ط±ظٹط® ط§ظ„ط·ظ„ط¨}}طŒ ظˆظ‡ط°ط§ ظ‡ظˆ ط³ط¨ط¨ ط§ظ„ط®ط·ط£ ط§ظ„ط°ظٹ ط¸ظ‡ط± ط¹ظ†ط¯ ط¥ظ†ط´ط§ط، ط§ظ„ظˆط«ظٹظ‚ط©.
     """
     key = str(label or "").strip()
     replacements = [
         (" ", "_"), ("-", "_"), ("/", "_"), ("\\", "_"),
-        (":", "_"), ("؛", "_"), (",", "_"), ("،", "_"),
+        (":", "_"), ("ط›", "_"), (",", "_"), ("طŒ", "_"),
         (".", "_"), ("(", ""), (")", ""), ("[", ""), ("]", ""),
     ]
     for old, new in replacements:
@@ -90,17 +90,17 @@ def render_text_template(template_content, data):
 
 def replace_text_in_paragraph(paragraph, data):
     """
-    يستبدل المتغيرات داخل الفقرة بدون إعادة بناء الفقرة.
+    ظٹط³طھط¨ط¯ظ„ ط§ظ„ظ…طھط؛ظٹط±ط§طھ ط¯ط§ط®ظ„ ط§ظ„ظپظ‚ط±ط© ط¨ط¯ظˆظ† ط¥ط¹ط§ط¯ط© ط¨ظ†ط§ط، ط§ظ„ظپظ‚ط±ط©.
 
-    السبب:
-    عند إعادة كتابة paragraph.text أو مسح كل الـ runs يتغير شكل ملف وورد:
-    المحاذاة، المسافات، التبويبات، أماكن النص، وحجم الخط.
+    ط§ظ„ط³ط¨ط¨:
+    ط¹ظ†ط¯ ط¥ط¹ط§ط¯ط© ظƒطھط§ط¨ط© paragraph.text ط£ظˆ ظ…ط³ط­ ظƒظ„ ط§ظ„ظ€ runs ظٹطھط؛ظٹط± ط´ظƒظ„ ظ…ظ„ظپ ظˆظˆط±ط¯:
+    ط§ظ„ظ…ط­ط§ط°ط§ط©طŒ ط§ظ„ظ…ط³ط§ظپط§طھطŒ ط§ظ„طھط¨ظˆظٹط¨ط§طھطŒ ط£ظ…ط§ظƒظ† ط§ظ„ظ†طµطŒ ظˆط­ط¬ظ… ط§ظ„ط®ط·.
 
-    الحل هنا يعمل على مستوى الـ runs نفسها:
-    - إذا كان المتغير داخل Run واحد يتم استبداله داخل نفس الـ Run فقط.
-    - إذا كان المتغير مقسومًا بين أكثر من Run يتم وضع القيمة مكانه
-      بدون تغيير باقي النص أو خصائص الفقرة.
-    - لا نغيّر paragraph.alignment إطلاقًا.
+    ط§ظ„ط­ظ„ ظ‡ظ†ط§ ظٹط¹ظ…ظ„ ط¹ظ„ظ‰ ظ…ط³طھظˆظ‰ ط§ظ„ظ€ runs ظ†ظپط³ظ‡ط§:
+    - ط¥ط°ط§ ظƒط§ظ† ط§ظ„ظ…طھط؛ظٹط± ط¯ط§ط®ظ„ Run ظˆط§ط­ط¯ ظٹطھظ… ط§ط³طھط¨ط¯ط§ظ„ظ‡ ط¯ط§ط®ظ„ ظ†ظپط³ ط§ظ„ظ€ Run ظپظ‚ط·.
+    - ط¥ط°ط§ ظƒط§ظ† ط§ظ„ظ…طھط؛ظٹط± ظ…ظ‚ط³ظˆظ…ظ‹ط§ ط¨ظٹظ† ط£ظƒط«ط± ظ…ظ† Run ظٹطھظ… ظˆط¶ط¹ ط§ظ„ظ‚ظٹظ…ط© ظ…ظƒط§ظ†ظ‡
+      ط¨ط¯ظˆظ† طھط؛ظٹظٹط± ط¨ط§ظ‚ظٹ ط§ظ„ظ†طµ ط£ظˆ ط®طµط§ط¦طµ ط§ظ„ظپظ‚ط±ط©.
+    - ظ„ط§ ظ†ط؛ظٹظ‘ط± paragraph.alignment ط¥ط·ظ„ط§ظ‚ظ‹ط§.
     """
     if not paragraph.runs:
         return
@@ -123,13 +123,13 @@ def replace_text_in_paragraph(paragraph, data):
             return values[safe_key]
         return match.group(0)
 
-    # خريطة كل حرف إلى رقم الـ run ومكانه داخله.
+    # ط®ط±ظٹط·ط© ظƒظ„ ط­ط±ظپ ط¥ظ„ظ‰ ط±ظ‚ظ… ط§ظ„ظ€ run ظˆظ…ظƒط§ظ†ظ‡ ط¯ط§ط®ظ„ظ‡.
     char_map = []
     for run_index, run in enumerate(paragraph.runs):
         for char_index, _ in enumerate(run.text):
             char_map.append((run_index, char_index))
 
-    # نعالج من آخر الفقرة إلى أولها حتى لا تتغير الإحداثيات أثناء الاستبدال.
+    # ظ†ط¹ط§ظ„ط¬ ظ…ظ† ط¢ط®ط± ط§ظ„ظپظ‚ط±ط© ط¥ظ„ظ‰ ط£ظˆظ„ظ‡ط§ ط­طھظ‰ ظ„ط§ طھطھط؛ظٹط± ط§ظ„ط¥ط­ط¯ط§ط«ظٹط§طھ ط£ط«ظ†ط§ط، ط§ظ„ط§ط³طھط¨ط¯ط§ظ„.
     for match in reversed(matches):
         replacement = replacement_for(match)
         if replacement == match.group(0):
@@ -170,7 +170,7 @@ def replace_placeholders_in_document(document, data):
                 for paragraph in cell.paragraphs:
                     replace_text_in_paragraph(paragraph, data)
 
-    # بعض القوالب تضع المتغيرات داخل رأس أو تذييل الصفحة.
+    # ط¨ط¹ط¶ ط§ظ„ظ‚ظˆط§ظ„ط¨ طھط¶ط¹ ط§ظ„ظ…طھط؛ظٹط±ط§طھ ط¯ط§ط®ظ„ ط±ط£ط³ ط£ظˆ طھط°ظٹظٹظ„ ط§ظ„طµظپط­ط©.
     for section in document.sections:
         for paragraph in section.header.paragraphs:
             replace_text_in_paragraph(paragraph, data)
@@ -178,16 +178,16 @@ def replace_placeholders_in_document(document, data):
             replace_text_in_paragraph(paragraph, data)
 
 
-def generate_word_document(template_path, data, template_name="وثيقة"):
+def generate_word_document(template_path, data, template_name="ظˆط«ظٹظ‚ط©"):
     """
-    ينشئ ملف وورد من قالب مرفوع.
+    ظٹظ†ط´ط¦ ظ…ظ„ظپ ظˆظˆط±ط¯ ظ…ظ† ظ‚ط§ظ„ط¨ ظ…ط±ظپظˆط¹.
 
-    مهم:
-    لم نعد نستعمل docxtpl هنا، لأن docxtpl يسبب خطأ عند وجود متغير عربي فيه فراغ:
-    {{تاريخ الطلب}}
-    الآن البرنامج يستبدل المتغيرات بنفسه، ويدعم الصيغتين:
-    {{تاريخ الطلب}}
-    {{تاريخ_الطلب}}
+    ظ…ظ‡ظ…:
+    ظ„ظ… ظ†ط¹ط¯ ظ†ط³طھط¹ظ…ظ„ docxtpl ظ‡ظ†ط§طŒ ظ„ط£ظ† docxtpl ظٹط³ط¨ط¨ ط®ط·ط£ ط¹ظ†ط¯ ظˆط¬ظˆط¯ ظ…طھط؛ظٹط± ط¹ط±ط¨ظٹ ظپظٹظ‡ ظپط±ط§ط؛:
+    {{طھط§ط±ظٹط® ط§ظ„ط·ظ„ط¨}}
+    ط§ظ„ط¢ظ† ط§ظ„ط¨ط±ظ†ط§ظ…ط¬ ظٹط³طھط¨ط¯ظ„ ط§ظ„ظ…طھط؛ظٹط±ط§طھ ط¨ظ†ظپط³ظ‡طŒ ظˆظٹط¯ط¹ظ… ط§ظ„طµظٹط؛طھظٹظ†:
+    {{طھط§ط±ظٹط® ط§ظ„ط·ظ„ط¨}}
+    {{طھط§ط±ظٹط®_ط§ظ„ط·ظ„ط¨}}
     """
     ensure_output_folder()
 
@@ -201,7 +201,7 @@ def generate_word_document(template_path, data, template_name="وثيقة"):
     return output_path
 
 
-def generate_word_from_text_template(template_content, data, template_name="وثيقة"):
+def generate_word_from_text_template(template_content, data, template_name="ظˆط«ظٹظ‚ط©"):
     ensure_output_folder()
     rendered_text = render_text_template(template_content, data)
 
@@ -230,27 +230,27 @@ def generate_word_from_text_template(template_content, data, template_name="وث
 
 def convert_word_to_pdf(word_path):
     """
-    يحوّل ملف Word الناتج إلى PDF باستعمال Microsoft Word نفسه.
+    ظٹط­ظˆظ‘ظ„ ظ…ظ„ظپ Word ط§ظ„ظ†ط§طھط¬ ط¥ظ„ظ‰ PDF ط¨ط§ط³طھط¹ظ…ط§ظ„ Microsoft Word ظ†ظپط³ظ‡.
 
-    لماذا؟
-    إنشاء PDF يدويًا عبر reportlab لا يحافظ على العربية ولا على شكل القالب،
-    لذلك تظهر حروف غريبة مثل ����. التحويل الصحيح هو أن نترك Word
-    يصدّر نفس الملف إلى PDF، فيحافظ على الخطوط، الاتجاه، الجداول، والهوامش.
+    ظ„ظ…ط§ط°ط§طں
+    ط¥ظ†ط´ط§ط، PDF ظٹط¯ظˆظٹظ‹ط§ ط¹ط¨ط± reportlab ظ„ط§ ظٹط­ط§ظپط¸ ط¹ظ„ظ‰ ط§ظ„ط¹ط±ط¨ظٹط© ظˆظ„ط§ ط¹ظ„ظ‰ ط´ظƒظ„ ط§ظ„ظ‚ط§ظ„ط¨طŒ
+    ظ„ط°ظ„ظƒ طھط¸ظ‡ط± ط­ط±ظˆظپ ط؛ط±ظٹط¨ط© ظ…ط«ظ„ ï؟½ï؟½ï؟½ï؟½. ط§ظ„طھط­ظˆظٹظ„ ط§ظ„طµط­ظٹط­ ظ‡ظˆ ط£ظ† ظ†طھط±ظƒ Word
+    ظٹطµط¯ظ‘ط± ظ†ظپط³ ط§ظ„ظ…ظ„ظپ ط¥ظ„ظ‰ PDFطŒ ظپظٹط­ط§ظپط¸ ط¹ظ„ظ‰ ط§ظ„ط®ط·ظˆط·طŒ ط§ظ„ط§طھط¬ط§ظ‡طŒ ط§ظ„ط¬ط¯ط§ظˆظ„طŒ ظˆط§ظ„ظ‡ظˆط§ظ…ط´.
 
-    ملاحظة: هذه الدالة تعمل على Windows عندما يكون Microsoft Word مثبتًا.
+    ظ…ظ„ط§ط­ط¸ط©: ظ‡ط°ظ‡ ط§ظ„ط¯ط§ظ„ط© طھط¹ظ…ظ„ ط¹ظ„ظ‰ Windows ط¹ظ†ط¯ظ…ط§ ظٹظƒظˆظ† Microsoft Word ظ…ط«ط¨طھظ‹ط§.
     """
     if not word_path or not os.path.exists(word_path):
-        raise FileNotFoundError("ملف وورد غير موجود للتحويل إلى PDF")
+        raise FileNotFoundError("ظ…ظ„ظپ ظˆظˆط±ط¯ ط؛ظٹط± ظ…ظˆط¬ظˆط¯ ظ„ظ„طھط­ظˆظٹظ„ ط¥ظ„ظ‰ PDF")
 
     pdf_path = os.path.splitext(word_path)[0] + ".pdf"
 
     if not os.name == "nt":
-        raise RuntimeError("تحويل وورد إلى PDF يحتاج Windows و Microsoft Word")
+        raise RuntimeError("طھط­ظˆظٹظ„ ظˆظˆط±ط¯ ط¥ظ„ظ‰ PDF ظٹط­طھط§ط¬ Windows ظˆ Microsoft Word")
 
     try:
         import win32com.client
     except Exception as exc:
-        raise RuntimeError("مكتبة pywin32 غير مثبتة. أضف pywin32 إلى requirements.txt ثم أعد البناء.") from exc
+        raise RuntimeError("ظ…ظƒطھط¨ط© pywin32 ط؛ظٹط± ظ…ط«ط¨طھط©. ط£ط¶ظپ pywin32 ط¥ظ„ظ‰ requirements.txt ط«ظ… ط£ط¹ط¯ ط§ظ„ط¨ظ†ط§ط،.") from exc
 
     word_app = None
     document = None
@@ -282,7 +282,7 @@ def convert_word_to_pdf(word_path):
             pass
 
 
-def generate_simple_pdf(data, template_name="وثيقة", template_content=None):
+def generate_simple_pdf(data, template_name="ظˆط«ظٹظ‚ط©", template_content=None):
     ensure_output_folder()
 
     pdfmetrics.registerFont(UnicodeCIDFont('HYSMyeongJo-Medium'))
