@@ -8,6 +8,7 @@ from ui.archive_page import ArchivePage
 from ui.customers_page import CustomersPage
 from ui.services_page import ServicesPage
 from ui.settings_page import SettingsPage
+from ui.search_page import SearchPage
 from ui.splash_screen import SplashScreen
 from ui.ux_widgets import ToastNotification
 
@@ -39,15 +40,14 @@ class IdaraDZApp(ctk.CTk):
 
         self.after(
             1300,
-            lambda: self.toast("مرحبا بك في IDARA DZ", "info")
+            lambda: self.toast("IDARA DZ جاهز للعمل", "info")
         )
 
         self.bind("<F1>", lambda e: self.show_documents())
-        self.bind("<F2>", lambda e: self.global_search.focus())
+        self.bind("<F2>", lambda e: self.focus_global_search())
         self.bind("<Alt-Key-1>", lambda e: self.show_documents())
         self.bind("<Alt-Key-2>", lambda e: self.show_services())
         self.bind("<Alt-Key-3>", lambda e: self.show_archive())
-        self.bind("<Alt-Key-4>", lambda e: self.show_customers())
         self.bind("<Control-p>", lambda e: self.show_archive())
         self.bind("<Escape>", lambda e: self.show_dashboard())
 
@@ -112,7 +112,6 @@ class IdaraDZApp(ctk.CTk):
         self.add_nav_button("documents", "📄 وثائق", self.show_documents)
         self.add_nav_button("services", "🌐 خدمات إلكترونية", self.show_services)
         self.add_nav_button("archive", "🗂️ أرشيف", self.show_archive)
-        self.add_nav_button("customers", "👥 زبائن", self.show_customers)
 
         spacer = ctk.CTkFrame(
             self.sidebar,
@@ -180,15 +179,51 @@ class IdaraDZApp(ctk.CTk):
         )
         self.clock_label.pack(side="left", padx=6)
 
+        search_box = ctk.CTkFrame(self.topbar, fg_color="transparent")
+        search_box.pack(side="left", padx=14)
+
         self.global_search = ctk.CTkEntry(
-            self.topbar,
-            placeholder_text="بحث سريع...",
-            width=280,
-            height=40,
+            search_box,
+            placeholder_text="بحث سريع في النماذج والأرشيف والزبائن...",
+            width=340,
+            height=42,
             corner_radius=14,
-            font=("Segoe UI", 14)
+            font=("Segoe UI", 14),
+            justify="right"
         )
-        self.global_search.pack(side="left", padx=14)
+        self.global_search.pack(side="right")
+        self.global_search.bind("<Return>", lambda e: self.run_global_search())
+
+        self.global_search_btn = ctk.CTkButton(
+            search_box,
+            text="🔎 بحث",
+            width=78,
+            height=42,
+            corner_radius=14,
+            font=("Segoe UI", 13, "bold"),
+            fg_color="#E5E7EB",
+            hover_color="#D1D5DB",
+            text_color="#111827",
+            command=self.run_global_search,
+        )
+        self.global_search_btn.pack(side="right", padx=(8, 0))
+
+    def focus_global_search(self):
+        self.global_search.focus()
+
+    def run_global_search(self):
+        query = self.global_search.get().strip()
+        if not query:
+            self.toast("اكتب كلمة للبحث", "info")
+            self.global_search.focus()
+            return
+        self.show_search_results(query)
+
+    def show_search_results(self, query):
+        self.clear_content()
+        self.set_active("search", "نتائج البحث")
+        page = SearchPage(self.content, query=query, app=self)
+        page.pack(fill="both", expand=True)
 
     def clear_content(self):
         for widget in self.content.winfo_children():
