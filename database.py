@@ -31,7 +31,7 @@ def make_field_key(field_label):
     key = str(field_label or "").strip()
     replacements = [
         (" ", "_"), ("-", "_"), ("/", "_"), ("\\", "_"),
-        (":", "_"), ("؛", "_"), (",", "_"), ("،", "_"),
+        (":", "_"), ("ط›", "_"), (",", "_"), ("طŒ", "_"),
         (".", "_"), ("(", ""), (")", ""), ("[", ""), ("]", "")
     ]
     for old, new in replacements:
@@ -49,7 +49,7 @@ def init_database():
         CREATE TABLE IF NOT EXISTS document_categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE,
-            icon TEXT DEFAULT '📄',
+            icon TEXT DEFAULT 'ًں“„',
             created_at TEXT NOT NULL
         )
     """)
@@ -129,10 +129,10 @@ def init_database():
 
 def seed_default_categories():
     categories = [
-        ("طلب خطي", "📄"),
-        ("تصريح شرفي", "🖋️"),
-        ("سيرة ذاتية", "📑"),
-        ("فاتورة", "🧾"),
+        ("ط·ظ„ط¨ ط®ط·ظٹ", "ًں“„"),
+        ("طھطµط±ظٹط­ ط´ط±ظپظٹ", "ًں–‹ï¸ڈ"),
+        ("ط³ظٹط±ط© ط°ط§طھظٹط©", "ًں“‘"),
+        ("ظپط§طھظˆط±ط©", "ًں§¾"),
     ]
     conn = connect_db()
     cursor = conn.cursor()
@@ -148,7 +148,7 @@ def seed_default_categories():
 def get_categories():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, icon FROM document_categories WHERE name != ? ORDER BY id ASC", ("أخرى",))
+    cursor.execute("SELECT id, name, icon FROM document_categories WHERE name != ? ORDER BY id ASC", ("ط£ط®ط±ظ‰",))
     rows = cursor.fetchall()
     conn.close()
     return rows
@@ -386,7 +386,7 @@ def count_documents_today():
         SELECT COUNT(*)
         FROM archive
         WHERE date(created_at) = date(?)
-          AND (document_type IS NULL OR document_type NOT LIKE '%خدمات%')
+          AND (document_type IS NULL OR document_type NOT LIKE '%ط®ط¯ظ…ط§طھ%')
     """, (today,))
     count = cursor.fetchone()[0]
     conn.close()
@@ -446,7 +446,7 @@ def search_service_operations(keyword="", date_from="", date_to=""):
 
 
 def get_search_suggestions(keyword="", limit=8):
-    """اقتراحات ذكية موحدة للبحث العام: نماذج، أرشيف، زبائن، وخدمات."""
+    """ط§ظ‚طھط±ط§ط­ط§طھ ط°ظƒظٹط© ظ…ظˆط­ط¯ط© ظ„ظ„ط¨ط­ط« ط§ظ„ط¹ط§ظ…: ظ†ظ…ط§ط°ط¬طŒ ط£ط±ط´ظٹظپطŒ ط²ط¨ط§ط¦ظ†طŒ ظˆط®ط¯ظ…ط§طھ."""
     keyword = (keyword or "").strip()
     if not keyword:
         return []
@@ -477,7 +477,7 @@ def get_search_suggestions(keyword="", limit=8):
         LIMIT ?
     """, (like_keyword, like_keyword, limit))
     for name, category in cursor.fetchall():
-        add("نموذج", name, category or "وثائق")
+        add("ظ†ظ…ظˆط°ط¬", name, category or "ظˆط«ط§ط¦ظ‚")
 
     cursor.execute("""
         SELECT customer_name, template_name, phone
@@ -487,7 +487,7 @@ def get_search_suggestions(keyword="", limit=8):
         LIMIT ?
     """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
     for customer_name, template_name, phone in cursor.fetchall():
-        add("أرشيف", template_name or customer_name, f"{customer_name or ''} {phone or ''}".strip())
+        add("ط£ط±ط´ظٹظپ", template_name or customer_name, f"{customer_name or ''} {phone or ''}".strip())
 
     cursor.execute("""
         SELECT first_name, last_name, phone
@@ -497,7 +497,7 @@ def get_search_suggestions(keyword="", limit=8):
         LIMIT ?
     """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
     for first, last, phone in cursor.fetchall():
-        add("زبون", f"{first or ''} {last or ''}".strip(), phone or "")
+        add("ط²ط¨ظˆظ†", f"{first or ''} {last or ''}".strip(), phone or "")
 
     cursor.execute("""
         SELECT service_name, service_url
@@ -507,7 +507,7 @@ def get_search_suggestions(keyword="", limit=8):
         LIMIT ?
     """, (like_keyword, like_keyword, like_keyword, like_keyword, like_keyword, limit))
     for service_name, service_url in cursor.fetchall():
-        add("خدمة", service_name, service_url or "")
+        add("ط®ط¯ظ…ط©", service_name, service_url or "")
 
     conn.close()
     return suggestions[:limit]
