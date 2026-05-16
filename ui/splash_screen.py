@@ -24,7 +24,7 @@ class SplashScreen(ctk.CTkToplevel):
 
         subtitle = ctk.CTkLabel(
             self,
-            text="نظام الوثائق والخدمات الإلكترونية",
+            text="ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½",
             font=("Segoe UI", 15),
             text_color="#D1D5DB"
         )
@@ -32,7 +32,7 @@ class SplashScreen(ctk.CTkToplevel):
 
         loading = ctk.CTkLabel(
             self,
-            text="جاري التحميل...",
+            text="ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½...",
             font=("Segoe UI", 14),
             text_color="#93C5FD"
         )
