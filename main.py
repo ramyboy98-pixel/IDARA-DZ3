@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from datetime import datetime
 
-from database import init_database
+from database import init_database, get_search_suggestions
 from ui.dashboard_page import DashboardPage
 from ui.documents_page import DocumentsPage
 from ui.archive_page import ArchivePage
@@ -80,6 +80,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.build_sidebar()
         self.build_topbar()
+        self.build_global_suggestions_panel()
 
         self.content = ctk.CTkFrame(
             self.content_wrapper,
@@ -180,6 +181,8 @@ class IdaraDZApp(ctk.CTk):
         )
         self.global_search.pack(side="right")
         self.global_search.bind("<Return>", lambda e: self.run_global_search())
+        self.global_search.bind("<KeyRelease>", self.update_global_suggestions)
+        self.global_search.bind("<FocusOut>", lambda e: self.after(180, self.hide_global_suggestions))
 
         self.global_search_btn = ctk.CTkButton(
             search_box,
@@ -195,11 +198,76 @@ class IdaraDZApp(ctk.CTk):
         )
         self.global_search_btn.pack(side="right", padx=(8, 0))
 
+
+    def build_global_suggestions_panel(self):
+        self.global_suggestions_panel = ctk.CTkFrame(
+            self.content_wrapper,
+            fg_color="#FFFFFF",
+            corner_radius=14,
+            border_width=1,
+            border_color="#E5E7EB",
+        )
+        self.global_suggestions_visible = False
+
+    def hide_global_suggestions(self):
+        if getattr(self, "global_suggestions_visible", False):
+            self.global_suggestions_panel.pack_forget()
+            self.global_suggestions_visible = False
+
+    def update_global_suggestions(self, event=None):
+        if event is not None and getattr(event, "keysym", "") in ("Return", "Escape", "Up", "Down"):
+            if getattr(event, "keysym", "") == "Escape":
+                self.hide_global_suggestions()
+            return
+        query = self.global_search.get().strip()
+        for widget in self.global_suggestions_panel.winfo_children():
+            widget.destroy()
+        if len(query) < 1:
+            self.hide_global_suggestions()
+            return
+        try:
+            suggestions = get_search_suggestions(query, limit=7)
+        except Exception:
+            suggestions = []
+        if not suggestions:
+            self.hide_global_suggestions()
+            return
+        for item in suggestions:
+            title = item.get("title", "")
+            kind = item.get("type", "")
+            subtitle = item.get("subtitle", "")
+            display = f"{title}  ·  {kind}"
+            if subtitle:
+                display += f"  —  {subtitle}"
+            btn = ctk.CTkButton(
+                self.global_suggestions_panel,
+                text=display,
+                anchor="e",
+                height=34,
+                corner_radius=10,
+                fg_color="transparent",
+                hover_color="#EFF6FF",
+                text_color="#111827",
+                font=("Segoe UI", 13),
+                command=lambda value=title: self.choose_global_suggestion(value),
+            )
+            btn.pack(fill="x", padx=8, pady=3)
+        if not self.global_suggestions_visible:
+            self.global_suggestions_panel.pack(fill="x", padx=260, pady=(0, 8))
+            self.global_suggestions_visible = True
+
+    def choose_global_suggestion(self, value):
+        self.global_search.delete(0, "end")
+        self.global_search.insert(0, value)
+        self.hide_global_suggestions()
+        self.run_global_search()
+
     def focus_global_search(self):
         self.global_search.focus()
 
     def run_global_search(self):
         query = self.global_search.get().strip()
+        self.hide_global_suggestions()
         if not query:
             self.toast("اكتب كلمة للبحث", "info")
             self.global_search.focus()
