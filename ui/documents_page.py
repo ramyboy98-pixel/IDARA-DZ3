@@ -65,6 +65,7 @@ class DocumentsPage(ctk.CTkFrame):
         self.current_category_name = None
         self.current_category_icon = None
         self.template_search_entry = None
+        self.template_suggestions_area = None
         self.templates_area = None
         self.build_categories_ui()
 
@@ -194,10 +195,58 @@ class DocumentsPage(ctk.CTkFrame):
             font=("Segoe UI", 14),
         )
         self.template_search_entry.pack(side="left", padx=16, pady=14)
-        self.template_search_entry.bind("<KeyRelease>", lambda e: self.load_templates_cards())
+        self.template_search_entry.bind("<KeyRelease>", self.on_template_search_key)
+
+        self.template_suggestions_area = ctk.CTkFrame(self, fg_color="transparent")
+        self.template_suggestions_area.pack(fill="x", pady=(0, 6))
 
         self.templates_area = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self.templates_area.pack(fill="both", expand=True)
+        self.load_templates_cards()
+
+
+    def on_template_search_key(self, event=None):
+        self.load_template_search_suggestions()
+        self.load_templates_cards()
+
+    def load_template_search_suggestions(self):
+        if not self.template_suggestions_area or not self.template_search_entry:
+            return
+        for widget in self.template_suggestions_area.winfo_children():
+            widget.destroy()
+        keyword = self.template_search_entry.get().strip()
+        if not keyword:
+            return
+        try:
+            templates = search_templates(self.current_category_id, keyword)[:6]
+        except Exception:
+            templates = []
+        if not templates:
+            return
+        box = ctk.CTkFrame(self.template_suggestions_area, fg_color="#FFFFFF", corner_radius=14, border_width=1, border_color=BORDER)
+        box.pack(fill="x", padx=6)
+        for template_id, name, template_path, created_at, updated_at, template_content in templates:
+            status = "وورد" if template_path else "داخلي"
+            btn = ctk.CTkButton(
+                box,
+                text=f"{name}  ·  {status}",
+                anchor="e",
+                height=32,
+                corner_radius=10,
+                fg_color="transparent",
+                hover_color="#EFF6FF",
+                text_color=TEXT,
+                font=("Segoe UI", 13),
+                command=lambda value=name: self.choose_template_suggestion(value),
+            )
+            btn.pack(fill="x", padx=8, pady=3)
+
+    def choose_template_suggestion(self, value):
+        self.template_search_entry.delete(0, "end")
+        self.template_search_entry.insert(0, value)
+        if self.template_suggestions_area:
+            for widget in self.template_suggestions_area.winfo_children():
+                widget.destroy()
         self.load_templates_cards()
 
     def load_templates_cards(self):
@@ -235,21 +284,79 @@ class DocumentsPage(ctk.CTkFrame):
         card = ctk.CTkFrame(parent, corner_radius=22, fg_color=CARD, border_width=1, border_color=BORDER)
         card.grid(row=row, column=col, sticky="nsew", padx=10, pady=10)
         card.grid_propagate(False)
-        card.configure(width=300, height=245)
+        card.configure(width=300, height=205)
 
-        ctk.CTkLabel(card, text="📄", font=("Segoe UI Emoji", 34)).pack(pady=(16, 4))
-        ctk.CTkLabel(card, text=name, font=("Segoe UI", 18, "bold"), text_color=TEXT, wraplength=240).pack()
+        def open_form(_event=None):
+            self.open_fill_form_window(template_id)
 
-        status_text = "قالب وورد مرفوع" if template_path else "قالب داخلي" if template_content else "بدون قالب"
-        ctk.CTkLabel(card, text=f"{status_text}  •  {len(fields)} خانات", font=("Segoe UI", 12), text_color=MUTED).pack(pady=(6, 2))
-        ctk.CTkLabel(card, text=f"آخر تعديل: {updated_at}", font=("Segoe UI", 11), text_color="#9CA3AF").pack(pady=(0, 10))
+        def set_hand(widget):
+            try:
+                widget.configure(cursor="hand2")
+            except Exception:
+                pass
+            widget.bind("<Button-1>", open_form)
 
-        ctk.CTkButton(card, text="فتح الاستمارة", height=34, corner_radius=12, command=lambda: self.open_fill_form_window(template_id)).pack(fill="x", padx=20, pady=(0, 6))
+        icon_label = ctk.CTkLabel(card, text="📄", font=("Segoe UI Emoji", 24), text_color=TEXT)
+        icon_label.pack(pady=(16, 2))
+        set_hand(icon_label)
 
-        row_buttons = ctk.CTkFrame(card, fg_color="transparent")
-        row_buttons.pack(fill="x", padx=20)
-        ctk.CTkButton(row_buttons, text="تعديل", height=32, corner_radius=12, fg_color="#F59E0B", hover_color="#D97706", command=lambda: self.open_template_editor(template_id)).pack(side="right", fill="x", expand=True, padx=(0, 4))
-        ctk.CTkButton(row_buttons, text="حذف", height=32, corner_radius=12, fg_color=RED, hover_color="#B91C1C", command=lambda: self.confirm_delete_template(template_id)).pack(side="left", fill="x", expand=True, padx=(4, 0))
+        title_label = ctk.CTkLabel(card, text=name, font=("Segoe UI", 17, "bold"), text_color=TEXT, wraplength=250)
+        title_label.pack(pady=(0, 2))
+        set_hand(title_label)
+
+        status_text = "قالب وورد" if template_path else "قالب داخلي" if template_content else "بدون قالب"
+        info_label = ctk.CTkLabel(card, text=f"{status_text}  •  {len(fields)} خانات", font=("Segoe UI", 11), text_color=MUTED)
+        info_label.pack(pady=(4, 2))
+        set_hand(info_label)
+
+        date_label = ctk.CTkLabel(card, text=f"آخر تعديل: {updated_at}", font=("Segoe UI", 10), text_color="#9CA3AF")
+        date_label.pack(pady=(0, 10))
+        set_hand(date_label)
+
+        actions = ctk.CTkFrame(card, fg_color="transparent")
+        actions.pack(fill="x", padx=22, pady=(0, 12))
+
+        edit_btn = ctk.CTkButton(
+            actions,
+            text="✏️",
+            width=54,
+            height=34,
+            corner_radius=12,
+            fg_color="#F59E0B",
+            hover_color="#D97706",
+            font=("Segoe UI Emoji", 16),
+            command=lambda: self.open_template_editor(template_id),
+        )
+        edit_btn.pack(side="right", padx=5)
+
+        delete_btn = ctk.CTkButton(
+            actions,
+            text="🗑️",
+            width=54,
+            height=34,
+            corner_radius=12,
+            fg_color=RED,
+            hover_color="#B91C1C",
+            font=("Segoe UI Emoji", 16),
+            command=lambda: self.confirm_delete_template(template_id),
+        )
+        delete_btn.pack(side="left", padx=5)
+
+        set_hand(card)
+
+        def enter(_event=None):
+            card.configure(fg_color="#EFF6FF", border_color=BLUE)
+            icon_label.configure(font=("Segoe UI Emoji", 28), text_color=BLUE)
+            title_label.configure(text_color=BLUE)
+
+        def leave(_event=None):
+            card.configure(fg_color=CARD, border_color=BORDER)
+            icon_label.configure(font=("Segoe UI Emoji", 24), text_color=TEXT)
+            title_label.configure(text_color=TEXT)
+
+        for widget in (card, icon_label, title_label, info_label, date_label):
+            widget.bind("<Enter>", enter)
+            widget.bind("<Leave>", leave)
 
     def make_modal(self, title, size="900x760"):
         window = ctk.CTkToplevel(self)
