@@ -29,7 +29,6 @@ class IdaraDZApp(ctk.CTk):
         self.geometry("1250x780")
         self.minsize(1050, 680)
 
-        self.dark_mode = False
         self.current_page = None
 
         self.build_ui()
@@ -121,18 +120,6 @@ class IdaraDZApp(ctk.CTk):
 
         self.add_nav_button("settings", "⚙️ الإعدادات", self.show_settings)
 
-        self.theme_btn = ctk.CTkButton(
-            self.sidebar,
-            text="🌙 الوضع الداكن",
-            height=42,
-            corner_radius=12,
-            font=("Segoe UI", 14, "bold"),
-            fg_color="#1F2937",
-            hover_color="#374151",
-            text_color="white",
-            command=self.toggle_dark_mode
-        )
-        self.theme_btn.pack(fill="x", padx=16, pady=(8, 20))
 
     def add_nav_button(self, key, text, command):
 
@@ -283,31 +270,6 @@ class IdaraDZApp(ctk.CTk):
         self.set_active("settings", "الإعدادات")
         page = SettingsPage(self.content)
         page.pack(fill="both", expand=True)
-
-    def toggle_dark_mode(self):
-
-        self.dark_mode = not self.dark_mode
-
-        if self.dark_mode:
-            ctk.set_appearance_mode("dark")
-            self.configure(fg_color="#0B1220")
-            self.root_frame.configure(fg_color="#0B1220")
-            self.content_wrapper.configure(fg_color="#0B1220")
-            self.topbar.configure(fg_color="#0B1220")
-            self.content.configure(fg_color="#0B1220")
-            self.page_title.configure(text_color="white")
-            self.theme_btn.configure(text="☀️ الوضع الفاتح")
-            self.toast("تم تفعيل الوضع الداكن", "info")
-        else:
-            ctk.set_appearance_mode("light")
-            self.configure(fg_color="#F5F7FA")
-            self.root_frame.configure(fg_color="#F5F7FA")
-            self.content_wrapper.configure(fg_color="#F5F7FA")
-            self.topbar.configure(fg_color="#F5F7FA")
-            self.content.configure(fg_color="#F5F7FA")
-            self.page_title.configure(text_color="#111827")
-            self.theme_btn.configure(text="🌙 الوضع الداكن")
-            self.toast("تم تفعيل الوضع الفاتح", "info")
 
     def update_clock(self):
 
