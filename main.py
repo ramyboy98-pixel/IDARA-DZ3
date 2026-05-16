@@ -236,9 +236,9 @@ class IdaraDZApp(ctk.CTk):
             title = item.get("title", "")
             kind = item.get("type", "")
             subtitle = item.get("subtitle", "")
-            display = f"{title}  آ·  {kind}"
+            display = f"{title}  ط¢آ·  {kind}"
             if subtitle:
-                display += f"  â€”  {subtitle}"
+                display += f"  أ¢â‚¬â€‌  {subtitle}"
             btn = ctk.CTkButton(
                 self.global_suggestions_panel,
                 text=display,
