@@ -99,30 +99,37 @@ class DocumentsPage(ctk.CTkFrame):
             messagebox.showerror("خطأ", f"تعذر تحميل الأقسام:\n{e}")
             categories = []
 
-        for col in range(3):
-            grid.grid_columnconfigure(col, weight=1)
+        for col in range(4):
+            grid.grid_columnconfigure(col, weight=1, uniform="document_categories")
 
-        for index, (category_id, name, icon) in enumerate(categories):
-            row, col = divmod(index, 3)
+        visible_categories = [cat for cat in categories if cat[1] != "أخرى"]
+
+        def bind_open(widget, cid, n, i):
+            widget.bind("<Button-1>", lambda _event: self.open_category(cid, n, i))
+            try:
+                widget.configure(cursor="hand2")
+            except Exception:
+                pass
+
+        for index, (category_id, name, icon) in enumerate(visible_categories):
+            row, col = divmod(index, 4)
             card = ctk.CTkFrame(grid, corner_radius=24, fg_color=CARD, border_width=1, border_color=BORDER)
-            card.grid(row=row, column=col, sticky="nsew", padx=12, pady=12)
+            card.grid(row=row, column=col, sticky="nsew", padx=10, pady=12)
             card.grid_propagate(False)
-            card.configure(width=280, height=180)
+            card.configure(width=245, height=210)
+            bind_open(card, category_id, name, icon)
 
-            ctk.CTkLabel(card, text=icon, font=("Segoe UI Emoji", 42)).pack(pady=(22, 8))
-            ctk.CTkLabel(card, text=name, font=("Segoe UI", 21, "bold"), text_color=TEXT).pack()
-            ctk.CTkLabel(card, text="إدارة النماذج والاستمارات", font=("Segoe UI", 12), text_color=MUTED).pack(pady=(5, 10))
+            icon_label = ctk.CTkLabel(card, text=icon, font=("Segoe UI Emoji", 44))
+            icon_label.pack(pady=(32, 10))
+            bind_open(icon_label, category_id, name, icon)
 
-            btn = ctk.CTkButton(
-                card,
-                text="فتح القسم",
-                height=34,
-                corner_radius=12,
-                fg_color=BLUE,
-                hover_color="#1D4ED8",
-                command=lambda cid=category_id, n=name, i=icon: self.open_category(cid, n, i),
-            )
-            btn.pack(padx=24, fill="x")
+            name_label = ctk.CTkLabel(card, text=name, font=("Segoe UI", 22, "bold"), text_color=TEXT)
+            name_label.pack()
+            bind_open(name_label, category_id, name, icon)
+
+            subtitle = ctk.CTkLabel(card, text="إدارة النماذج والاستمارات", font=("Segoe UI", 12), text_color=MUTED)
+            subtitle.pack(pady=(7, 0))
+            bind_open(subtitle, category_id, name, icon)
 
     def open_category(self, category_id, category_name, category_icon):
         self.current_category_id = category_id
