@@ -110,6 +110,18 @@ def init_database():
     if not column_exists(cursor, "customers", "updated_at"):
         cursor.execute("ALTER TABLE customers ADD COLUMN updated_at TEXT")
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS service_operations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            service_name TEXT NOT NULL,
+            service_url TEXT,
+            customer_name TEXT,
+            phone TEXT,
+            notes TEXT,
+            created_at TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
     seed_default_categories()
@@ -382,16 +394,52 @@ def count_documents_today():
     return count
 
 
+def log_service_operation(service_name, service_url="", customer_name="", phone="", notes=""):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO service_operations
+        (service_name, service_url, customer_name, phone, notes, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (service_name, service_url, customer_name, phone, notes, now_text()))
+    operation_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return operation_id
+
+
 def count_services_today():
     conn = connect_db()
     cursor = conn.cursor()
     today = datetime.now().strftime("%Y-%m-%d")
     cursor.execute("""
         SELECT COUNT(*)
-        FROM archive
+        FROM service_operations
         WHERE date(created_at) = date(?)
-          AND document_type LIKE '%خدمات%'
     """, (today,))
     count = cursor.fetchone()[0]
     conn.close()
     return count
+
+
+def search_service_operations(keyword="", date_from="", date_to=""):
+    conn = connect_db()
+    cursor = conn.cursor()
+    like_keyword = f"%{keyword}%"
+    query = """
+        SELECT id, service_name, service_url, customer_name, phone, notes, created_at
+        FROM service_operations
+        WHERE (service_name LIKE ? OR service_url LIKE ? OR customer_name LIKE ? OR phone LIKE ? OR notes LIKE ?)
+    """
+    params = [like_keyword, like_keyword, like_keyword, like_keyword, like_keyword]
+    if date_from:
+        query += " AND date(created_at) >= date(?)"
+        params.append(date_from)
+    if date_to:
+        query += " AND date(created_at) <= date(?)"
+        params.append(date_to)
+    query += " ORDER BY id DESC"
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
