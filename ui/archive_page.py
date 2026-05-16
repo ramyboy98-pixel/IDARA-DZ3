@@ -48,8 +48,7 @@ class ArchivePage(ctk.CTkFrame):
         clear_btn = ctk.CTkButton(filters, text="ظ…ط³ط­ ط§ظ„ظپظ„طھط±", width=115, height=40, fg_color="#6B7280", hover_color="#4B5563", command=self.clear_filters)
         clear_btn.pack(side="left", padx=14, pady=14)
 
-        # طµظ†ط¯ظˆظ‚ ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ ظ„ط§ ظٹط¸ظ‡ط± ظˆظ‡ظˆ ظپط§ط±ط؛ ط­طھظ‰ ظ„ط§ ظٹط¯ظپط¹ ط¬ط¯ظˆظ„ ط§ظ„ط£ط±ط´ظٹظپ ظ„ظ„ط£ط³ظپظ„.
-        self.suggestions_box = ctk.CTkFrame(self, fg_color="transparent", height=1)
+        self.suggestions_box = None
 
         self.action_bar = ctk.CTkFrame(self, fg_color="transparent")
         self.action_bar.pack(fill="x", pady=(0, 8), anchor="n")
@@ -109,7 +108,6 @@ class ArchivePage(ctk.CTkFrame):
             return
         for widget in self.suggestions_box.winfo_children():
             widget.destroy()
-        self.suggestions_box.pack_forget()
         keyword = self.search_entry.get().strip()
         if not keyword:
             return
@@ -119,10 +117,6 @@ class ArchivePage(ctk.CTkFrame):
             rows = []
         if not rows:
             return
-        try:
-            self.suggestions_box.pack(fill="x", pady=(0, 8), before=self.action_bar)
-        except Exception:
-            self.suggestions_box.pack(fill="x", pady=(0, 8))
         box = ctk.CTkFrame(self.suggestions_box, fg_color="#FFFFFF", corner_radius=14, border_width=1, border_color=BORDER)
         box.pack(fill="x")
         for row in rows:
@@ -147,9 +141,8 @@ class ArchivePage(ctk.CTkFrame):
         self.search_entry.delete(0, "end")
         self.search_entry.insert(0, value)
         if self.suggestions_box:
-            for widget in self.suggestions_box.winfo_children():
-                widget.destroy()
-            self.suggestions_box.pack_forget()
+            self.suggestions_box.destroy()
+            self.suggestions_box = None
         self.load_archive()
 
     def clear_filters(self):
@@ -157,9 +150,8 @@ class ArchivePage(ctk.CTkFrame):
         self.date_from_entry.delete(0, "end")
         self.date_to_entry.delete(0, "end")
         if self.suggestions_box:
-            for widget in self.suggestions_box.winfo_children():
-                widget.destroy()
-            self.suggestions_box.pack_forget()
+            self.suggestions_box.destroy()
+            self.suggestions_box = None
         self.load_archive()
 
     def load_archive(self):
