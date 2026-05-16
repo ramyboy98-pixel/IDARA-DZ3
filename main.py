@@ -39,7 +39,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.after(
             1300,
-            lambda: self.toast("IDARA DZ جاهز للعمل", "info")
+            lambda: self.toast("IDARA DZ ط¬ط§ظ‡ط² ظ„ظ„ط¹ظ…ظ„", "info")
         )
 
         self.bind("<F1>", lambda e: self.show_documents())
@@ -100,7 +100,7 @@ class IdaraDZApp(ctk.CTk):
 
         subtitle = ctk.CTkLabel(
             self.sidebar,
-            text="نظام الوثائق والخدمات",
+            text="ظ†ط¸ط§ظ… ط§ظ„ظˆط«ط§ط¦ظ‚ ظˆط§ظ„ط®ط¯ظ…ط§طھ",
             font=("Segoe UI", 13),
             text_color="#9CA3AF"
         )
@@ -108,10 +108,10 @@ class IdaraDZApp(ctk.CTk):
 
         self.nav_buttons = {}
 
-        self.add_nav_button("dashboard", "🏠 الرئيسية", self.show_dashboard)
-        self.add_nav_button("documents", "📄 وثائق", self.show_documents)
-        self.add_nav_button("services", "🌐 خدمات إلكترونية", self.show_services)
-        self.add_nav_button("archive", "🗂️ أرشيف", self.show_archive)
+        self.add_nav_button("dashboard", "ًںڈ  ط§ظ„ط±ط¦ظٹط³ظٹط©", self.show_dashboard)
+        self.add_nav_button("documents", "ًں“„ ظˆط«ط§ط¦ظ‚", self.show_documents)
+        self.add_nav_button("services", "ًںŒگ ط®ط¯ظ…ط§طھ ط¥ظ„ظƒطھط±ظˆظ†ظٹط©", self.show_services)
+        self.add_nav_button("archive", "ًں—‚ï¸ڈ ط£ط±ط´ظٹظپ", self.show_archive)
 
         spacer = ctk.CTkFrame(
             self.sidebar,
@@ -119,7 +119,7 @@ class IdaraDZApp(ctk.CTk):
         )
         spacer.pack(fill="both", expand=True)
 
-        self.add_nav_button("settings", "⚙️ الإعدادات", self.show_settings)
+        self.add_nav_button("settings", "âڑ™ï¸ڈ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ", self.show_settings)
 
 
     def add_nav_button(self, key, text, command):
@@ -153,7 +153,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.page_title = ctk.CTkLabel(
             self.topbar,
-            text="الرئيسية",
+            text="ط§ظ„ط±ط¦ظٹط³ظٹط©",
             font=("Segoe UI", 26, "bold"),
             text_color="#111827"
         )
@@ -172,7 +172,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.global_search = ctk.CTkEntry(
             search_box,
-            placeholder_text="بحث سريع في النماذج والأرشيف والزبائن...",
+            placeholder_text="ط¨ط­ط« ط³ط±ظٹط¹ ظپظٹ ط§ظ„ظ†ظ…ط§ط°ط¬ ظˆط§ظ„ط£ط±ط´ظٹظپ ظˆط§ظ„ط²ط¨ط§ط¦ظ†...",
             width=340,
             height=42,
             corner_radius=14,
@@ -186,7 +186,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.global_search_btn = ctk.CTkButton(
             search_box,
-            text="🔎 بحث",
+            text="ًں”ژ ط¨ط­ط«",
             width=78,
             height=42,
             corner_radius=14,
@@ -236,9 +236,9 @@ class IdaraDZApp(ctk.CTk):
             title = item.get("title", "")
             kind = item.get("type", "")
             subtitle = item.get("subtitle", "")
-            display = f"{title}  ·  {kind}"
+            display = f"{title}  آ·  {kind}"
             if subtitle:
-                display += f"  —  {subtitle}"
+                display += f"  â€”  {subtitle}"
             btn = ctk.CTkButton(
                 self.global_suggestions_panel,
                 text=display,
@@ -269,14 +269,14 @@ class IdaraDZApp(ctk.CTk):
         query = self.global_search.get().strip()
         self.hide_global_suggestions()
         if not query:
-            self.toast("اكتب كلمة للبحث", "info")
+            self.toast("ط§ظƒطھط¨ ظƒظ„ظ…ط© ظ„ظ„ط¨ط­ط«", "info")
             self.global_search.focus()
             return
         self.show_search_results(query)
 
     def show_search_results(self, query):
         self.clear_content()
-        self.set_active("search", "نتائج البحث")
+        self.set_active("search", "ظ†طھط§ط¦ط¬ ط§ظ„ط¨ط­ط«")
         page = SearchPage(self.content, query=query, app=self)
         page.pack(fill="both", expand=True)
 
@@ -305,37 +305,37 @@ class IdaraDZApp(ctk.CTk):
 
     def show_dashboard(self):
         self.clear_content()
-        self.set_active("dashboard", "الرئيسية")
+        self.set_active("dashboard", "ط§ظ„ط±ط¦ظٹط³ظٹط©")
         page = DashboardPage(self.content, app=self)
         page.pack(fill="both", expand=True)
 
     def show_documents(self):
         self.clear_content()
-        self.set_active("documents", "وثائق")
+        self.set_active("documents", "ظˆط«ط§ط¦ظ‚")
         page = DocumentsPage(self.content)
         page.pack(fill="both", expand=True)
 
     def show_services(self):
         self.clear_content()
-        self.set_active("services", "خدمات إلكترونية")
+        self.set_active("services", "ط®ط¯ظ…ط§طھ ط¥ظ„ظƒطھط±ظˆظ†ظٹط©")
         page = ServicesPage(self.content, app=self)
         page.pack(fill="both", expand=True)
 
     def show_archive(self):
         self.clear_content()
-        self.set_active("archive", "الأرشيف")
+        self.set_active("archive", "ط§ظ„ط£ط±ط´ظٹظپ")
         page = ArchivePage(self.content)
         page.pack(fill="both", expand=True)
 
     def show_customers(self):
         self.clear_content()
-        self.set_active("customers", "الزبائن")
+        self.set_active("customers", "ط§ظ„ط²ط¨ط§ط¦ظ†")
         page = CustomersPage(self.content)
         page.pack(fill="both", expand=True)
 
     def show_settings(self):
         self.clear_content()
-        self.set_active("settings", "الإعدادات")
+        self.set_active("settings", "ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ")
         page = SettingsPage(self.content)
         page.pack(fill="both", expand=True)
 
