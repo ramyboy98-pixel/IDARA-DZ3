@@ -17,6 +17,7 @@ class ArchivePage(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
         self.archive_rows = {}
+        self.suggestions_box = None
         self.build_ui()
         self.load_archive()
 
@@ -34,7 +35,7 @@ class ArchivePage(ctk.CTkFrame):
 
         self.search_entry = ctk.CTkEntry(filters, placeholder_text="بحث باسم الزبون أو الوثيقة أو الهاتف...", width=340, height=40, font=("Segoe UI", 14))
         self.search_entry.pack(side="right", padx=14, pady=14)
-        self.search_entry.bind("<KeyRelease>", lambda e: self.load_archive())
+        self.search_entry.bind("<KeyRelease>", self.on_search_key)
 
         self.date_from_entry = ctk.CTkEntry(filters, placeholder_text="من تاريخ YYYY-MM-DD", width=165, height=40, font=("Segoe UI", 13))
         self.date_from_entry.pack(side="right", padx=5, pady=14)
@@ -46,6 +47,9 @@ class ArchivePage(ctk.CTkFrame):
 
         clear_btn = ctk.CTkButton(filters, text="مسح الفلتر", width=115, height=40, fg_color="#6B7280", hover_color="#4B5563", command=self.clear_filters)
         clear_btn.pack(side="left", padx=14, pady=14)
+
+        self.suggestions_box = ctk.CTkFrame(self, fg_color="transparent")
+        self.suggestions_box.pack(fill="x", pady=(0, 8))
 
         action_bar = ctk.CTkFrame(self, fg_color="transparent")
         action_bar.pack(fill="x", pady=(0, 12))
@@ -94,10 +98,60 @@ class ArchivePage(ctk.CTkFrame):
         info = ctk.CTkLabel(self, text="النقر المزدوج يفتح ملف وورد. استعمل صيغة التاريخ 2026-05-12 للفلترة.", font=("Segoe UI", 13), text_color=MUTED)
         info.pack(anchor="e", pady=(10, 0))
 
+
+    def on_search_key(self, event=None):
+        self.load_archive_suggestions()
+        self.load_archive()
+
+    def load_archive_suggestions(self):
+        if not self.suggestions_box:
+            return
+        for widget in self.suggestions_box.winfo_children():
+            widget.destroy()
+        keyword = self.search_entry.get().strip()
+        if not keyword:
+            return
+        try:
+            rows = search_archive(keyword)[:6]
+        except Exception:
+            rows = []
+        if not rows:
+            return
+        box = ctk.CTkFrame(self.suggestions_box, fg_color="#FFFFFF", corner_radius=14, border_width=1, border_color=BORDER)
+        box.pack(fill="x")
+        for row in rows:
+            _id, customer_name, phone, document_type, template_name, word_path, pdf_path, created_at = row
+            title = template_name or customer_name or phone
+            subtitle = f"{customer_name or ''} {phone or ''}".strip()
+            btn = ctk.CTkButton(
+                box,
+                text=f"{title}  —  {subtitle}",
+                anchor="e",
+                height=32,
+                corner_radius=10,
+                fg_color="transparent",
+                hover_color="#EFF6FF",
+                text_color=TEXT,
+                font=("Segoe UI", 13),
+                command=lambda value=title: self.choose_archive_suggestion(value),
+            )
+            btn.pack(fill="x", padx=8, pady=3)
+
+    def choose_archive_suggestion(self, value):
+        self.search_entry.delete(0, "end")
+        self.search_entry.insert(0, value)
+        if self.suggestions_box:
+            for widget in self.suggestions_box.winfo_children():
+                widget.destroy()
+        self.load_archive()
+
     def clear_filters(self):
         self.search_entry.delete(0, "end")
         self.date_from_entry.delete(0, "end")
         self.date_to_entry.delete(0, "end")
+        if self.suggestions_box:
+            for widget in self.suggestions_box.winfo_children():
+                widget.destroy()
         self.load_archive()
 
     def load_archive(self):
