@@ -197,11 +197,8 @@ class DocumentsPage(ctk.CTkFrame):
         self.template_search_entry.pack(side="left", padx=16, pady=14)
         self.template_search_entry.bind("<KeyRelease>", self.on_template_search_key)
 
-        # طµظ†ط¯ظˆظ‚ ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ ظ„ط§ ظ†ط¹ط±ط¶ظ‡ ظˆظ‡ظˆ ظپط§ط±ط؛طŒ ظ„ط£ظ† CTkFrame ظٹظ…ظ„ظƒ ط§ط±طھظپط§ط¹ظ‹ط§ ط§ظپطھط±ط§ط¶ظٹظ‹ط§ ظٹط®ظ„ظ‚ ظپط±ط§ط؛ظ‹ط§ ظƒط¨ظٹط±ظ‹ط§.
-        self.template_suggestions_area = ctk.CTkFrame(self, fg_color="transparent", height=1)
+        self.template_suggestions_area = None
 
-        # ظ…ظ†ط·ظ‚ط© ط§ظ„ط¨ط·ط§ظ‚ط§طھ: ط¥ط·ط§ط± ط¹ط§ط¯ظٹ ظ…ط«ط¨طھ ظپظٹ ط§ظ„ط£ط¹ظ„ظ‰.
-        # ظ„ط§ ظ†ط³طھط¹ظ…ظ„ CTkScrollableFrame ظ‡ظ†ط§ ظ„ط£ظ†ظ‡ ظƒط§ظ† ظٹط¯ظپط¹ ط§ظ„ط¨ط·ط§ظ‚ط§طھ ظ„ظ„ط£ط³ظپظ„ ظˆظٹط¬ط¹ظ„ظ‡ط§ طھط®طھظپظٹ ط®ظ„ظپ ط­ط§ط¬ط² ط£ط¨ظٹط¶.
         self.templates_area = ctk.CTkFrame(self, fg_color="transparent")
         self.templates_area.pack(fill="x", expand=False, anchor="n", pady=(0, 0))
         self.load_templates_cards()
@@ -212,11 +209,11 @@ class DocumentsPage(ctk.CTkFrame):
         self.load_templates_cards()
 
     def load_template_search_suggestions(self):
-        if not self.template_suggestions_area or not self.template_search_entry:
+        if not self.template_search_entry:
             return
-        for widget in self.template_suggestions_area.winfo_children():
-            widget.destroy()
-        self.template_suggestions_area.pack_forget()
+        if self.template_suggestions_area:
+            self.template_suggestions_area.destroy()
+            self.template_suggestions_area = None
         keyword = self.template_search_entry.get().strip()
         if not keyword:
             return
@@ -226,10 +223,8 @@ class DocumentsPage(ctk.CTkFrame):
             templates = []
         if not templates:
             return
-        try:
-            self.template_suggestions_area.pack(fill="x", pady=(0, 6), before=self.templates_area)
-        except Exception:
-            self.template_suggestions_area.pack(fill="x", pady=(0, 6))
+        self.template_suggestions_area = ctk.CTkFrame(self, fg_color="transparent")
+        self.template_suggestions_area.pack(fill="x", pady=(0, 6), before=self.templates_area)
         box = ctk.CTkFrame(self.template_suggestions_area, fg_color="#FFFFFF", corner_radius=14, border_width=1, border_color=BORDER)
         box.pack(fill="x", padx=6)
         for template_id, name, template_path, created_at, updated_at, template_content in templates:
@@ -252,9 +247,8 @@ class DocumentsPage(ctk.CTkFrame):
         self.template_search_entry.delete(0, "end")
         self.template_search_entry.insert(0, value)
         if self.template_suggestions_area:
-            for widget in self.template_suggestions_area.winfo_children():
-                widget.destroy()
-            self.template_suggestions_area.pack_forget()
+            self.template_suggestions_area.destroy()
+            self.template_suggestions_area = None
         self.load_templates_cards()
 
     def load_templates_cards(self):
