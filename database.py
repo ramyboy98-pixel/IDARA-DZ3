@@ -49,7 +49,7 @@ def init_database():
         CREATE TABLE IF NOT EXISTS document_categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE,
-            icon TEXT DEFAULT 'ًں“„',
+            icon TEXT DEFAULT 'ظ‹ع؛â€œâ€‍',
             created_at TEXT NOT NULL
         )
     """)
