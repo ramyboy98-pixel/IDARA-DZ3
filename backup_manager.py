@@ -32,9 +32,9 @@ def add_folder_to_zip(zip_file, folder_path, folder_name):
 
 def restore_backup(backup_path):
     if not backup_path:
-        raise FileNotFoundError("لم يتم اختيار ملف النسخة الاحتياطية")
+        raise FileNotFoundError("ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½")
     if not os.path.exists(backup_path):
-        raise FileNotFoundError("ملف النسخة الاحتياطية غير موجود")
+        raise FileNotFoundError("ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½")
     with zipfile.ZipFile(backup_path, "r") as backup:
         backup.extractall(get_base_dir())
     return True
