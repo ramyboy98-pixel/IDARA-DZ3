@@ -39,9 +39,9 @@ RED = "#DC2626"
 GRAY_BTN = "#F3F4F6"
 
 DEFAULT_FIELDS = [
-    "الاسم", "اللقب", "تاريخ الميلاد", "العنوان", "رقم الهاتف", "تاريخ الطلب",
-    "الجهة المرسل إليها", "المنصب", "الشهادة", "التخصص", "المستوى الدراسي", "الخبرة",
-    "الجامعة", "ولاية الجامعة", "السنة الجامعية", "الدفعة",
+    "ط§ظ„ط§ط³ظ…", "ط§ظ„ظ„ظ‚ط¨", "طھط§ط±ظٹط® ط§ظ„ظ…ظٹظ„ط§ط¯", "ط§ظ„ط¹ظ†ظˆط§ظ†", "ط±ظ‚ظ… ط§ظ„ظ‡ط§طھظپ", "طھط§ط±ظٹط® ط§ظ„ط·ظ„ط¨",
+    "ط§ظ„ط¬ظ‡ط© ط§ظ„ظ…ط±ط³ظ„ ط¥ظ„ظٹظ‡ط§", "ط§ظ„ظ…ظ†طµط¨", "ط§ظ„ط´ظ‡ط§ط¯ط©", "ط§ظ„طھط®طµطµ", "ط§ظ„ظ…ط³طھظˆظ‰ ط§ظ„ط¯ط±ط§ط³ظٹ", "ط§ظ„ط®ط¨ط±ط©",
+    "ط§ظ„ط¬ط§ظ…ط¹ط©", "ظˆظ„ط§ظٹط© ط§ظ„ط¬ط§ظ…ط¹ط©", "ط§ظ„ط³ظ†ط© ط§ظ„ط¬ط§ظ…ط¹ظٹط©", "ط§ظ„ط¯ظپط¹ط©",
 ]
 
 
@@ -87,8 +87,8 @@ class DocumentsPage(ctk.CTkFrame):
         self.clear_page()
         self.page_title(
             self,
-            "📄 قسم الوثائق",
-            "اختر القسم، ثم أنشئ نماذج وورد واستمارات خاصة بكل وثيقة."
+            "ًں“„ ظ‚ط³ظ… ط§ظ„ظˆط«ط§ط¦ظ‚",
+            "ط§ط®طھط± ط§ظ„ظ‚ط³ظ…طŒ ط«ظ… ط£ظ†ط´ط¦ ظ†ظ…ط§ط°ط¬ ظˆظˆط±ط¯ ظˆط§ط³طھظ…ط§ط±ط§طھ ط®ط§طµط© ط¨ظƒظ„ ظˆط«ظٹظ‚ط©."
         )
 
         grid = ctk.CTkFrame(self, fg_color="transparent")
@@ -97,13 +97,13 @@ class DocumentsPage(ctk.CTkFrame):
         try:
             categories = get_categories()
         except Exception as e:
-            messagebox.showerror("خطأ", f"تعذر تحميل الأقسام:\n{e}")
+            messagebox.showerror("ط®ط·ط£", f"طھط¹ط°ط± طھط­ظ…ظٹظ„ ط§ظ„ط£ظ‚ط³ط§ظ…:\n{e}")
             categories = []
 
         for col in range(4):
             grid.grid_columnconfigure(col, weight=1, uniform="document_categories")
 
-        visible_categories = [cat for cat in categories if cat[1] != "أخرى"]
+        visible_categories = [cat for cat in categories if cat[1] != "ط£ط®ط±ظ‰"]
 
         def bind_open(widget, cid, n, i):
             widget.bind("<Button-1>", lambda _event: self.open_category(cid, n, i))
@@ -132,7 +132,7 @@ class DocumentsPage(ctk.CTkFrame):
             name_label.pack()
             bind_open(name_label, category_id, name, icon)
 
-            subtitle = ctk.CTkLabel(card, text="إدارة النماذج والاستمارات", font=("Segoe UI", 12), text_color=MUTED)
+            subtitle = ctk.CTkLabel(card, text="ط¥ط¯ط§ط±ط© ط§ظ„ظ†ظ…ط§ط°ط¬ ظˆط§ظ„ط§ط³طھظ…ط§ط±ط§طھ", font=("Segoe UI", 12), text_color=MUTED)
             subtitle.pack(pady=(7, 0))
             bind_open(subtitle, category_id, name, icon)
 
@@ -166,10 +166,10 @@ class DocumentsPage(ctk.CTkFrame):
         header = self.page_title(
             self,
             f"{category_icon} {category_name}",
-            "أنشئ بطاقة لكل نموذج. كل بطاقة لها استمارة خاصة وملف وورد أو محرر داخلي."
+            "ط£ظ†ط´ط¦ ط¨ط·ط§ظ‚ط© ظ„ظƒظ„ ظ†ظ…ظˆط°ط¬. ظƒظ„ ط¨ط·ط§ظ‚ط© ظ„ظ‡ط§ ط§ط³طھظ…ط§ط±ط© ط®ط§طµط© ظˆظ…ظ„ظپ ظˆظˆط±ط¯ ط£ظˆ ظ…ط­ط±ط± ط¯ط§ط®ظ„ظٹ."
         )
 
-        back_btn = ctk.CTkButton(header, text="↩ رجوع", width=110, height=38, fg_color="#6B7280", hover_color="#4B5563", command=self.build_categories_ui)
+        back_btn = ctk.CTkButton(header, text="â†© ط±ط¬ظˆط¹", width=110, height=38, fg_color="#6B7280", hover_color="#4B5563", command=self.build_categories_ui)
         back_btn.pack(side="left", padx=5, pady=5)
 
         toolbar = ctk.CTkFrame(self, fg_color=CARD, corner_radius=20, border_width=1, border_color=BORDER)
@@ -177,7 +177,7 @@ class DocumentsPage(ctk.CTkFrame):
 
         add_btn = ctk.CTkButton(
             toolbar,
-            text="➕ إضافة نموذج جديد",
+            text="â‍• ط¥ط¶ط§ظپط© ظ†ظ…ظˆط°ط¬ ط¬ط¯ظٹط¯",
             width=190,
             height=42,
             corner_radius=14,
@@ -188,7 +188,7 @@ class DocumentsPage(ctk.CTkFrame):
 
         self.template_search_entry = ctk.CTkEntry(
             toolbar,
-            placeholder_text="بحث في نماذج هذا القسم...",
+            placeholder_text="ط¨ط­ط« ظپظٹ ظ†ظ…ط§ط°ط¬ ظ‡ط°ط§ ط§ظ„ظ‚ط³ظ…...",
             height=42,
             width=320,
             corner_radius=14,
@@ -197,11 +197,13 @@ class DocumentsPage(ctk.CTkFrame):
         self.template_search_entry.pack(side="left", padx=16, pady=14)
         self.template_search_entry.bind("<KeyRelease>", self.on_template_search_key)
 
-        self.template_suggestions_area = ctk.CTkFrame(self, fg_color="transparent")
-        self.template_suggestions_area.pack(fill="x", pady=(0, 6))
+        # طµظ†ط¯ظˆظ‚ ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ ظ„ط§ ظ†ط¹ط±ط¶ظ‡ ظˆظ‡ظˆ ظپط§ط±ط؛طŒ ظ„ط£ظ† CTkFrame ظٹظ…ظ„ظƒ ط§ط±طھظپط§ط¹ظ‹ط§ ط§ظپطھط±ط§ط¶ظٹظ‹ط§ ظٹط®ظ„ظ‚ ظپط±ط§ط؛ظ‹ط§ ظƒط¨ظٹط±ظ‹ط§.
+        self.template_suggestions_area = ctk.CTkFrame(self, fg_color="transparent", height=1)
 
-        self.templates_area = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        self.templates_area.pack(fill="both", expand=True)
+        # ظ…ظ†ط·ظ‚ط© ط§ظ„ط¨ط·ط§ظ‚ط§طھ: ط¥ط·ط§ط± ط¹ط§ط¯ظٹ ظ…ط«ط¨طھ ظپظٹ ط§ظ„ط£ط¹ظ„ظ‰.
+        # ظ„ط§ ظ†ط³طھط¹ظ…ظ„ CTkScrollableFrame ظ‡ظ†ط§ ظ„ط£ظ†ظ‡ ظƒط§ظ† ظٹط¯ظپط¹ ط§ظ„ط¨ط·ط§ظ‚ط§طھ ظ„ظ„ط£ط³ظپظ„ ظˆظٹط¬ط¹ظ„ظ‡ط§ طھط®طھظپظٹ ط®ظ„ظپ ط­ط§ط¬ط² ط£ط¨ظٹط¶.
+        self.templates_area = ctk.CTkFrame(self, fg_color="transparent")
+        self.templates_area.pack(fill="x", expand=False, anchor="n", pady=(0, 0))
         self.load_templates_cards()
 
 
@@ -214,6 +216,7 @@ class DocumentsPage(ctk.CTkFrame):
             return
         for widget in self.template_suggestions_area.winfo_children():
             widget.destroy()
+        self.template_suggestions_area.pack_forget()
         keyword = self.template_search_entry.get().strip()
         if not keyword:
             return
@@ -223,13 +226,17 @@ class DocumentsPage(ctk.CTkFrame):
             templates = []
         if not templates:
             return
+        try:
+            self.template_suggestions_area.pack(fill="x", pady=(0, 6), before=self.templates_area)
+        except Exception:
+            self.template_suggestions_area.pack(fill="x", pady=(0, 6))
         box = ctk.CTkFrame(self.template_suggestions_area, fg_color="#FFFFFF", corner_radius=14, border_width=1, border_color=BORDER)
         box.pack(fill="x", padx=6)
         for template_id, name, template_path, created_at, updated_at, template_content in templates:
-            status = "وورد" if template_path else "داخلي"
+            status = "ظˆظˆط±ط¯" if template_path else "ط¯ط§ط®ظ„ظٹ"
             btn = ctk.CTkButton(
                 box,
-                text=f"{name}  ·  {status}",
+                text=f"{name}  آ·  {status}",
                 anchor="e",
                 height=32,
                 corner_radius=10,
@@ -247,6 +254,7 @@ class DocumentsPage(ctk.CTkFrame):
         if self.template_suggestions_area:
             for widget in self.template_suggestions_area.winfo_children():
                 widget.destroy()
+            self.template_suggestions_area.pack_forget()
         self.load_templates_cards()
 
     def load_templates_cards(self):
@@ -259,104 +267,94 @@ class DocumentsPage(ctk.CTkFrame):
         try:
             templates = search_templates(self.current_category_id, keyword)
         except Exception as e:
-            messagebox.showerror("خطأ", f"تعذر تحميل النماذج:\n{e}")
+            messagebox.showerror("ط®ط·ط£", f"طھط¹ط°ط± طھط­ظ…ظٹظ„ ط§ظ„ظ†ظ…ط§ط°ط¬:\n{e}")
             templates = []
 
         if not templates:
-            empty = ctk.CTkFrame(self.templates_area, fg_color=CARD, corner_radius=22, border_width=1, border_color=BORDER)
-            empty.pack(fill="x", padx=8, pady=18)
-            ctk.CTkLabel(empty, text="لا توجد نماذج مطابقة.", font=("Segoe UI", 19, "bold"), text_color=TEXT).pack(pady=(28, 8))
-            ctk.CTkLabel(empty, text="اضغط على إضافة نموذج جديد لإنشاء استمارة وقالب خاص بها.", font=("Segoe UI", 14), text_color=MUTED).pack(pady=(0, 28))
+            empty = ctk.CTkFrame(self.templates_area, fg_color=CARD, corner_radius=18, border_width=1, border_color=BORDER)
+            empty.pack(fill="x", padx=0, pady=(8, 0), anchor="n")
+            ctk.CTkLabel(empty, text="ظ„ط§ طھظˆط¬ط¯ ظ†ظ…ط§ط°ط¬ ظ…ط·ط§ط¨ظ‚ط©.", font=("Segoe UI", 18, "bold"), text_color=TEXT).pack(pady=(22, 6))
+            ctk.CTkLabel(empty, text="ط§ط¶ط؛ط· ط¹ظ„ظ‰ ط¥ط¶ط§ظپط© ظ†ظ…ظˆط°ط¬ ط¬ط¯ظٹط¯ ظ„ط¥ظ†ط´ط§ط، ط§ط³طھظ…ط§ط±ط© ظˆظ‚ط§ظ„ط¨ ط®ط§طµ ط¨ظ‡ط§.", font=("Segoe UI", 13), text_color=MUTED).pack(pady=(0, 22))
             return
 
         grid = ctk.CTkFrame(self.templates_area, fg_color="transparent")
-        grid.pack(fill="x")
-        for col in range(3):
-            grid.grid_columnconfigure(col, weight=1)
+        grid.pack(fill="x", anchor="n", pady=(0, 0))
+        for col in range(2):
+            grid.grid_columnconfigure(col, weight=1, uniform="template_cards")
 
         for index, item in enumerate(templates):
             template_id, name, template_path, created_at, updated_at, template_content = item
-            row, col = divmod(index, 3)
+            row, col = divmod(index, 2)
             self.template_card(grid, template_id, name, template_path, template_content, updated_at, row, col)
 
     def template_card(self, parent, template_id, name, template_path, template_content, updated_at, row, col):
         fields = get_template_fields(template_id)
-        card = ctk.CTkFrame(parent, corner_radius=22, fg_color=CARD, border_width=1, border_color=BORDER)
-        card.grid(row=row, column=col, sticky="nsew", padx=10, pady=10)
+        card = ctk.CTkFrame(parent, corner_radius=18, fg_color=CARD, border_width=1, border_color=BORDER)
+        card.grid(row=row, column=col, sticky="ew", padx=10, pady=10)
         card.grid_propagate(False)
-        card.configure(width=300, height=205)
+        card.configure(height=118)
 
         def open_form(_event=None):
             self.open_fill_form_window(template_id)
 
-        def set_hand(widget):
+        def make_clickable(widget):
             try:
                 widget.configure(cursor="hand2")
             except Exception:
                 pass
             widget.bind("<Button-1>", open_form)
 
-        icon_label = ctk.CTkLabel(card, text="📄", font=("Segoe UI Emoji", 24), text_color=TEXT)
-        icon_label.pack(pady=(16, 2))
-        set_hand(icon_label)
-
-        title_label = ctk.CTkLabel(card, text=name, font=("Segoe UI", 17, "bold"), text_color=TEXT, wraplength=250)
-        title_label.pack(pady=(0, 2))
-        set_hand(title_label)
-
-        status_text = "قالب وورد" if template_path else "قالب داخلي" if template_content else "بدون قالب"
-        info_label = ctk.CTkLabel(card, text=f"{status_text}  •  {len(fields)} خانات", font=("Segoe UI", 11), text_color=MUTED)
-        info_label.pack(pady=(4, 2))
-        set_hand(info_label)
-
-        date_label = ctk.CTkLabel(card, text=f"آخر تعديل: {updated_at}", font=("Segoe UI", 10), text_color="#9CA3AF")
-        date_label.pack(pady=(0, 10))
-        set_hand(date_label)
-
-        actions = ctk.CTkFrame(card, fg_color="transparent")
-        actions.pack(fill="x", padx=22, pady=(0, 12))
-
-        edit_btn = ctk.CTkButton(
-            actions,
-            text="✏️",
-            width=54,
-            height=34,
-            corner_radius=12,
-            fg_color="#F59E0B",
-            hover_color="#D97706",
-            font=("Segoe UI Emoji", 16),
-            command=lambda: self.open_template_editor(template_id),
-        )
-        edit_btn.pack(side="right", padx=5)
+        # ط£ط²ط±ط§ط± طµط؛ظٹط±ط© ظپظٹ ط£ط¹ظ„ظ‰ ط§ظ„ط¨ط·ط§ظ‚ط©طŒ ظ„ط§ طھط¯ظپط¹ ط§ظ„ظ…ط­طھظˆظ‰ ظ„ظ„ط£ط³ظپظ„.
+        top = ctk.CTkFrame(card, fg_color="transparent")
+        top.pack(fill="x", padx=10, pady=(8, 0))
 
         delete_btn = ctk.CTkButton(
-            actions,
-            text="🗑️",
-            width=54,
-            height=34,
-            corner_radius=12,
-            fg_color=RED,
-            hover_color="#B91C1C",
-            font=("Segoe UI Emoji", 16),
-            command=lambda: self.confirm_delete_template(template_id),
+            top, text="ًں—‘ï¸ڈ", width=32, height=28, corner_radius=9,
+            fg_color="#FEE2E2", hover_color="#FECACA", text_color="#991B1B",
+            font=("Segoe UI Emoji", 13), command=lambda: self.confirm_delete_template(template_id),
         )
-        delete_btn.pack(side="left", padx=5)
+        delete_btn.pack(side="left", padx=(0, 4))
 
-        set_hand(card)
+        edit_btn = ctk.CTkButton(
+            top, text="âœڈï¸ڈ", width=32, height=28, corner_radius=9,
+            fg_color="#FEF3C7", hover_color="#FDE68A", text_color="#92400E",
+            font=("Segoe UI Emoji", 13), command=lambda: self.open_template_editor(template_id),
+        )
+        edit_btn.pack(side="left", padx=(0, 4))
+
+        icon_label = ctk.CTkLabel(top, text="ًں“„", font=("Segoe UI Emoji", 22), text_color=TEXT)
+        icon_label.pack(side="right", padx=(6, 0))
+        make_clickable(icon_label)
+
+        title_label = ctk.CTkLabel(top, text=name, font=("Segoe UI", 16, "bold"), text_color=TEXT, anchor="e")
+        title_label.pack(side="right", fill="x", expand=True)
+        make_clickable(title_label)
+
+        status_text = "ظ‚ط§ظ„ط¨ ظˆظˆط±ط¯" if template_path else "ظ‚ط§ظ„ط¨ ط¯ط§ط®ظ„ظٹ" if template_content else "ط¨ط¯ظˆظ† ظ‚ط§ظ„ط¨"
+        info_label = ctk.CTkLabel(card, text=f"{status_text}  â€¢  {len(fields)} ط®ط§ظ†ط§طھ", font=("Segoe UI", 11), text_color=MUTED, anchor="e")
+        info_label.pack(fill="x", padx=16, pady=(8, 0))
+        make_clickable(info_label)
+
+        date_label = ctk.CTkLabel(card, text=f"ط¢ط®ط± طھط¹ط¯ظٹظ„: {updated_at}", font=("Segoe UI", 10), text_color="#9CA3AF", anchor="e")
+        date_label.pack(fill="x", padx=16, pady=(4, 0))
+        make_clickable(date_label)
+
+        make_clickable(card)
 
         def enter(_event=None):
             card.configure(fg_color="#EFF6FF", border_color=BLUE)
-            icon_label.configure(font=("Segoe UI Emoji", 28), text_color=BLUE)
+            icon_label.configure(text_color=BLUE)
             title_label.configure(text_color=BLUE)
 
         def leave(_event=None):
             card.configure(fg_color=CARD, border_color=BORDER)
-            icon_label.configure(font=("Segoe UI Emoji", 24), text_color=TEXT)
+            icon_label.configure(text_color=TEXT)
             title_label.configure(text_color=TEXT)
 
         for widget in (card, icon_label, title_label, info_label, date_label):
             widget.bind("<Enter>", enter)
             widget.bind("<Leave>", leave)
+
 
     def make_modal(self, title, size="900x760"):
         window = ctk.CTkToplevel(self)
@@ -371,7 +369,7 @@ class DocumentsPage(ctk.CTkFrame):
         try:
             self._open_template_editor(template_id)
         except Exception as e:
-            messagebox.showerror("خطأ", f"تعذر فتح محرر النموذج:\n{e}")
+            messagebox.showerror("ط®ط·ط£", f"طھط¹ط°ط± ظپطھط­ ظ…ط­ط±ط± ط§ظ„ظ†ظ…ظˆط°ط¬:\n{e}")
 
     def _open_template_editor(self, template_id=None):
         is_edit = template_id is not None
@@ -381,28 +379,28 @@ class DocumentsPage(ctk.CTkFrame):
         selected_template_path = ctk.StringVar(value=existing[3] if existing and existing[3] else "")
         fields_list = [row[1] for row in existing_fields]
 
-        window = self.make_modal("تعديل نموذج" if is_edit else "إضافة نموذج جديد", "920x790")
+        window = self.make_modal("طھط¹ط¯ظٹظ„ ظ†ظ…ظˆط°ط¬" if is_edit else "ط¥ط¶ط§ظپط© ظ†ظ…ظˆط°ط¬ ط¬ط¯ظٹط¯", "920x790")
         container = ctk.CTkScrollableFrame(window, fg_color=BG)
         container.pack(fill="both", expand=True, padx=18, pady=18)
 
-        ctk.CTkLabel(container, text=("تعديل نموذج" if is_edit else f"إضافة نموذج داخل: {self.current_category_name}"), font=("Segoe UI", 25, "bold"), text_color=TEXT).pack(anchor="e", pady=(8, 18))
+        ctk.CTkLabel(container, text=("طھط¹ط¯ظٹظ„ ظ†ظ…ظˆط°ط¬" if is_edit else f"ط¥ط¶ط§ظپط© ظ†ظ…ظˆط°ط¬ ط¯ط§ط®ظ„: {self.current_category_name}"), font=("Segoe UI", 25, "bold"), text_color=TEXT).pack(anchor="e", pady=(8, 18))
 
         card = ctk.CTkFrame(container, fg_color=CARD, corner_radius=22, border_width=1, border_color=BORDER)
         card.pack(fill="x", pady=(0, 14))
 
-        ctk.CTkLabel(card, text="اسم النموذج", font=("Segoe UI", 15, "bold"), text_color=TEXT, anchor="e").pack(fill="x", padx=18, pady=(18, 6))
-        name_entry = ctk.CTkEntry(card, height=42, font=("Segoe UI", 15), placeholder_text="مثال: طلب وظيفة")
+        ctk.CTkLabel(card, text="ط§ط³ظ… ط§ظ„ظ†ظ…ظˆط°ط¬", font=("Segoe UI", 15, "bold"), text_color=TEXT, anchor="e").pack(fill="x", padx=18, pady=(18, 6))
+        name_entry = ctk.CTkEntry(card, height=42, font=("Segoe UI", 15), placeholder_text="ظ…ط«ط§ظ„: ط·ظ„ط¨ ظˆط¸ظٹظپط©")
         name_entry.pack(fill="x", padx=18, pady=(0, 16))
         if existing:
             name_entry.insert(0, existing[2])
 
         fields_card = ctk.CTkFrame(container, fg_color=CARD, corner_radius=22, border_width=1, border_color=BORDER)
         fields_card.pack(fill="x", pady=(0, 14))
-        ctk.CTkLabel(fields_card, text="خانات الاستمارة", font=("Segoe UI", 16, "bold"), text_color=TEXT).pack(anchor="e", padx=18, pady=(18, 8))
+        ctk.CTkLabel(fields_card, text="ط®ط§ظ†ط§طھ ط§ظ„ط§ط³طھظ…ط§ط±ط©", font=("Segoe UI", 16, "bold"), text_color=TEXT).pack(anchor="e", padx=18, pady=(18, 8))
 
         input_row = ctk.CTkFrame(fields_card, fg_color="transparent")
         input_row.pack(fill="x", padx=18)
-        field_entry = ctk.CTkEntry(input_row, height=40, placeholder_text="اكتب اسم الخانة ثم اضغط إضافة", font=("Segoe UI", 14))
+        field_entry = ctk.CTkEntry(input_row, height=40, placeholder_text="ط§ظƒطھط¨ ط§ط³ظ… ط§ظ„ط®ط§ظ†ط© ط«ظ… ط§ط¶ط؛ط· ط¥ط¶ط§ظپط©", font=("Segoe UI", 14))
         field_entry.pack(side="right", fill="x", expand=True, padx=(0, 8))
 
         fields_box = ctk.CTkTextbox(fields_card, height=160, font=("Segoe UI", 15))
@@ -412,11 +410,11 @@ class DocumentsPage(ctk.CTkFrame):
             fields_box.configure(state="normal")
             fields_box.delete("1.0", "end")
             if not fields_list:
-                fields_box.insert("end", "لم تضف أي خانة بعد.\n")
+                fields_box.insert("end", "ظ„ظ… طھط¶ظپ ط£ظٹ ط®ط§ظ†ط© ط¨ط¹ط¯.\n")
             else:
                 for index, field in enumerate(fields_list, start=1):
                     key = make_field_key(field)
-                    fields_box.insert("end", f"{index}. {field}     ←     {{{{{key}}}}}\n")
+                    fields_box.insert("end", f"{index}. {field}     â†گ     {{{{{key}}}}}\n")
             fields_box.configure(state="disabled")
 
         def add_field(value=None):
@@ -424,7 +422,7 @@ class DocumentsPage(ctk.CTkFrame):
             if not value:
                 return
             if make_field_key(value) in [make_field_key(x) for x in fields_list]:
-                messagebox.showwarning("تنبيه", "هذه الخانة موجودة مسبقا")
+                messagebox.showwarning("طھظ†ط¨ظٹظ‡", "ظ‡ط°ظ‡ ط§ظ„ط®ط§ظ†ط© ظ…ظˆط¬ظˆط¯ط© ظ…ط³ط¨ظ‚ط§")
                 return
             fields_list.append(value)
             field_entry.delete(0, "end")
@@ -435,7 +433,7 @@ class DocumentsPage(ctk.CTkFrame):
                 fields_list.pop()
                 refresh_fields_box()
 
-        ctk.CTkButton(input_row, text="إضافة", width=120, height=40, command=add_field).pack(side="left")
+        ctk.CTkButton(input_row, text="ط¥ط¶ط§ظپط©", width=120, height=40, command=add_field).pack(side="left")
         field_entry.bind("<Return>", lambda e: add_field())
 
         quick = ctk.CTkFrame(fields_card, fg_color="transparent")
@@ -443,46 +441,46 @@ class DocumentsPage(ctk.CTkFrame):
         for f in DEFAULT_FIELDS[:8]:
             ctk.CTkButton(quick, text=f"+ {f}", width=95, height=30, fg_color=GRAY_BTN, hover_color="#E5E7EB", text_color=TEXT, command=lambda x=f: add_field(x)).pack(side="right", padx=3, pady=3)
 
-        ctk.CTkButton(fields_card, text="حذف آخر خانة", width=150, height=34, fg_color="#6B7280", hover_color="#4B5563", command=remove_last_field).pack(anchor="e", padx=18, pady=(0, 16))
+        ctk.CTkButton(fields_card, text="ط­ط°ظپ ط¢ط®ط± ط®ط§ظ†ط©", width=150, height=34, fg_color="#6B7280", hover_color="#4B5563", command=remove_last_field).pack(anchor="e", padx=18, pady=(0, 16))
         refresh_fields_box()
 
         template_card = ctk.CTkFrame(container, fg_color=CARD, corner_radius=22, border_width=1, border_color=BORDER)
         template_card.pack(fill="x", pady=(0, 14))
-        ctk.CTkLabel(template_card, text="القالب", font=("Segoe UI", 16, "bold"), text_color=TEXT).pack(anchor="e", padx=18, pady=(18, 6))
+        ctk.CTkLabel(template_card, text="ط§ظ„ظ‚ط§ظ„ط¨", font=("Segoe UI", 16, "bold"), text_color=TEXT).pack(anchor="e", padx=18, pady=(18, 6))
 
-        path_label = ctk.CTkLabel(template_card, text=selected_template_path.get() or "لم يتم اختيار ملف وورد بعد", font=("Segoe UI", 13), text_color=MUTED, wraplength=780, justify="right")
+        path_label = ctk.CTkLabel(template_card, text=selected_template_path.get() or "ظ„ظ… ظٹطھظ… ط§ط®طھظٹط§ط± ظ…ظ„ظپ ظˆظˆط±ط¯ ط¨ط¹ط¯", font=("Segoe UI", 13), text_color=MUTED, wraplength=780, justify="right")
         path_label.pack(fill="x", padx=18, pady=(0, 8))
 
         def choose_word_template():
-            file_path = filedialog.askopenfilename(title="اختر نموذج وورد", filetypes=[("ملفات وورد", "*.docx"), ("كل الملفات", "*.*")])
+            file_path = filedialog.askopenfilename(title="ط§ط®طھط± ظ†ظ…ظˆط°ط¬ ظˆظˆط±ط¯", filetypes=[("ظ…ظ„ظپط§طھ ظˆظˆط±ط¯", "*.docx"), ("ظƒظ„ ط§ظ„ظ…ظ„ظپط§طھ", "*.*")])
             if file_path:
                 selected_template_path.set(file_path)
                 path_label.configure(text=file_path)
 
         def clear_word_template():
             selected_template_path.set("")
-            path_label.configure(text="لم يتم اختيار ملف وورد بعد")
+            path_label.configure(text="ظ„ظ… ظٹطھظ… ط§ط®طھظٹط§ط± ظ…ظ„ظپ ظˆظˆط±ط¯ ط¨ط¹ط¯")
 
         btns = ctk.CTkFrame(template_card, fg_color="transparent")
         btns.pack(fill="x", padx=18, pady=(0, 14))
-        ctk.CTkButton(btns, text="📎 رفع نموذج وورد من الجهاز", height=40, command=choose_word_template).pack(side="right", fill="x", expand=True, padx=(0, 5))
-        ctk.CTkButton(btns, text="إزالة ملف وورد واستعمال المحرر", height=40, fg_color="#6B7280", hover_color="#4B5563", command=clear_word_template).pack(side="left", fill="x", expand=True, padx=(5, 0))
+        ctk.CTkButton(btns, text="ًں“ژ ط±ظپط¹ ظ†ظ…ظˆط°ط¬ ظˆظˆط±ط¯ ظ…ظ† ط§ظ„ط¬ظ‡ط§ط²", height=40, command=choose_word_template).pack(side="right", fill="x", expand=True, padx=(0, 5))
+        ctk.CTkButton(btns, text="ط¥ط²ط§ظ„ط© ظ…ظ„ظپ ظˆظˆط±ط¯ ظˆط§ط³طھط¹ظ…ط§ظ„ ط§ظ„ظ…ط­ط±ط±", height=40, fg_color="#6B7280", hover_color="#4B5563", command=clear_word_template).pack(side="left", fill="x", expand=True, padx=(5, 0))
 
-        ctk.CTkLabel(template_card, text="المحرر الداخلي: استعمل الخانات بالشكل {{الاسم}} أو {{رقم_الهاتف}}", font=("Segoe UI", 13), text_color=MUTED).pack(anchor="e", padx=18)
+        ctk.CTkLabel(template_card, text="ط§ظ„ظ…ط­ط±ط± ط§ظ„ط¯ط§ط®ظ„ظٹ: ط§ط³طھط¹ظ…ظ„ ط§ظ„ط®ط§ظ†ط§طھ ط¨ط§ظ„ط´ظƒظ„ {{ط§ظ„ط§ط³ظ…}} ط£ظˆ {{ط±ظ‚ظ…_ط§ظ„ظ‡ط§طھظپ}}", font=("Segoe UI", 13), text_color=MUTED).pack(anchor="e", padx=18)
         editor = ctk.CTkTextbox(template_card, height=250, font=("Segoe UI", 15))
         editor.pack(fill="x", padx=18, pady=(8, 18))
         if existing and existing[6]:
             editor.insert("end", existing[6])
         else:
-            editor.insert("end", "اكتب نص النموذج هنا...\n\nأنا الممضي أسفله {{الاسم}} {{اللقب}}\nالساكن بـ {{العنوان}}\nرقم الهاتف: {{رقم_الهاتف}}\n")
+            editor.insert("end", "ط§ظƒطھط¨ ظ†طµ ط§ظ„ظ†ظ…ظˆط°ط¬ ظ‡ظ†ط§...\n\nط£ظ†ط§ ط§ظ„ظ…ظ…ط¶ظٹ ط£ط³ظپظ„ظ‡ {{ط§ظ„ط§ط³ظ…}} {{ط§ظ„ظ„ظ‚ط¨}}\nط§ظ„ط³ط§ظƒظ† ط¨ظ€ {{ط§ظ„ط¹ظ†ظˆط§ظ†}}\nط±ظ‚ظ… ط§ظ„ظ‡ط§طھظپ: {{ط±ظ‚ظ…_ط§ظ„ظ‡ط§طھظپ}}\n")
 
         def save_template_action():
             template_name = name_entry.get().strip()
             if not template_name:
-                messagebox.showerror("خطأ", "اكتب اسم النموذج")
+                messagebox.showerror("ط®ط·ط£", "ط§ظƒطھط¨ ط§ط³ظ… ط§ظ„ظ†ظ…ظˆط°ط¬")
                 return
             if not fields_list:
-                messagebox.showerror("خطأ", "أضف خانات الاستمارة")
+                messagebox.showerror("ط®ط·ط£", "ط£ط¶ظپ ط®ط§ظ†ط§طھ ط§ظ„ط§ط³طھظ…ط§ط±ط©")
                 return
 
             source_path = selected_template_path.get().strip()
@@ -495,7 +493,7 @@ class DocumentsPage(ctk.CTkFrame):
                     try:
                         shutil.copy2(source_path, final_path)
                     except Exception as e:
-                        messagebox.showerror("خطأ", f"تعذر نسخ ملف وورد:\n{e}")
+                        messagebox.showerror("ط®ط·ط£", f"طھط¹ط°ط± ظ†ط³ط® ظ…ظ„ظپ ظˆظˆط±ط¯:\n{e}")
                         return
                 template_content_to_save = None
             else:
@@ -503,7 +501,7 @@ class DocumentsPage(ctk.CTkFrame):
                 template_content_to_save = template_content
 
             if not final_path and not template_content_to_save:
-                messagebox.showerror("خطأ", "ارفع ملف وورد أو اكتب النموذج داخل المحرر")
+                messagebox.showerror("ط®ط·ط£", "ط§ط±ظپط¹ ظ…ظ„ظپ ظˆظˆط±ط¯ ط£ظˆ ط§ظƒطھط¨ ط§ظ„ظ†ظ…ظˆط°ط¬ ط¯ط§ط®ظ„ ط§ظ„ظ…ط­ط±ط±")
                 return
 
             try:
@@ -513,25 +511,25 @@ class DocumentsPage(ctk.CTkFrame):
                     new_id = add_template(self.current_category_id, template_name, fields_list, final_path, template_content_to_save)
                     if final_path and final_path.endswith("_new.docx"):
                         pass
-                messagebox.showinfo("تم", "تم حفظ النموذج بنجاح")
+                messagebox.showinfo("طھظ…", "طھظ… ط­ظپط¸ ط§ظ„ظ†ظ…ظˆط°ط¬ ط¨ظ†ط¬ط§ط­")
                 window.destroy()
                 self.load_templates_cards()
             except Exception as e:
-                messagebox.showerror("خطأ", f"تعذر حفظ النموذج:\n{e}")
+                messagebox.showerror("ط®ط·ط£", f"طھط¹ط°ط± ط­ظپط¸ ط§ظ„ظ†ظ…ظˆط°ط¬:\n{e}")
 
-        ctk.CTkButton(container, text="💾 حفظ النموذج", height=48, corner_radius=16, font=("Segoe UI", 16, "bold"), command=save_template_action).pack(fill="x", pady=(0, 20))
+        ctk.CTkButton(container, text="ًں’¾ ط­ظپط¸ ط§ظ„ظ†ظ…ظˆط°ط¬", height=48, corner_radius=16, font=("Segoe UI", 16, "bold"), command=save_template_action).pack(fill="x", pady=(0, 20))
 
     def open_fill_form_window(self, template_id):
         try:
             self._open_fill_form_window(template_id)
         except Exception as e:
-            messagebox.showerror("خطأ في فتح الاستمارة", str(e))
+            messagebox.showerror("ط®ط·ط£ ظپظٹ ظپطھط­ ط§ظ„ط§ط³طھظ…ط§ط±ط©", str(e))
 
     def _open_fill_form_window(self, template_id):
         template = get_template(template_id)
         fields = get_template_fields(template_id)
         if not template:
-            messagebox.showerror("خطأ", "النموذج غير موجود")
+            messagebox.showerror("ط®ط·ط£", "ط§ظ„ظ†ظ…ظˆط°ط¬ ط؛ظٹط± ظ…ظˆط¬ظˆط¯")
             return
 
         template_name = template[2]
@@ -543,21 +541,21 @@ class DocumentsPage(ctk.CTkFrame):
         container = ctk.CTkScrollableFrame(window, fg_color=BG)
         container.pack(fill="both", expand=True, padx=18, pady=18)
 
-        ctk.CTkLabel(container, text=f"استمارة: {template_name}", font=("Segoe UI", 25, "bold"), text_color=TEXT).pack(anchor="e", pady=(8, 6))
-        ctk.CTkLabel(container, text="املأ بيانات الزبون ثم أنشئ الوثيقة. سيتم حفظ الزبون والأرشيف تلقائيا.", font=("Segoe UI", 14), text_color=MUTED).pack(anchor="e", pady=(0, 14))
+        ctk.CTkLabel(container, text=f"ط§ط³طھظ…ط§ط±ط©: {template_name}", font=("Segoe UI", 25, "bold"), text_color=TEXT).pack(anchor="e", pady=(8, 6))
+        ctk.CTkLabel(container, text="ط§ظ…ظ„ط£ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط²ط¨ظˆظ† ط«ظ… ط£ظ†ط´ط¦ ط§ظ„ظˆط«ظٹظ‚ط©. ط³ظٹطھظ… ط­ظپط¸ ط§ظ„ط²ط¨ظˆظ† ظˆط§ظ„ط£ط±ط´ظٹظپ طھظ„ظ‚ط§ط¦ظٹط§.", font=("Segoe UI", 14), text_color=MUTED).pack(anchor="e", pady=(0, 14))
 
         customers = search_customers("")[:80]
         customer_map = {}
-        customer_values = ["-- اختر زبونا محفوظا --"]
+        customer_values = ["-- ط§ط®طھط± ط²ط¨ظˆظ†ط§ ظ…ط­ظپظˆط¸ط§ --"]
         for cid, first, last, address, phone in customers:
             label = f"{first or ''} {last or ''} | {phone or ''}".strip()
             customer_values.append(label)
-            customer_map[label] = {"الاسم": first or "", "اللقب": last or "", "العنوان": address or "", "رقم_الهاتف": phone or "", "الهاتف": phone or ""}
+            customer_map[label] = {"ط§ظ„ط§ط³ظ…": first or "", "ط§ظ„ظ„ظ‚ط¨": last or "", "ط§ظ„ط¹ظ†ظˆط§ظ†": address or "", "ط±ظ‚ظ…_ط§ظ„ظ‡ط§طھظپ": phone or "", "ط§ظ„ظ‡ط§طھظپ": phone or ""}
 
         if customers:
             choose_card = ctk.CTkFrame(container, fg_color=CARD, corner_radius=18, border_width=1, border_color=BORDER)
             choose_card.pack(fill="x", pady=(0, 12))
-            ctk.CTkLabel(choose_card, text="اختيار زبون محفوظ", font=("Segoe UI", 14, "bold"), text_color=TEXT).pack(anchor="e", padx=16, pady=(14, 6))
+            ctk.CTkLabel(choose_card, text="ط§ط®طھظٹط§ط± ط²ط¨ظˆظ† ظ…ط­ظپظˆط¸", font=("Segoe UI", 14, "bold"), text_color=TEXT).pack(anchor="e", padx=16, pady=(14, 6))
             combo = ctk.CTkComboBox(choose_card, values=customer_values, height=38, font=("Segoe UI", 13))
             combo.pack(fill="x", padx=16, pady=(0, 14))
 
@@ -595,26 +593,26 @@ class DocumentsPage(ctk.CTkFrame):
             return ""
 
         def save_customer_from_form(data):
-            first_name = get_value(data, ["الاسم", "الإسم", "اسم"])
-            last_name = get_value(data, ["اللقب"])
-            address = get_value(data, ["العنوان", "الاقامة", "الإقامة", "مكان الإقامة"])
-            phone = get_value(data, ["الهاتف", "رقم الهاتف", "رقم_الهاتف", "الرقم"])
+            first_name = get_value(data, ["ط§ظ„ط§ط³ظ…", "ط§ظ„ط¥ط³ظ…", "ط§ط³ظ…"])
+            last_name = get_value(data, ["ط§ظ„ظ„ظ‚ط¨"])
+            address = get_value(data, ["ط§ظ„ط¹ظ†ظˆط§ظ†", "ط§ظ„ط§ظ‚ط§ظ…ط©", "ط§ظ„ط¥ظ‚ط§ظ…ط©", "ظ…ظƒط§ظ† ط§ظ„ط¥ظ‚ط§ظ…ط©"])
+            phone = get_value(data, ["ط§ظ„ظ‡ط§طھظپ", "ط±ظ‚ظ… ط§ظ„ظ‡ط§طھظپ", "ط±ظ‚ظ…_ط§ظ„ظ‡ط§طھظپ", "ط§ظ„ط±ظ‚ظ…"])
             if first_name or last_name or phone:
                 save_customer(first_name, last_name, address, phone)
             return first_name, last_name, address, phone
 
         def preview_data():
             data = collect_data()
-            preview = self.make_modal("معاينة", "760x650")
+            preview = self.make_modal("ظ…ط¹ط§ظٹظ†ط©", "760x650")
             box = ctk.CTkFrame(preview, fg_color=BG)
             box.pack(fill="both", expand=True, padx=18, pady=18)
-            ctk.CTkLabel(box, text="معاينة قبل إنشاء الوثيقة", font=("Segoe UI", 22, "bold"), text_color=TEXT).pack(anchor="e", pady=(0, 12))
+            ctk.CTkLabel(box, text="ظ…ط¹ط§ظٹظ†ط© ظ‚ط¨ظ„ ط¥ظ†ط´ط§ط، ط§ظ„ظˆط«ظٹظ‚ط©", font=("Segoe UI", 22, "bold"), text_color=TEXT).pack(anchor="e", pady=(0, 12))
             text = ctk.CTkTextbox(box, font=("Segoe UI", 15))
             text.pack(fill="both", expand=True)
             if template_content:
                 text.insert("end", render_text_template(template_content, data))
             else:
-                text.insert("end", f"النموذج: {template_name}\nالقسم: {self.current_category_name}\n\n")
+                text.insert("end", f"ط§ظ„ظ†ظ…ظˆط°ط¬: {template_name}\nط§ظ„ظ‚ط³ظ…: {self.current_category_name}\n\n")
                 for field_id, field_label, field_key, field_order in fields:
                     text.insert("end", f"{field_label}: {data.get(field_key, '')}\n")
             text.configure(state="disabled")
@@ -622,7 +620,7 @@ class DocumentsPage(ctk.CTkFrame):
         def create_document():
             data = collect_data()
             if not template_path and not template_content:
-                messagebox.showerror("خطأ", "هذا النموذج غير مرتبط بملف وورد ولا يحتوي على نص داخلي.")
+                messagebox.showerror("ط®ط·ط£", "ظ‡ط°ط§ ط§ظ„ظ†ظ…ظˆط°ط¬ ط؛ظٹط± ظ…ط±طھط¨ط· ط¨ظ…ظ„ظپ ظˆظˆط±ط¯ ظˆظ„ط§ ظٹط­طھظˆظٹ ط¹ظ„ظ‰ ظ†طµ ط¯ط§ط®ظ„ظٹ.")
                 return
             try:
                 if template_path:
@@ -642,39 +640,39 @@ class DocumentsPage(ctk.CTkFrame):
                 save_archive(customer_name, phone, self.current_category_name, template_name, output_path, pdf_path)
                 self.show_result_window(window, output_path, pdf_path, pdf_error)
             except Exception as e:
-                messagebox.showerror("خطأ", f"تعذر إنشاء الوثيقة:\n{e}")
+                messagebox.showerror("ط®ط·ط£", f"طھط¹ط°ط± ط¥ظ†ط´ط§ط، ط§ظ„ظˆط«ظٹظ‚ط©:\n{e}")
 
         buttons = ctk.CTkFrame(container, fg_color="transparent")
         buttons.pack(fill="x", pady=(4, 18))
-        ctk.CTkButton(buttons, text="👁 معاينة", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color="#6B7280", hover_color="#4B5563", command=preview_data).pack(side="right", fill="x", expand=True, padx=(0, 6))
-        ctk.CTkButton(buttons, text="📄 إنشاء وورد وبي دي إف", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color=GREEN, hover_color="#047857", command=create_document).pack(side="left", fill="x", expand=True, padx=(6, 0))
+        ctk.CTkButton(buttons, text="ًں‘پ ظ…ط¹ط§ظٹظ†ط©", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color="#6B7280", hover_color="#4B5563", command=preview_data).pack(side="right", fill="x", expand=True, padx=(0, 6))
+        ctk.CTkButton(buttons, text="ًں“„ ط¥ظ†ط´ط§ط، ظˆظˆط±ط¯ ظˆط¨ظٹ ط¯ظٹ ط¥ظپ", height=46, corner_radius=15, font=("Segoe UI", 15, "bold"), fg_color=GREEN, hover_color="#047857", command=create_document).pack(side="left", fill="x", expand=True, padx=(6, 0))
 
     def show_result_window(self, parent, output_path, pdf_path, pdf_error=""):
-        result = self.make_modal("تم إنشاء الوثيقة", "680x400")
+        result = self.make_modal("طھظ… ط¥ظ†ط´ط§ط، ط§ظ„ظˆط«ظٹظ‚ط©", "680x400")
         box = ctk.CTkFrame(result, fg_color=BG)
         box.pack(fill="both", expand=True, padx=20, pady=20)
-        ctk.CTkLabel(box, text="✅ تم إنشاء الوثيقة وحفظها في الأرشيف", font=("Segoe UI", 22, "bold"), text_color=TEXT).pack(pady=(8, 14))
+        ctk.CTkLabel(box, text="âœ… طھظ… ط¥ظ†ط´ط§ط، ط§ظ„ظˆط«ظٹظ‚ط© ظˆط­ظپط¸ظ‡ط§ ظپظٹ ط§ظ„ط£ط±ط´ظٹظپ", font=("Segoe UI", 22, "bold"), text_color=TEXT).pack(pady=(8, 14))
         path_text = ctk.CTkTextbox(box, height=105, font=("Segoe UI", 13))
         path_text.pack(fill="x", pady=8)
         if pdf_path:
             path_text.insert("end", f"Word:\n{output_path}\n\nPDF:\n{pdf_path}")
         else:
-            path_text.insert("end", f"Word:\n{output_path}\n\nPDF:\nلم يتم إنشاء PDF.\n\nالسبب:\n{pdf_error}")
+            path_text.insert("end", f"Word:\n{output_path}\n\nPDF:\nظ„ظ… ظٹطھظ… ط¥ظ†ط´ط§ط، PDF.\n\nط§ظ„ط³ط¨ط¨:\n{pdf_error}")
         path_text.configure(state="disabled")
         buttons = ctk.CTkFrame(box, fg_color="transparent")
         buttons.pack(fill="x", pady=(18, 0))
-        ctk.CTkButton(buttons, text="📄 فتح ملف وورد", height=40, command=lambda: open_file(output_path)).pack(side="right", fill="x", expand=True, padx=5)
+        ctk.CTkButton(buttons, text="ًں“„ ظپطھط­ ظ…ظ„ظپ ظˆظˆط±ط¯", height=40, command=lambda: open_file(output_path)).pack(side="right", fill="x", expand=True, padx=5)
         if pdf_path:
-            ctk.CTkButton(buttons, text="📕 فتح PDF", height=40, command=lambda: open_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
-            ctk.CTkButton(buttons, text="🖨️ طباعة PDF", height=40, fg_color=GREEN, hover_color="#047857", command=lambda: print_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
+            ctk.CTkButton(buttons, text="ًں“• ظپطھط­ PDF", height=40, command=lambda: open_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
+            ctk.CTkButton(buttons, text="ًں–¨ï¸ڈ ط·ط¨ط§ط¹ط© PDF", height=40, fg_color=GREEN, hover_color="#047857", command=lambda: print_file(pdf_path)).pack(side="right", fill="x", expand=True, padx=5)
         else:
-            ctk.CTkButton(buttons, text="📕 لم يتم إنشاء PDF", height=40, state="disabled").pack(side="right", fill="x", expand=True, padx=5)
+            ctk.CTkButton(buttons, text="ًں“• ظ„ظ… ظٹطھظ… ط¥ظ†ط´ط§ط، PDF", height=40, state="disabled").pack(side="right", fill="x", expand=True, padx=5)
 
     def confirm_delete_template(self, template_id):
-        answer = messagebox.askyesno("تأكيد الحذف", "هل تريد حذف هذا النموذج؟\nسيتم حذف الاستمارة وربطها بالقالب، لكن الوثائق القديمة في الأرشيف لا تحذف.")
+        answer = messagebox.askyesno("طھط£ظƒظٹط¯ ط§ظ„ط­ط°ظپ", "ظ‡ظ„ طھط±ظٹط¯ ط­ط°ظپ ظ‡ط°ط§ ط§ظ„ظ†ظ…ظˆط°ط¬طں\nط³ظٹطھظ… ط­ط°ظپ ط§ظ„ط§ط³طھظ…ط§ط±ط© ظˆط±ط¨ط·ظ‡ط§ ط¨ط§ظ„ظ‚ط§ظ„ط¨طŒ ظ„ظƒظ† ط§ظ„ظˆط«ط§ط¦ظ‚ ط§ظ„ظ‚ط¯ظٹظ…ط© ظپظٹ ط§ظ„ط£ط±ط´ظٹظپ ظ„ط§ طھط­ط°ظپ.")
         if answer:
             try:
                 delete_template(template_id)
                 self.load_templates_cards()
             except Exception as e:
-                messagebox.showerror("خطأ", f"تعذر حذف النموذج:\n{e}")
+                messagebox.showerror("ط®ط·ط£", f"طھط¹ط°ط± ط­ط°ظپ ط§ظ„ظ†ظ…ظˆط°ط¬:\n{e}")
