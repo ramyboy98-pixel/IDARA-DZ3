@@ -6,11 +6,11 @@ from tkinter import messagebox
 
 def open_file(path):
     if not path:
-        messagebox.showerror("خطأ", "لا يوجد ملف لفتحه")
+        messagebox.showerror("ï؟½ï؟½ï؟½", "ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½")
         return
 
     if not os.path.exists(path):
-        messagebox.showerror("خطأ", f"الملف غير موجود:\n{path}")
+        messagebox.showerror("ï؟½ï؟½ï؟½", f"ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½:\n{path}")
         return
 
     try:
@@ -21,21 +21,21 @@ def open_file(path):
         else:
             subprocess.call(["xdg-open", path])
     except Exception as e:
-        messagebox.showerror("خطأ", f"تعذر فتح الملف:\n{e}")
+        messagebox.showerror("ï؟½ï؟½ï؟½", f"ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½:\n{e}")
 
 
 def print_file(path):
     """
-    طباعة مباشرة على Windows.
-    في الأنظمة الأخرى يفتح الملف ليتم طباعته يدويا.
+    ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ Windows.
+    ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½.
     """
 
     if not path:
-        messagebox.showerror("خطأ", "لا يوجد ملف للطباعة")
+        messagebox.showerror("ï؟½ï؟½ï؟½", "ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½")
         return
 
     if not os.path.exists(path):
-        messagebox.showerror("خطأ", f"الملف غير موجود:\n{path}")
+        messagebox.showerror("ï؟½ï؟½ï؟½", f"ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½:\n{path}")
         return
 
     try:
@@ -46,8 +46,8 @@ def print_file(path):
 
     except Exception as e:
         messagebox.showerror(
-            "خطأ",
-            f"تعذر إرسال الملف للطابعة:\n{e}\n\nسيتم فتح الملف للطباعة اليدوية."
+            "ï؟½ï؟½ï؟½",
+            f"ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½:\n{e}\n\nï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½."
         )
         open_file(path)
       
