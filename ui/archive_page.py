@@ -23,7 +23,7 @@ class ArchivePage(ctk.CTkFrame):
 
     def build_ui(self):
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", pady=(10, 18))
+        header.pack(fill="x", pady=(10, 12))
 
         title_box = ctk.CTkFrame(header, fg_color="transparent")
         title_box.pack(side="right", fill="x", expand=True)
@@ -31,7 +31,7 @@ class ArchivePage(ctk.CTkFrame):
         ctk.CTkLabel(title_box, text="بحث، فلترة، فتح وإعادة طباعة الوثائق المحفوظة.", font=("Segoe UI", 14), text_color=MUTED).pack(anchor="e", pady=(5, 0))
 
         filters = ctk.CTkFrame(self, corner_radius=20, fg_color=CARD, border_width=1, border_color=BORDER)
-        filters.pack(fill="x", pady=(0, 12))
+        filters.pack(fill="x", pady=(0, 8), anchor="n")
 
         self.search_entry = ctk.CTkEntry(filters, placeholder_text="بحث باسم الزبون أو الوثيقة أو الهاتف...", width=340, height=40, font=("Segoe UI", 14))
         self.search_entry.pack(side="right", padx=14, pady=14)
@@ -52,7 +52,7 @@ class ArchivePage(ctk.CTkFrame):
         self.suggestions_box.pack(fill="x", pady=(0, 8))
 
         action_bar = ctk.CTkFrame(self, fg_color="transparent")
-        action_bar.pack(fill="x", pady=(0, 12))
+        action_bar.pack(fill="x", pady=(0, 8), anchor="n")
 
         ctk.CTkButton(action_bar, text="📄 فتح ملف وورد", width=130, height=38, command=self.open_selected_word).pack(side="right", padx=5)
         ctk.CTkButton(action_bar, text="📕 فتح PDF", width=130, height=38, command=self.open_selected_pdf).pack(side="right", padx=5)
@@ -61,7 +61,7 @@ class ArchivePage(ctk.CTkFrame):
         self.count_label.pack(side="left", padx=8)
 
         container = ctk.CTkFrame(self, corner_radius=22, fg_color=CARD, border_width=1, border_color=BORDER)
-        container.pack(fill="both", expand=True)
+        container.pack(fill="both", expand=True, anchor="n")
 
         style = ttk.Style()
         try:
@@ -95,8 +95,6 @@ class ArchivePage(ctk.CTkFrame):
         scrollbar.pack(side="right", fill="y", pady=18, padx=(0, 18))
         self.tree.bind("<Double-1>", lambda e: self.open_selected_word())
 
-        info = ctk.CTkLabel(self, text="النقر المزدوج يفتح ملف وورد. استعمل صيغة التاريخ 2026-05-12 للفلترة.", font=("Segoe UI", 13), text_color=MUTED)
-        info.pack(anchor="e", pady=(10, 0))
 
 
     def on_search_key(self, event=None):
