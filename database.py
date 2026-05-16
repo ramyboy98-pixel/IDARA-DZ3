@@ -343,3 +343,55 @@ def search_customers(keyword=""):
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+
+def search_templates_all(keyword=""):
+    conn = connect_db()
+    cursor = conn.cursor()
+    like_keyword = f"%{keyword}%"
+    cursor.execute("""
+        SELECT
+            t.id,
+            t.name,
+            c.name AS category_name,
+            t.updated_at,
+            CASE WHEN t.template_path IS NOT NULL AND t.template_path != '' THEN 1 ELSE 0 END AS has_word,
+            CASE WHEN t.template_content IS NOT NULL AND t.template_content != '' THEN 1 ELSE 0 END AS has_text
+        FROM document_templates t
+        LEFT JOIN document_categories c ON c.id = t.category_id
+        WHERE t.name LIKE ? OR c.name LIKE ?
+        ORDER BY t.updated_at DESC, t.id DESC
+    """, (like_keyword, like_keyword))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+
+def count_documents_today():
+    conn = connect_db()
+    cursor = conn.cursor()
+    today = datetime.now().strftime("%Y-%m-%d")
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM archive
+        WHERE date(created_at) = date(?)
+          AND (document_type IS NULL OR document_type NOT LIKE '%خدمات%')
+    """, (today,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
+
+
+def count_services_today():
+    conn = connect_db()
+    cursor = conn.cursor()
+    today = datetime.now().strftime("%Y-%m-%d")
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM archive
+        WHERE date(created_at) = date(?)
+          AND document_type LIKE '%خدمات%'
+    """, (today,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
