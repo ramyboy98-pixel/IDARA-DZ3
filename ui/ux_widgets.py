@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import customtkinter as ctk
 
 
@@ -36,7 +37,7 @@ class ToastNotification(ctk.CTkFrame):
 
 
 class LoadingOverlay(ctk.CTkFrame):
-    def __init__(self, parent, text="ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½..."):
+    def __init__(self, parent, text="جاري التحميل..."):
         super().__init__(
             parent,
             fg_color="#000000"
@@ -70,7 +71,7 @@ class LoadingOverlay(ctk.CTkFrame):
 
         sub = ctk.CTkLabel(
             box,
-            text="ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½",
+            text="يرجى الانتظار قليلاً...",
             font=("Segoe UI", 13),
             text_color="#6B7280"
         )
