@@ -172,11 +172,11 @@ class IdaraDZApp(ctk.CTk):
         )
         self.clock_label.pack(side="left", padx=6)
 
-        self.search_box = ctk.CTkFrame(self.topbar, fg_color="transparent")
-        self.search_box.pack(side="left", padx=14)
+        search_box = ctk.CTkFrame(self.topbar, fg_color="transparent")
+        search_box.pack(side="left", padx=14)
 
         self.global_search = ctk.CTkEntry(
-            self.search_box,
+            search_box,
             placeholder_text="بحث سريع في النماذج والأرشيف والزبائن...",
             width=340,
             height=42,
@@ -190,7 +190,7 @@ class IdaraDZApp(ctk.CTk):
         self.global_search.bind("<FocusOut>", lambda e: self.after(180, self.hide_global_suggestions))
 
         self.global_search_btn = ctk.CTkButton(
-            self.search_box,
+            search_box,
             text="🔍 بحث",
             width=78,
             height=42,
@@ -205,28 +205,31 @@ class IdaraDZApp(ctk.CTk):
 
 
     def build_global_suggestions_panel(self):
-        # قائمة اقتراحات صغيرة تظهر فوق محتوى الصفحة وتحت خانة البحث مباشرة
-        # نستعمل place بدل pack حتى لا تدفع الصفحة للأسفل.
         self.global_suggestions_panel = ctk.CTkFrame(
             self.content_wrapper,
-            fg_color="#E5E7EB",
+            width=340,
+            fg_color="#E5E5E5",
             corner_radius=0,
-            border_width=1,
-            border_color="#D1D5DB",
+            border_width=0,
         )
         self.global_suggestions_visible = False
 
-    def _place_global_suggestions(self, rows_count):
-        self.update_idletasks()
-
-        x = self.global_search.winfo_rootx() - self.content_wrapper.winfo_rootx()
-        y = self.global_search.winfo_rooty() - self.content_wrapper.winfo_rooty() + self.global_search.winfo_height() + 2
-        width = self.global_search.winfo_width()
-        height = max(28, min(rows_count, 3) * 28)
-
-        self.global_suggestions_panel.place(x=x, y=y, width=width, height=height)
-        self.global_suggestions_panel.lift()
-        self.global_suggestions_visible = True
+    def _place_global_suggestions_panel(self):
+        """وضع الاقتراحات مباشرة تحت خانة البحث كقائمة منسدلة."""
+        try:
+            self.update_idletasks()
+            x = self.global_search.winfo_rootx() - self.content_wrapper.winfo_rootx()
+            y = (
+                self.global_search.winfo_rooty()
+                - self.content_wrapper.winfo_rooty()
+                + self.global_search.winfo_height()
+            )
+            width = self.global_search.winfo_width()
+            self.global_suggestions_panel.place(x=x, y=y, width=width)
+            self.global_suggestions_panel.lift()
+            self.global_suggestions_visible = True
+        except Exception as e:
+            print(f"خطأ في وضع اقتراحات البحث: {e}")
 
     def hide_global_suggestions(self):
         if getattr(self, "global_suggestions_visible", False):
@@ -234,11 +237,14 @@ class IdaraDZApp(ctk.CTk):
             self.global_suggestions_visible = False
 
     def update_global_suggestions(self, event=None):
-        """تحديث قائمة اقتراحات البحث الذكية"""
-        if event is not None and getattr(event, "keysym", "") in ("Return", "Escape", "Up", "Down"):
-            if getattr(event, "keysym", "") == "Escape":
+        """إظهار اقتراحات البحث الذكية تحت خانة البحث مباشرة."""
+        if event is not None:
+            key = getattr(event, "keysym", "")
+            if key == "Escape":
                 self.hide_global_suggestions()
-            return
+                return
+            if key in ("Return", "Up", "Down", "Left", "Right"):
+                return
 
         query = self.global_search.get().strip()
 
@@ -270,19 +276,23 @@ class IdaraDZApp(ctk.CTk):
                 anchor="e",
                 height=28,
                 corner_radius=0,
-                fg_color="#E5E7EB",
-                hover_color="#D1D5DB",
+                fg_color="#E5E5E5",
+                hover_color="#D4D4D4",
                 text_color="#111827",
-                font=("Segoe UI", 13),
+                font=("Segoe UI", 12),
                 command=lambda value=title: self.choose_global_suggestion(value),
             )
-            row.pack(fill="x")
+            row.pack(fill="x", padx=0, pady=0)
 
-        count = len(self.global_suggestions_panel.winfo_children())
-        if count:
-            self._place_global_suggestions(count)
-        else:
-            self.hide_global_suggestions()
+            if index < min(len(suggestions), 3) - 1:
+                line = ctk.CTkFrame(
+                    self.global_suggestions_panel,
+                    height=1,
+                    fg_color="#D1D5DB",
+                )
+                line.pack(fill="x")
+
+        self._place_global_suggestions_panel()
 
     def choose_global_suggestion(self, value):
         """اختيار اقتراح"""
