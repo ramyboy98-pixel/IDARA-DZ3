@@ -40,7 +40,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.after(
             1300,
-            lambda: self.toast("مرحبا بك في IDARA DZ", "info")
+            lambda: self.toast("ظ…ط±ط­ط¨ط§ ط¨ظƒ ظپظٹ IDARA DZ", "info")
         )
 
         self.bind("<F1>", lambda e: self.show_documents())
@@ -52,11 +52,11 @@ class IdaraDZApp(ctk.CTk):
         self.bind("<Escape>", lambda e: self.show_dashboard())
 
     def toast(self, message, kind="success"):
-        """عرض إشعار مؤقت"""
+        """ط¹ط±ط¶ ط¥ط´ط¹ط§ط± ظ…ط¤ظ‚طھ"""
         try:
             ToastNotification(self, message, kind)
         except Exception as e:
-            print(f"خطأ في عرض الإشعار: {e}")
+            print(f"ط®ط·ط£ ظپظٹ ط¹ط±ط¶ ط§ظ„ط¥ط´ط¹ط§ط±: {e}")
 
     def build_ui(self):
 
@@ -105,7 +105,7 @@ class IdaraDZApp(ctk.CTk):
 
         subtitle = ctk.CTkLabel(
             self.sidebar,
-            text="نظام الوثائق والخدمات",
+            text="ظ†ط¸ط§ظ… ط§ظ„ظˆط«ط§ط¦ظ‚ ظˆط§ظ„ط®ط¯ظ…ط§طھ",
             font=("Segoe UI", 13),
             text_color="#9CA3AF"
         )
@@ -113,10 +113,10 @@ class IdaraDZApp(ctk.CTk):
 
         self.nav_buttons = {}
 
-        self.add_nav_button("dashboard", "📊 الرئيسية", self.show_dashboard)
-        self.add_nav_button("documents", "📄 وثائق", self.show_documents)
-        self.add_nav_button("services", "🔧 خدمات إلكترونية", self.show_services)
-        self.add_nav_button("archive", "📁 أرشيف", self.show_archive)
+        self.add_nav_button("dashboard", "ًں“ٹ ط§ظ„ط±ط¦ظٹط³ظٹط©", self.show_dashboard)
+        self.add_nav_button("documents", "ًں“„ ظˆط«ط§ط¦ظ‚", self.show_documents)
+        self.add_nav_button("services", "ًں”§ ط®ط¯ظ…ط§طھ ط¥ظ„ظƒطھط±ظˆظ†ظٹط©", self.show_services)
+        self.add_nav_button("archive", "ًں“پ ط£ط±ط´ظٹظپ", self.show_archive)
 
         spacer = ctk.CTkFrame(
             self.sidebar,
@@ -124,7 +124,7 @@ class IdaraDZApp(ctk.CTk):
         )
         spacer.pack(fill="both", expand=True)
 
-        self.add_nav_button("settings", "⚙️ الإعدادات", self.show_settings)
+        self.add_nav_button("settings", "âڑ™ï¸ڈ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ", self.show_settings)
 
 
     def add_nav_button(self, key, text, command):
@@ -158,7 +158,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.page_title = ctk.CTkLabel(
             self.topbar,
-            text="الرئيسية",
+            text="ط§ظ„ط±ط¦ظٹط³ظٹط©",
             font=("Segoe UI", 26, "bold"),
             text_color="#111827"
         )
@@ -177,7 +177,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.global_search = ctk.CTkEntry(
             search_box,
-            placeholder_text="بحث سريع في النماذج والأرشيف والزبائن...",
+            placeholder_text="ط¨ط­ط« ط³ط±ظٹط¹ ظپظٹ ط§ظ„ظ†ظ…ط§ط°ط¬ ظˆط§ظ„ط£ط±ط´ظٹظپ ظˆط§ظ„ط²ط¨ط§ط¦ظ†...",
             width=340,
             height=42,
             corner_radius=14,
@@ -191,7 +191,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.global_search_btn = ctk.CTkButton(
             search_box,
-            text="🔍 بحث",
+            text="ًں”چ ط¨ط­ط«",
             width=78,
             height=42,
             corner_radius=14,
@@ -207,122 +207,130 @@ class IdaraDZApp(ctk.CTk):
     def build_global_suggestions_panel(self):
         self.global_suggestions_panel = ctk.CTkFrame(
             self.content_wrapper,
-            fg_color="#FFFFFF",
-            corner_radius=14,
-            border_width=1,
-            border_color="#E5E7EB",
+            fg_color="#E5E7EB",
+            corner_radius=0,
+            border_width=0,
         )
         self.global_suggestions_visible = False
 
+    def position_global_suggestions(self):
+        """ظˆط¶ط¹ ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ ظ…ط¨ط§ط´ط±ط© طھط­طھ ط®ط§ظ†ط© ط§ظ„ط¨ط­ط« ط¨ط¯ظˆظ† ط¯ظپط¹ ط§ظ„طµظپط­ط© ظ„ظ„ط£ط³ظپظ„"""
+        try:
+            self.update_idletasks()
+            x = self.global_search.winfo_rootx() - self.content_wrapper.winfo_rootx()
+            y = (
+                self.global_search.winfo_rooty()
+                - self.content_wrapper.winfo_rooty()
+                + self.global_search.winfo_height()
+                + 2
+            )
+            width = self.global_search.winfo_width()
+            self.global_suggestions_panel.place(x=x, y=y, width=width)
+        except Exception as e:
+            print(f"ط®ط·ط£ ظپظٹ ظˆط¶ط¹ ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ: {e}")
+
     def hide_global_suggestions(self):
         if getattr(self, "global_suggestions_visible", False):
-            self.global_suggestions_panel.pack_forget()
+            self.global_suggestions_panel.place_forget()
             self.global_suggestions_visible = False
 
     def update_global_suggestions(self, event=None):
-        """تحديث قائمة الاقتراحات"""
+        """طھط­ط¯ظٹط« ظ‚ط§ط¦ظ…ط© ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ ط£ط³ظپظ„ ط®ط§ظ†ط© ط§ظ„ط¨ط­ط«"""
         if event is not None and getattr(event, "keysym", "") in ("Return", "Escape", "Up", "Down"):
             if getattr(event, "keysym", "") == "Escape":
                 self.hide_global_suggestions()
             return
-        
+
         query = self.global_search.get().strip()
-        
-        # حذف الاقتراحات السابقة
+
         for widget in self.global_suggestions_panel.winfo_children():
             widget.destroy()
-        
+
         if len(query) < 1:
             self.hide_global_suggestions()
             return
-        
-        # محاولة الحصول على الاقتراحات
+
         try:
-            suggestions = get_search_suggestions(query, limit=7)
+            suggestions = get_search_suggestions(query, limit=3)
         except Exception as e:
-            print(f"خطأ في الحصول على الاقتراحات: {e}")
+            print(f"ط®ط·ط£ ظپظٹ ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ: {e}")
             suggestions = []
-        
+
         if not suggestions:
             self.hide_global_suggestions()
             return
-        
-        # عرض الاقتراحات
+
         for item in suggestions:
-            try:
-                title = item.get("title", "")
-                kind = item.get("type", "")
-                subtitle = item.get("subtitle", "")
-                
-                display = f"{title}  •  {kind}"
-                if subtitle:
-                    display += f"  •  {subtitle}"
-                
-                btn = ctk.CTkButton(
-                    self.global_suggestions_panel,
-                    text=display,
-                    anchor="e",
-                    height=34,
-                    corner_radius=10,
-                    fg_color="transparent",
-                    hover_color="#EFF6FF",
-                    text_color="#111827",
-                    font=("Segoe UI", 13),
-                    command=lambda value=title: self.choose_global_suggestion(value),
-                )
-                btn.pack(fill="x", padx=8, pady=3)
-            except Exception as e:
-                print(f"خطأ في عرض الاقتراح: {e}")
+            title = str(item.get("title", "")).strip()
+            if not title:
                 continue
-        
-        if not self.global_suggestions_visible:
-            self.global_suggestions_panel.pack(fill="x", padx=260, pady=(0, 8))
-            self.global_suggestions_visible = True
+
+            btn = ctk.CTkButton(
+                self.global_suggestions_panel,
+                text=title,
+                anchor="e",
+                height=28,
+                corner_radius=0,
+                fg_color="#E5E7EB",
+                hover_color="#D1D5DB",
+                text_color="#111827",
+                font=("Segoe UI", 13),
+                command=lambda value=title: self.choose_global_suggestion(value),
+            )
+            btn.pack(fill="x", padx=0, pady=0)
+
+        if not self.global_suggestions_panel.winfo_children():
+            self.hide_global_suggestions()
+            return
+
+        self.position_global_suggestions()
+        self.global_suggestions_panel.lift()
+        self.global_suggestions_visible = True
 
     def choose_global_suggestion(self, value):
-        """اختيار اقتراح"""
+        """ط§ط®طھظٹط§ط± ط§ظ‚طھط±ط§ط­"""
         try:
             self.global_search.delete(0, "end")
             self.global_search.insert(0, value)
             self.hide_global_suggestions()
             self.run_global_search()
         except Exception as e:
-            print(f"خطأ في اختيار الاقتراح: {e}")
+            print(f"ط®ط·ط£ ظپظٹ ط§ط®طھظٹط§ط± ط§ظ„ط§ظ‚طھط±ط§ط­: {e}")
 
     def focus_global_search(self):
-        """التركيز على حقل البحث"""
+        """ط§ظ„طھط±ظƒظٹط² ط¹ظ„ظ‰ ط­ظ‚ظ„ ط§ظ„ط¨ط­ط«"""
         self.global_search.focus()
 
     def run_global_search(self):
-        """تنفيذ البحث العام"""
+        """طھظ†ظپظٹط° ط§ظ„ط¨ط­ط« ط§ظ„ط¹ط§ظ…"""
         query = self.global_search.get().strip()
         self.hide_global_suggestions()
         
         if not query:
-            self.toast("اكتب كلمة للبحث", "info")
+            self.toast("ط§ظƒطھط¨ ظƒظ„ظ…ط© ظ„ظ„ط¨ط­ط«", "info")
             self.global_search.focus()
             return
         
         self.show_search_results(query)
 
     def show_search_results(self, query):
-        """عرض نتائج البحث"""
+        """ط¹ط±ط¶ ظ†طھط§ط¦ط¬ ط§ظ„ط¨ط­ط«"""
         try:
             self.clear_content()
-            self.set_active("search", "نتائج البحث")
+            self.set_active("search", "ظ†طھط§ط¦ط¬ ط§ظ„ط¨ط­ط«")
             page = SearchPage(self.content, query=query, app=self)
             page.pack(fill="both", expand=True)
         except Exception as e:
-            print(f"خطأ في عرض نتائج البحث: {e}")
-            self.toast(f"خطأ: {str(e)}", "error")
+            print(f"ط®ط·ط£ ظپظٹ ط¹ط±ط¶ ظ†طھط§ط¦ط¬ ط§ظ„ط¨ط­ط«: {e}")
+            self.toast(f"ط®ط·ط£: {str(e)}", "error")
 
     def clear_content(self):
-        """مسح محتوى الصفحة الحالية"""
+        """ظ…ط³ط­ ظ…ط­طھظˆظ‰ ط§ظ„طµظپط­ط© ط§ظ„ط­ط§ظ„ظٹط©"""
         for widget in self.content.winfo_children():
             widget.destroy()
 
     def set_active(self, key, title):
-        """تعيين الصفحة النشطة"""
+        """طھط¹ظٹظٹظ† ط§ظ„طµظپط­ط© ط§ظ„ظ†ط´ط·ط©"""
         self.current_page = key
         self.page_title.configure(text=title)
 
@@ -341,78 +349,78 @@ class IdaraDZApp(ctk.CTk):
                 )
 
     def show_dashboard(self):
-        """عرض صفحة لوحة التحكم"""
+        """ط¹ط±ط¶ طµظپط­ط© ظ„ظˆط­ط© ط§ظ„طھط­ظƒظ…"""
         try:
             self.clear_content()
-            self.set_active("dashboard", "الرئيسية")
+            self.set_active("dashboard", "ط§ظ„ط±ط¦ظٹط³ظٹط©")
             page = DashboardPage(self.content, app=self)
             page.pack(fill="both", expand=True)
         except Exception as e:
-            print(f"خطأ في عرض لوحة التحكم: {e}")
-            self.toast(f"خطأ: {str(e)}", "error")
+            print(f"ط®ط·ط£ ظپظٹ ط¹ط±ط¶ ظ„ظˆط­ط© ط§ظ„طھط­ظƒظ…: {e}")
+            self.toast(f"ط®ط·ط£: {str(e)}", "error")
 
     def show_documents(self):
-        """عرض صفحة الوثائق"""
+        """ط¹ط±ط¶ طµظپط­ط© ط§ظ„ظˆط«ط§ط¦ظ‚"""
         try:
             self.clear_content()
-            self.set_active("documents", "وثائق")
+            self.set_active("documents", "ظˆط«ط§ط¦ظ‚")
             page = DocumentsPage(self.content)
             page.pack(fill="both", expand=True)
         except Exception as e:
-            print(f"خطأ في عرض الوثائق: {e}")
-            self.toast(f"خطأ: {str(e)}", "error")
+            print(f"ط®ط·ط£ ظپظٹ ط¹ط±ط¶ ط§ظ„ظˆط«ط§ط¦ظ‚: {e}")
+            self.toast(f"ط®ط·ط£: {str(e)}", "error")
 
     def show_services(self):
-        """عرض صفحة الخدمات"""
+        """ط¹ط±ط¶ طµظپط­ط© ط§ظ„ط®ط¯ظ…ط§طھ"""
         try:
             self.clear_content()
-            self.set_active("services", "خدمات إلكترونية")
+            self.set_active("services", "ط®ط¯ظ…ط§طھ ط¥ظ„ظƒطھط±ظˆظ†ظٹط©")
             page = ServicesPage(self.content, app=self)
             page.pack(fill="both", expand=True)
         except Exception as e:
-            print(f"خطأ في عرض الخدمات: {e}")
-            self.toast(f"خطأ: {str(e)}", "error")
+            print(f"ط®ط·ط£ ظپظٹ ط¹ط±ط¶ ط§ظ„ط®ط¯ظ…ط§طھ: {e}")
+            self.toast(f"ط®ط·ط£: {str(e)}", "error")
 
     def show_archive(self):
-        """عرض صفحة الأرشيف"""
+        """ط¹ط±ط¶ طµظپط­ط© ط§ظ„ط£ط±ط´ظٹظپ"""
         try:
             self.clear_content()
-            self.set_active("archive", "الأرشيف")
+            self.set_active("archive", "ط§ظ„ط£ط±ط´ظٹظپ")
             page = ArchivePage(self.content)
             page.pack(fill="both", expand=True)
         except Exception as e:
-            print(f"خطأ في عرض الأرشيف: {e}")
-            self.toast(f"خطأ: {str(e)}", "error")
+            print(f"ط®ط·ط£ ظپظٹ ط¹ط±ط¶ ط§ظ„ط£ط±ط´ظٹظپ: {e}")
+            self.toast(f"ط®ط·ط£: {str(e)}", "error")
 
     def show_customers(self):
-        """عرض صفحة الزبائن"""
+        """ط¹ط±ط¶ طµظپط­ط© ط§ظ„ط²ط¨ط§ط¦ظ†"""
         try:
             self.clear_content()
-            self.set_active("customers", "الزبائن")
+            self.set_active("customers", "ط§ظ„ط²ط¨ط§ط¦ظ†")
             page = CustomersPage(self.content)
             page.pack(fill="both", expand=True)
         except Exception as e:
-            print(f"خطأ في عرض الزبائن: {e}")
-            self.toast(f"خطأ: {str(e)}", "error")
+            print(f"ط®ط·ط£ ظپظٹ ط¹ط±ط¶ ط§ظ„ط²ط¨ط§ط¦ظ†: {e}")
+            self.toast(f"ط®ط·ط£: {str(e)}", "error")
 
     def show_settings(self):
-        """عرض صفحة الإعدادات"""
+        """ط¹ط±ط¶ طµظپط­ط© ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ"""
         try:
             self.clear_content()
-            self.set_active("settings", "الإعدادات")
+            self.set_active("settings", "ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ")
             page = SettingsPage(self.content)
             page.pack(fill="both", expand=True)
         except Exception as e:
-            print(f"خطأ في عرض الإعدادات: {e}")
-            self.toast(f"خطأ: {str(e)}", "error")
+            print(f"ط®ط·ط£ ظپظٹ ط¹ط±ط¶ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ: {e}")
+            self.toast(f"ط®ط·ط£: {str(e)}", "error")
 
     def update_clock(self):
-        """تحديث الساعة"""
+        """طھط­ط¯ظٹط« ط§ظ„ط³ط§ط¹ط©"""
         try:
             now = datetime.now().strftime("%Y/%m/%d  -  %H:%M:%S")
             self.clock_label.configure(text=now)
         except Exception as e:
-            print(f"خطأ في تحديث الساعة: {e}")
+            print(f"ط®ط·ط£ ظپظٹ طھط­ط¯ظٹط« ط§ظ„ط³ط§ط¹ط©: {e}")
         finally:
             self.after(1000, self.update_clock)
 
