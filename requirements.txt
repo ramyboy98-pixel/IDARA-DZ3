@@ -1,7 +1,6 @@
 customtkinter
 pillow
 python-docx
-docxtpl
 reportlab
 pyinstaller
 pywin32
