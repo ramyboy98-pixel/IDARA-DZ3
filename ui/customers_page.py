@@ -22,7 +22,7 @@ class CustomersPage(ctk.CTkFrame):
 
         title = ctk.CTkLabel(
             header,
-            text="ًں‘¥ ط§ظ„ط²ط¨ط§ط¦ظ†",
+            text="👥 الزبائن",
             font=("Segoe UI", 30, "bold"),
             text_color="#111827"
         )
@@ -30,7 +30,7 @@ class CustomersPage(ctk.CTkFrame):
 
         self.search_entry = ctk.CTkEntry(
             header,
-            placeholder_text="ط¨ط­ط« ط¨ط§ط³ظ… ط§ظ„ط²ط¨ظˆظ† ط£ظˆ ط§ظ„ظ‡ط§طھظپ...",
+            placeholder_text="بحث باسم الزبون أو الهاتف...",
             width=320,
             height=42,
             font=("Segoe UI", 14)
@@ -46,14 +46,14 @@ class CustomersPage(ctk.CTkFrame):
         )
         form.pack(fill="x", pady=(0, 20))
 
-        self.first_name = self.create_input(form, "ط§ظ„ط§ط³ظ…")
-        self.last_name = self.create_input(form, "ط§ظ„ظ„ظ‚ط¨")
-        self.address = self.create_input(form, "ط§ظ„ط¹ظ†ظˆط§ظ†")
-        self.phone = self.create_input(form, "ط±ظ‚ظ… ط§ظ„ظ‡ط§طھظپ")
+        self.first_name = self.create_input(form, "الاسم")
+        self.last_name = self.create_input(form, "اللقب")
+        self.address = self.create_input(form, "العنوان")
+        self.phone = self.create_input(form, "رقم الهاتف")
 
         save_btn = ctk.CTkButton(
             form,
-            text="ًں’¾ ط­ظپط¸ ط§ظ„ط²ط¨ظˆظ†",
+            text="💾 حفظ الزبون",
             height=44,
             font=("Segoe UI", 15, "bold"),
             command=self.save_customer_action
@@ -100,10 +100,10 @@ class CustomersPage(ctk.CTkFrame):
             show="headings"
         )
 
-        self.tree.heading("first_name", text="ط§ظ„ط§ط³ظ…")
-        self.tree.heading("last_name", text="ط§ظ„ظ„ظ‚ط¨")
-        self.tree.heading("phone", text="ط§ظ„ظ‡ط§طھظپ")
-        self.tree.heading("address", text="ط§ظ„ط¹ظ†ظˆط§ظ†")
+        self.tree.heading("first_name", text="الاسم")
+        self.tree.heading("last_name", text="اللقب")
+        self.tree.heading("phone", text="الهاتف")
+        self.tree.heading("address", text="العنوان")
 
         self.tree.column("first_name", width=150, anchor="center")
         self.tree.column("last_name", width=150, anchor="center")
@@ -145,7 +145,7 @@ class CustomersPage(ctk.CTkFrame):
         first_name = self.first_name.get().strip()
 
         if not first_name:
-            messagebox.showerror("ط®ط·ط£", "ط§ظƒطھط¨ ط§ط³ظ… ط§ظ„ط²ط¨ظˆظ†")
+            messagebox.showerror("خطأ", "اكتب اسم الزبون")
             return
 
         save_customer(
