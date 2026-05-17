@@ -23,21 +23,50 @@ def now_text():
 
 
 def column_exists(cursor, table_name, column_name):
-    cursor.execute("PRAGMA table_info(?)", (table_name,))
+    """
+    فحص وجود عمود داخل جدول.
+    مهم: SQLite لا يقبل استعمال ? داخل PRAGMA table_info
+    لذلك نستعمل اسم الجدول مباشرة بعد التحقق منه.
+    """
+    allowed_tables = {
+        "document_categories",
+        "document_templates",
+        "template_fields",
+        "archive",
+        "customers",
+        "service_operations",
+    }
+
+    if table_name not in allowed_tables:
+        return False
+
+    cursor.execute(f"PRAGMA table_info({table_name})")
     return any(col[1] == column_name for col in cursor.fetchall())
 
 
 def make_field_key(field_label):
     key = str(field_label or "").strip()
     replacements = [
-        (" ", "_"), ("-", "_"), ("/", "_"), ("\\", "_"),
-        (":", "_"), ("؛", "_"), (",", "_"), ("،", "_"),
-        (".", "_"), ("(", ""), (")", ""), ("[", ""), ("]", "")
+        (" ", "_"),
+        ("-", "_"),
+        ("/", "_"),
+        ("\\", "_"),
+        (":", "_"),
+        ("؛", "_"),
+        (",", "_"),
+        ("،", "_"),
+        (".", "_"),
+        ("(", ""),
+        (")", ""),
+        ("[", ""),
+        ("]", ""),
     ]
     for old, new in replacements:
         key = key.replace(old, new)
+
     while "__" in key:
         key = key.replace("__", "_")
+
     return key.strip("_")
 
 
@@ -126,17 +155,18 @@ def init_database():
         conn.commit()
     finally:
         conn.close()
-    
+
     seed_default_categories()
 
 
 def seed_default_categories():
     categories = [
-        ("طلبات خطية", "📝"),
-        ("تقرير شرعي", "⚖️"),
-        ("سيرة ذاتية", "👤"),
+        ("طلبات خطية", "📄"),
+        ("تصريح شرفي", "✒️"),
+        ("سيرة ذاتية", "📋"),
         ("فاتورة", "🧾"),
     ]
+
     conn = connect_db()
     try:
         cursor = conn.cursor()
@@ -154,7 +184,10 @@ def get_categories():
     conn = connect_db()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, name, icon FROM document_categories WHERE name != ? ORDER BY id ASC", ("أخرى",))
+        cursor.execute(
+            "SELECT id, name, icon FROM document_categories WHERE name != ? ORDER BY id ASC",
+            ("أخرى",)
+        )
         rows = cursor.fetchall()
         return rows
     finally:
@@ -166,11 +199,13 @@ def add_template(category_id, template_name, fields, template_path=None, templat
     try:
         cursor = conn.cursor()
         created = now_text()
+
         cursor.execute("""
             INSERT INTO document_templates
             (category_id, name, template_path, template_content, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (category_id, template_name, template_path, template_content, created, created))
+
         template_id = cursor.lastrowid
         _replace_template_fields(cursor, template_id, fields, created)
         conn.commit()
@@ -181,18 +216,24 @@ def add_template(category_id, template_name, fields, template_path=None, templat
 
 def _replace_template_fields(cursor, template_id, fields, created_at=None):
     created_at = created_at or now_text()
+
     cursor.execute("DELETE FROM template_fields WHERE template_id = ?", (template_id,))
+
     clean_fields = []
     seen = set()
+
     for field_label in fields:
         label = str(field_label).strip()
         if not label:
             continue
+
         key = make_field_key(label)
         if key in seen:
             continue
+
         seen.add(key)
         clean_fields.append(label)
+
     for index, field_label in enumerate(clean_fields):
         cursor.execute("""
             INSERT INTO template_fields
@@ -206,11 +247,13 @@ def update_template(template_id, template_name, fields, template_path=None, temp
     try:
         cursor = conn.cursor()
         updated = now_text()
+
         cursor.execute("""
             UPDATE document_templates
             SET name = ?, template_path = ?, template_content = ?, updated_at = ?
             WHERE id = ?
         """, (template_name, template_path, template_content, updated, template_id))
+
         _replace_template_fields(cursor, template_id, fields, updated)
         conn.commit()
     finally:
@@ -238,12 +281,14 @@ def search_templates(category_id, keyword=""):
     try:
         cursor = conn.cursor()
         like_keyword = f"%{keyword}%"
+
         cursor.execute("""
             SELECT id, name, template_path, created_at, updated_at, template_content
             FROM document_templates
             WHERE category_id = ? AND name LIKE ?
             ORDER BY id DESC
         """, (category_id, like_keyword))
+
         rows = cursor.fetchall()
         return rows
     finally:
@@ -311,19 +356,25 @@ def search_archive(keyword="", date_from="", date_to=""):
     try:
         cursor = conn.cursor()
         like_keyword = f"%{keyword}%"
+
         query = """
             SELECT id, customer_name, phone, document_type, template_name, word_path, pdf_path, created_at
             FROM archive
             WHERE (customer_name LIKE ? OR phone LIKE ? OR document_type LIKE ? OR template_name LIKE ?)
         """
+
         params = [like_keyword, like_keyword, like_keyword, like_keyword]
+
         if date_from:
             query += " AND date(created_at) >= date(?)"
             params.append(date_from)
+
         if date_to:
             query += " AND date(created_at) <= date(?)"
             params.append(date_to)
+
         query += " ORDER BY id DESC"
+
         cursor.execute(query, params)
         rows = cursor.fetchall()
         return rows
@@ -336,6 +387,7 @@ def save_customer(first_name, last_name, address, phone):
     last_name = (last_name or "").strip()
     address = (address or "").strip()
     phone = (phone or "").strip()
+
     if not (first_name or last_name or phone):
         return None
 
@@ -347,12 +399,14 @@ def save_customer(first_name, last_name, address, phone):
         if phone:
             cursor.execute("SELECT id FROM customers WHERE phone = ? LIMIT 1", (phone,))
             row = cursor.fetchone()
+
             if row:
                 cursor.execute("""
                     UPDATE customers
                     SET first_name = ?, last_name = ?, address = ?, updated_at = ?
                     WHERE id = ?
                 """, (first_name, last_name, address, now, row[0]))
+
                 conn.commit()
                 return row[0]
 
@@ -360,6 +414,7 @@ def save_customer(first_name, last_name, address, phone):
             INSERT INTO customers (first_name, last_name, address, phone, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (first_name, last_name, address, phone, now, now))
+
         customer_id = cursor.lastrowid
         conn.commit()
         return customer_id
@@ -372,12 +427,14 @@ def search_customers(keyword=""):
     try:
         cursor = conn.cursor()
         like_keyword = f"%{keyword}%"
+
         cursor.execute("""
             SELECT id, first_name, last_name, address, phone
             FROM customers
             WHERE first_name LIKE ? OR last_name LIKE ? OR phone LIKE ? OR address LIKE ?
             ORDER BY id DESC
         """, (like_keyword, like_keyword, like_keyword, like_keyword))
+
         rows = cursor.fetchall()
         return rows
     finally:
@@ -389,6 +446,7 @@ def search_templates_all(keyword=""):
     try:
         cursor = conn.cursor()
         like_keyword = f"%{keyword}%"
+
         cursor.execute("""
             SELECT
                 t.id,
@@ -402,6 +460,7 @@ def search_templates_all(keyword=""):
             WHERE t.name LIKE ? OR c.name LIKE ?
             ORDER BY t.updated_at DESC, t.id DESC
         """, (like_keyword, like_keyword))
+
         rows = cursor.fetchall()
         return rows
     finally:
@@ -413,12 +472,14 @@ def count_documents_today():
     try:
         cursor = conn.cursor()
         today = datetime.now().strftime("%Y-%m-%d")
+
         cursor.execute("""
             SELECT COUNT(*)
             FROM archive
             WHERE date(created_at) = date(?)
               AND (document_type IS NULL OR document_type NOT LIKE '%خدمات%')
         """, (today,))
+
         count = cursor.fetchone()[0]
         return count
     finally:
@@ -434,6 +495,7 @@ def log_service_operation(service_name, service_url="", customer_name="", phone=
             (service_name, service_url, customer_name, phone, notes, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (service_name, service_url, customer_name, phone, notes, now_text()))
+
         operation_id = cursor.lastrowid
         conn.commit()
         return operation_id
@@ -446,11 +508,13 @@ def count_services_today():
     try:
         cursor = conn.cursor()
         today = datetime.now().strftime("%Y-%m-%d")
+
         cursor.execute("""
             SELECT COUNT(*)
             FROM service_operations
             WHERE date(created_at) = date(?)
         """, (today,))
+
         count = cursor.fetchone()[0]
         return count
     finally:
@@ -462,19 +526,25 @@ def search_service_operations(keyword="", date_from="", date_to=""):
     try:
         cursor = conn.cursor()
         like_keyword = f"%{keyword}%"
+
         query = """
             SELECT id, service_name, service_url, customer_name, phone, notes, created_at
             FROM service_operations
             WHERE (service_name LIKE ? OR service_url LIKE ? OR customer_name LIKE ? OR phone LIKE ? OR notes LIKE ?)
         """
+
         params = [like_keyword, like_keyword, like_keyword, like_keyword, like_keyword]
+
         if date_from:
             query += " AND date(created_at) >= date(?)"
             params.append(date_from)
+
         if date_to:
             query += " AND date(created_at) <= date(?)"
             params.append(date_to)
+
         query += " ORDER BY id DESC"
+
         cursor.execute(query, params)
         rows = cursor.fetchall()
         return rows
@@ -483,10 +553,15 @@ def search_service_operations(keyword="", date_from="", date_to=""):
 
 
 def get_search_suggestions(keyword="", limit=8):
-    """اقتراحات ذكية موحدة للبحث العام: نماذج، أرشيف، زبائن"""
+    """
+    اقتراحات ذكية موحدة للبحث العام:
+    نماذج، أرشيف، زبائن، خدمات.
+    """
     keyword = (keyword or "").strip()
+
     if not keyword:
         return []
+
     like_keyword = f"%{keyword}%"
     suggestions = []
     seen = set()
@@ -494,13 +569,20 @@ def get_search_suggestions(keyword="", limit=8):
     def add(kind, title, subtitle=""):
         title = str(title or "").strip()
         subtitle = str(subtitle or "").strip()
+
         if not title:
             return
+
         key = (kind, title, subtitle)
         if key in seen:
             return
+
         seen.add(key)
-        suggestions.append({"type": kind, "title": title, "subtitle": subtitle})
+        suggestions.append({
+            "type": kind,
+            "title": title,
+            "subtitle": subtitle,
+        })
 
     conn = connect_db()
     try:
@@ -514,6 +596,7 @@ def get_search_suggestions(keyword="", limit=8):
             ORDER BY t.updated_at DESC, t.id DESC
             LIMIT ?
         """, (like_keyword, like_keyword, limit))
+
         for name, category in cursor.fetchall():
             add("نموذج", name, category or "وثائق")
 
@@ -524,8 +607,10 @@ def get_search_suggestions(keyword="", limit=8):
             ORDER BY id DESC
             LIMIT ?
         """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
+
         for customer_name, template_name, phone in cursor.fetchall():
-            add("أرشيف", template_name or customer_name, f"{customer_name or ''} {phone or ''}".strip())
+            subtitle = f"{customer_name or ''} {phone or ''}".strip()
+            add("أرشيف", template_name or customer_name, subtitle)
 
         cursor.execute("""
             SELECT first_name, last_name, phone
@@ -534,8 +619,10 @@ def get_search_suggestions(keyword="", limit=8):
             ORDER BY updated_at DESC, id DESC
             LIMIT ?
         """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
+
         for first, last, phone in cursor.fetchall():
-            add("زبون", f"{first or ''} {last or ''}".strip(), phone or "")
+            full_name = f"{first or ''} {last or ''}".strip()
+            add("زبون", full_name, phone or "")
 
         cursor.execute("""
             SELECT service_name, service_url
@@ -544,6 +631,7 @@ def get_search_suggestions(keyword="", limit=8):
             ORDER BY id DESC
             LIMIT ?
         """, (like_keyword, like_keyword, like_keyword, like_keyword, like_keyword, limit))
+
         for service_name, service_url in cursor.fetchall():
             add("خدمة", service_name, service_url or "")
 
