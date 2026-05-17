@@ -13,12 +13,12 @@ BORDER = "#E5E7EB"
 BLUE = "#2563EB"
 
 SERVICES = [
-    ("ًںڈ›ï¸ڈ", "ظˆط²ط§ط±ط© ط§ظ„ط¯ط§ط®ظ„ظٹط©", "https://www.interieur.gov.dz"),
-    ("ًں’¼", "ط§ظ„ظˆط¸ظٹظپ ط§ظ„ط¹ظ…ظˆظ…ظٹ", "https://www.concours-fonction-publique.gov.dz"),
-    ("ًںژ“", "ظˆط²ط§ط±ط© ط§ظ„طھط¹ظ„ظٹظ… ط§ظ„ط¹ط§ظ„ظٹ", "https://www.mesrs.dz"),
-    ("ًںڈ¥", "ط§ظ„ط¶ظ…ط§ظ† ط§ظ„ط§ط¬طھظ…ط§ط¹ظٹ", "https://www.cnas.dz"),
-    ("ًں’°", "ط§ظ„ط¶ط±ط§ط¦ط¨", "https://www.mfdgi.gov.dz"),
-    ("ًں“¬", "ط¨ط±ظٹط¯ ط§ظ„ط¬ط²ط§ط¦ط±", "https://www.poste.dz"),
+    ("🏛️", "وزارة الداخلية", "https://www.interieur.gov.dz"),
+    ("💼", "الوظيف العمومي", "https://www.concours-fonction-publique.gov.dz"),
+    ("🎓", "وزارة التعليم العالي", "https://www.mesrs.dz"),
+    ("🏥", "الضمان الاجتماعي", "https://www.cnas.dz"),
+    ("💰", "الضرائب", "https://www.mfdgi.gov.dz"),
+    ("📬", "بريد الجزائر", "https://www.poste.dz"),
 ]
 
 
@@ -39,14 +39,14 @@ class ServicesPage(ctk.CTkFrame):
 
         ctk.CTkLabel(
             header,
-            text="ًںŒگ ط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹط©",
+            text="🌐 الخدمات الإلكترونية",
             font=("Segoe UI", 30, "bold"),
             text_color=TEXT,
         ).pack(anchor="e")
 
         ctk.CTkLabel(
             header,
-            text="ط±ظˆط§ط¨ط· ط³ط±ظٹط¹ط© ظ„ظ„ظ…ظˆط§ظ‚ط¹ ط§ظ„ط±ط³ظ…ظٹط©. ط§ط¶ط؛ط· ط¹ظ„ظ‰ ط§ظ„ط¨ط·ط§ظ‚ط© ظ„ظپطھط­ ط§ظ„ط®ط¯ظ…ط© ظˆطھط³ط¬ظٹظ„ظ‡ط§ ط¶ظ…ظ† ط®ط¯ظ…ط§طھ ط§ظ„ظٹظˆظ….",
+            text="روابط سريعة للمواقع الرسمية. اضغط على البطاقة لفتح الخدمة وتسجيلها ضمن خدمات اليوم.",
             font=("Segoe UI", 14),
             text_color=MUTED,
         ).pack(anchor="e", pady=(4, 0))
@@ -56,7 +56,7 @@ class ServicesPage(ctk.CTkFrame):
 
         self.today_label = ctk.CTkLabel(
             top_bar,
-            text=f"ط®ط¯ظ…ط§طھ ط§ظ„ظٹظˆظ…: {count_services_today()}",
+            text=f"خدمات اليوم: {count_services_today()}",
             font=("Segoe UI", 17, "bold"),
             text_color=TEXT,
         )
@@ -64,7 +64,7 @@ class ServicesPage(ctk.CTkFrame):
 
         self.search_entry = ctk.CTkEntry(
             top_bar,
-            placeholder_text="ط¨ط­ط« ظپظٹ ط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹط©...",
+            placeholder_text="بحث في الخدمات الإلكترونية...",
             width=360,
             height=40,
             corner_radius=14,
@@ -76,7 +76,7 @@ class ServicesPage(ctk.CTkFrame):
 
         clear_btn = ctk.CTkButton(
             top_bar,
-            text="ظ…ط³ط­",
+            text="مسح",
             width=75,
             height=38,
             corner_radius=13,
@@ -95,7 +95,7 @@ class ServicesPage(ctk.CTkFrame):
 
         recent_title = ctk.CTkLabel(
             self,
-            text="ط¢ط®ط± ط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ظ…ظپطھظˆط­ط©",
+            text="آخر الخدمات المفتوحة",
             font=("Segoe UI", 18, "bold"),
             text_color=TEXT,
         )
@@ -124,14 +124,19 @@ class ServicesPage(ctk.CTkFrame):
         keyword = self.search_entry.get().strip()
         if not keyword:
             return
+
         matching = [s for s in SERVICES if keyword in s[1] or keyword in s[2]][:6]
         recent = search_service_operations(keyword)[:4]
+
         if not matching and not recent:
             return
+
         self.suggestions_box = ctk.CTkFrame(self, fg_color="transparent")
         self.suggestions_box.pack(fill="x", pady=(0, 6), anchor="n", before=self.cards_grid)
+
         box = ctk.CTkFrame(self.suggestions_box, fg_color=CARD, corner_radius=14, border_width=1, border_color=BORDER)
         box.pack(fill="x")
+
         for icon, name, url in matching:
             btn = ctk.CTkButton(
                 box,
@@ -146,10 +151,11 @@ class ServicesPage(ctk.CTkFrame):
                 command=lambda value=name: self.choose_service_suggestion(value),
             )
             btn.pack(fill="x", padx=8, pady=3)
+
         for _, service_name, service_url, customer_name, phone, notes, created_at in recent:
             btn = ctk.CTkButton(
                 box,
-                text=f"ط³ط§ط¨ظ‚ظ‹ط§: {service_name}",
+                text=f"سابقًا: {service_name}",
                 anchor="e",
                 height=32,
                 corner_radius=10,
@@ -170,20 +176,25 @@ class ServicesPage(ctk.CTkFrame):
     def render_service_cards(self):
         if not self.cards_grid:
             return
+
         for widget in self.cards_grid.winfo_children():
             widget.destroy()
+
         keyword = self.search_entry.get().strip() if self.search_entry else ""
         services = [s for s in SERVICES if not keyword or keyword in s[1] or keyword in s[2]]
+
         if not services:
             ctk.CTkLabel(
                 self.cards_grid,
-                text="ظ„ط§ طھظˆط¬ط¯ ط®ط¯ظ…ط© ظ…ط·ط§ط¨ظ‚ط© ظ„ظ„ط¨ط­ط«.",
+                text="لا توجد خدمة مطابقة للبحث.",
                 font=("Segoe UI", 15),
                 text_color=MUTED,
             ).grid(row=0, column=0, sticky="e", padx=10, pady=18)
             return
+
         for col in range(3):
             self.cards_grid.grid_columnconfigure(col, weight=1, uniform="service_cards")
+
         for index, (icon, name, url) in enumerate(services):
             row, col = divmod(index, 3)
             self.service_card(self.cards_grid, icon, name, url, row, col)
@@ -199,7 +210,12 @@ class ServicesPage(ctk.CTkFrame):
         name_label = ctk.CTkLabel(card, text=name, font=("Segoe UI", 17, "bold"), text_color=TEXT)
         name_label.pack(pady=(0, 3))
 
-        hint_label = ctk.CTkLabel(card, text="ط§ط¶ط؛ط· ظ„ظ„ظپطھط­ ظˆط§ظ„طھط³ط¬ظٹظ„", font=("Segoe UI", 11), text_color=MUTED)
+        hint_label = ctk.CTkLabel(
+            card,
+            text="اضغط للفتح والتسجيل",
+            font=("Segoe UI", 11),
+            text_color=MUTED
+        )
         hint_label.pack()
 
         def open_card(_event=None):
@@ -234,27 +250,35 @@ class ServicesPage(ctk.CTkFrame):
             log_service_operation(name, url)
             self.refresh_counter()
             self.refresh_recent()
+
             if self.app:
-                self.app.toast(f"طھظ… طھط³ط¬ظٹظ„ ط®ط¯ظ…ط©: {name}", "success")
+                self.app.toast(f"تم تسجيل خدمة: {name}", "success")
+
             webbrowser.open(url)
+
         except Exception as exc:
-            messagebox.showerror("ط®ط·ط£", f"طھط¹ط°ط± طھط³ط¬ظٹظ„ ط£ظˆ ظپطھط­ ط§ظ„ط®ط¯ظ…ط©:\n{exc}")
+            messagebox.showerror(
+                "خطأ",
+                f"تعذر تسجيل أو فتح الخدمة:\n{exc}"
+            )
 
     def refresh_counter(self):
         if self.today_label:
-            self.today_label.configure(text=f"ط®ط¯ظ…ط§طھ ط§ظ„ظٹظˆظ…: {count_services_today()}")
+            self.today_label.configure(text=f"خدمات اليوم: {count_services_today()}")
 
     def refresh_recent(self):
         if not self.recent_box:
             return
+
         for widget in self.recent_box.winfo_children():
             widget.destroy()
 
         rows = search_service_operations("")[:3]
+
         if not rows:
             ctk.CTkLabel(
                 self.recent_box,
-                text="ظ„ط§ طھظˆط¬ط¯ ط®ط¯ظ…ط§طھ ظ…ط³ط¬ظ„ط© ط¨ط¹ط¯.",
+                text="لا توجد خدمات مسجلة بعد.",
                 font=("Segoe UI", 14),
                 text_color=MUTED,
             ).pack(anchor="e", padx=12, pady=8)
@@ -263,15 +287,17 @@ class ServicesPage(ctk.CTkFrame):
         for _, service_name, service_url, customer_name, phone, notes, created_at in rows:
             card = ctk.CTkFrame(self.recent_box, fg_color=CARD, corner_radius=14, border_width=1, border_color=BORDER)
             card.pack(fill="x", pady=4)
+
             ctk.CTkLabel(
                 card,
-                text=f"ًںŒگ {service_name}",
+                text=f"🌐 {service_name}",
                 font=("Segoe UI", 14, "bold"),
                 text_color=TEXT,
             ).pack(anchor="e", padx=14, pady=(8, 1))
+
             ctk.CTkLabel(
                 card,
-                text=f"ط§ظ„طھط§ط±ظٹط®: {created_at}",
+                text=f"التاريخ: {created_at}",
                 font=("Segoe UI", 11),
                 text_color=MUTED,
             ).pack(anchor="e", padx=14, pady=(0, 8))
