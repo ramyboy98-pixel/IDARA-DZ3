@@ -1,5 +1,6 @@
 import os
 import re
+import logging
 from datetime import datetime
 from xml.sax.saxutils import escape
 
@@ -14,16 +15,27 @@ from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 
 from utils.paths import get_output_dir
 
+# إعداد النظام الداخلي للتسجيل
+logger = logging.getLogger(__name__)
 
 OUTPUT_FOLDER = get_output_dir()
 PLACEHOLDER_PATTERN = re.compile(r"\{\{\s*(.*?)\s*\}\}")
 
 
 def ensure_output_folder():
+    """إنشاء مجلد الإخراج إذا لم يكن موجوداً"""
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 
 def safe_filename(name):
+    """تنظيف اسم الملف من الأحرف المحرمة
+    
+    Args:
+        name: اسم الملف المراد تنظيفه
+        
+    Returns:
+        str: اسم ملف آمن وصالح
+    """
     value = str(name).strip()
     if not value:
         value = "document"
@@ -37,19 +49,25 @@ def safe_filename(name):
 
 
 def make_placeholder_key(label):
-    """
-    تحويل اسم الخانة إلى مفتاح موحد.
-    مثال:
-    تاريخ الطلب  => تاريخ_الطلب
-    رقم الهاتف   => رقم_الهاتف
-
-    استعملنا هذه الدالة هنا بدل docxtpl لأن docxtpl لا يقبل متغيرات[...]
-    مثل {{تاريخ الطلب}}، وهذا هو سبب الخطأ الذي ظهر عند إنشاء[...]
+    """تحويل اسم الخانة إلى مفتاح موحد
+    
+    تحويل الأسماء العربية والإنجليزية إلى مفاتيح آمنة:
+    - "تاريخ الطلب" => "تاريخ_الطلب"
+    - "رقم الهاتف" => "رقم_الهاتف"
+    
+    الفائدة: يدعم الكود مع docx بدون استخدام docxtpl
+    الذي يسبب مشاكل مع المتغيرات العربية
+    
+    Args:
+        label: اسم الخانة/المتغير
+        
+    Returns:
+        str: المفتاح الآمن والموحد
     """
     key = str(label or "").strip()
     replacements = [
         (" ", "_"), ("-", "_"), ("/", "_"), ("\\", "_"),
-        (":", "_"), ("ك", "_"), (",", "_"), ("،", "_"),
+        (":", "_"), (";", "_"), (",", "_"), ("،", "_"),
         (".", "_"), ("(", ""), (")", ""), ("[", ""), ("]", ""),
     ]
     for old, new in replacements:
@@ -60,6 +78,17 @@ def make_placeholder_key(label):
 
 
 def normalize_data(data):
+    """تطبيع البيانات للاستخدام مع المتغيرات
+    
+    تنشئ قاموس موحد يحتوي على كل المفاتيح الممكنة
+    (الأصلية والآمنة) لكل قيمة
+    
+    Args:
+        data: قاموس البيانات الأصلي
+        
+    Returns:
+        dict: قاموس معياري مع جميع الصيغ الممكنة
+    """
     normalized = {}
     for key, value in (data or {}).items():
         text_value = "" if value is None else str(value)
@@ -73,6 +102,24 @@ def normalize_data(data):
 
 
 def render_text_template(template_content, data):
+    """استبدال المتغيرات في نص القالب
+    
+    يبحث عن متغيرات بصيغة {{اسم_المتغير}} ويستبدلها
+    بقيمها من البيانات المعطاة
+    
+    Args:
+        template_content: نص القالب يحتوي على متغيرات
+        data: قاموس البيانات المراد استخدامها
+        
+    Returns:
+        str: النص بعد استبدال جميع المتغيرات
+        
+    Example:
+        >>> template = "اسم العميل: {{name}}"
+        >>> data = {"name": "أحمد"}
+        >>> render_text_template(template, data)
+        'اسم العميل: أحمد'
+    """
     text = template_content or ""
     values = normalize_data(data)
 
@@ -89,18 +136,17 @@ def render_text_template(template_content, data):
 
 
 def replace_text_in_paragraph(paragraph, data):
-    """
-    يستبدل المتغيرات داخل الفقرة بدون إعادة بناء الفقرة.
-
-    السبب:
-    عند إعادة كتابة paragraph.text أو مسح كل ال runs يتغير شكل ملف وورد:
-    المحاذاة، المسافات، التبويبات، أماكن النص، وحجم ال[...]
-
-    الحل هنا يعمل على مستوى ال runs نفسها:
-    - إذا كان المتغير داخل Run واحد يتم استبداله داخل نفس ال R[...]
-    - إذا كان المتغير مقسوماً بين أكثر من Run يتم وضع القيمة [...]
-      بدون تغيير باقي النص أو خصائص الفقرة.
-    - لا نغيّر paragraph.alignment إطلاقاً.
+    """استبدال المتغيرات في فقرة من ملف Word
+    
+    يعمل على مستوى الـ runs الفردية دون تعديل البنية
+    لحفظ التنسيق والمحاذاة والخصائص الأخرى
+    
+    السبب: تعديل paragraph.text مباشرة يفقد التنسيق
+    الحل: العمل على مستوى الـ runs والتعديل الدقيق
+    
+    Args:
+        paragraph: الفقرة من الوثيقة
+        data: قاموس البيانات
     """
     if not paragraph.runs:
         return
@@ -123,13 +169,13 @@ def replace_text_in_paragraph(paragraph, data):
             return values[safe_key]
         return match.group(0)
 
-    # خريطة كل حرف إلى رقم ال run ومكانه داخله.
+    # خريطة كل حرف إلى رقم الـ run ومكانه داخله
     char_map = []
     for run_index, run in enumerate(paragraph.runs):
         for char_index, _ in enumerate(run.text):
             char_map.append((run_index, char_index))
 
-    # نعالج من آخر الفقرة إلى أولها حتى لا تتغير الإحداثيات[...]
+    # معالجة من نهاية الفقرة إلى بدايتها لتجنب تغيير الإحداثيات
     for match in reversed(matches):
         replacement = replacement_for(match)
         if replacement == match.group(0):
@@ -162,6 +208,17 @@ def replace_text_in_paragraph(paragraph, data):
 
 
 def replace_placeholders_in_document(document, data):
+    """استبدال جميع المتغيرات في كامل الوثيقة
+    
+    يعالج:
+    - الفقرات في النص الرئيسي
+    - الجداول وخلاياها
+    - رأس وتذييل الصفحة
+    
+    Args:
+        document: كائن الوثيقة من python-docx
+        data: قاموس البيانات
+    """
     for paragraph in document.paragraphs:
         replace_text_in_paragraph(paragraph, data)
 
@@ -171,7 +228,7 @@ def replace_placeholders_in_document(document, data):
                 for paragraph in cell.paragraphs:
                     replace_text_in_paragraph(paragraph, data)
 
-    # بعض القوالب تضع المتغيرات داخل رأس أو تذييل الصفحة.
+    # بعض القوالب تضع المتغيرات داخل رأس أو تذييل الصفحة
     for section in document.sections:
         for paragraph in section.header.paragraphs:
             replace_text_in_paragraph(paragraph, data)
@@ -180,29 +237,70 @@ def replace_placeholders_in_document(document, data):
 
 
 def generate_word_document(template_path, data, template_name="وثيقة"):
-    """
-    ينشئ ملف وورد من قالب مرفوع.
-
-    مهم:
-    لم نعد نستعمل docxtpl هنا، لأن docxtpl يسبب خطأ عند وجود متغير ع[...]
-    {{تاريخ الطلب}}
-    الآن البرنامج يستبدل المتغيرات بنفسه، ويدعم الصيغ[...]
-    {{تاريخ الطلب}}
-    {{تاريخ_الطلب}}
+    """إنشاء ملف Word من قالب مرفوع
+    
+    يحمل القالب ويستبدل جميع المتغيرات ثم يحفظها
+    
+    ملاحظة مهمة:
+    - لا نستخدم docxtpl لأنه يسبب مشاكل مع العربية
+    - البرنامج يستبدل المتغيرات بنفسه بطريقة آمنة
+    - يدعم الصيغ: {{تاريخ الطلب}} و {{تاريخ_الطلب}}
+    
+    Args:
+        template_path: مسار ملف القالب Word
+        data: قاموس البيانات
+        template_name: اسم القالب (للملف الناتج)
+        
+    Returns:
+        str: مسار الملف الناتج
+        
+    Raises:
+        FileNotFoundError: إذا لم يوجد ملف القالب
+        Exception: عند فشل معالجة الملف
     """
     ensure_output_folder()
 
-    document = Document(template_path)
+    try:
+        document = Document(template_path)
+        logger.debug(f"تم تحميل قالب Word: {template_path}")
+    except FileNotFoundError:
+        logger.error(f"ملف القالب غير موجود: {template_path}")
+        raise
+    except Exception as e:
+        logger.error(f"خطأ في تحميل قالب Word: {str(e)}")
+        raise
+
     replace_placeholders_in_document(document, data)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{safe_filename(template_name)}_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_FOLDER, filename)
-    document.save(output_path)
-    return output_path
+    
+    try:
+        document.save(output_path)
+        logger.info(f"تم إنشاء وثيقة Word: {output_path}")
+        return output_path
+    except Exception as e:
+        logger.error(f"خطأ في حفظ وثيقة Word: {str(e)}")
+        raise
 
 
 def generate_word_from_text_template(template_content, data, template_name="وثيقة"):
+    """إنشاء ملف Word من نص القالب
+    
+    يعالج النص ثم يضعه في وثيقة Word جديدة
+    
+    Args:
+        template_content: محتوى القالب النصي
+        data: قاموس البيانات
+        template_name: اسم القالب
+        
+    Returns:
+        str: مسار الملف الناتج
+        
+    Raises:
+        Exception: عند فشل إنشاء الوثيقة
+    """
     ensure_output_folder()
     rendered_text = render_text_template(template_content, data)
 
@@ -225,32 +323,53 @@ def generate_word_from_text_template(template_content, data, template_name="وث
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{safe_filename(template_name)}_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_FOLDER, filename)
-    document.save(output_path)
-    return output_path
+    
+    try:
+        document.save(output_path)
+        logger.info(f"تم إنشاء وثيقة Word من نص: {output_path}")
+        return output_path
+    except Exception as e:
+        logger.error(f"خطأ في حفظ وثيقة Word: {str(e)}")
+        raise
 
 
 def convert_word_to_pdf(word_path):
-    """
-    تحويل ملف Word الناتج إلى PDF باستعمال Microsoft Word نفسه.
-
-    لماذا:
-    إنشاء PDF يدويا عبر reportlab لا يحافظ على العربية ولا على شكل[...]
-    لذلك تظهر حروف غريبة مثل ï؟½ï؟½ï؟½ï؟½. التحويل الصحيح هو أن[...]
-    يصدّر نفس الملف إلى PDFم في محافظ على الخطوط، الاتجاه، اللغ[...]
-
-    ملاحظة: هذه الدالة تعمل على Windows عندما يكون Microsoft Word مثبت[...]
+    """تحويل ملف Word إلى PDF باستخدام Microsoft Word
+    
+    السبب:
+    إنشاء PDF يدويا عبر reportlab لا يحافظ على العربية والتنسيق
+    يظهر نص غريب مثل ï؟½. الحل: استخدام Word نفسه للتصدير
+    
+    ملاحظة حرجة:
+    - هذه الدالة تعمل على Windows فقط
+    - يجب تثبيت Microsoft Word
+    - تتطلب مكتبة pywin32
+    
+    Args:
+        word_path: مسار ملف Word المراد تحويله
+        
+    Returns:
+        str: مسار ملف PDF الناتج
+        
+    Raises:
+        FileNotFoundError: إذا لم يوجد ملف Word
+        RuntimeError: إذا لم يكن Windows أو Word غير مثبت
+        ImportError: إذا كانت pywin32 غير مثبت��
     """
     if not word_path or not os.path.exists(word_path):
+        logger.error(f"ملف وورد غير موجود: {word_path}")
         raise FileNotFoundError("ملف وورد غير موجود للتحويل إلى PDF")
 
     pdf_path = os.path.splitext(word_path)[0] + ".pdf"
 
     if os.name != "nt":
+        logger.error("محاولة تحويل PDF على نظام غير Windows")
         raise RuntimeError("تحويل وورد إلى PDF يحتاج Windows و Microsoft Word")
 
     try:
         import win32com.client
     except ImportError:
+        logger.error("مكتبة pywin32 غير مثبتة")
         raise RuntimeError("مكتبة pywin32 غير مثبتة. أضف pywin32 إلى requirements.txt ثم أعد البناء.")
 
     word_app = None
@@ -268,8 +387,13 @@ def convert_word_to_pdf(word_path):
         document.SaveAs(abs_pdf_path, FileFormat=17)
         document.Close(False)
         document = None
+        
+        logger.info(f"تم تحويل Word إلى PDF: {abs_pdf_path}")
         return abs_pdf_path
 
+    except Exception as e:
+        logger.error(f"خطأ في تحويل Word إلى PDF: {str(e)}")
+        raise
     finally:
         try:
             if document is not None:
@@ -284,6 +408,23 @@ def convert_word_to_pdf(word_path):
 
 
 def generate_simple_pdf(data, template_name="وثيقة", template_content=None):
+    """إنشاء ملف PDF بسيط باستخدام reportlab
+    
+    ملاحظة:
+    هذه الدالة تستخدم للملفات البسيطة فقط
+    لا تحافظ تماماً على تنسيق Word المعقد
+    
+    Args:
+        data: قاموس البيانات
+        template_name: اسم المستند
+        template_content: محتوى القالب (اختياري)
+        
+    Returns:
+        str: مسار ملف PDF الناتج
+        
+    Raises:
+        Exception: عند فشل إنشاء PDF
+    """
     ensure_output_folder()
 
     pdfmetrics.registerFont(UnicodeCIDFont('HYSMyeongJo-Medium'))
@@ -303,17 +444,22 @@ def generate_simple_pdf(data, template_name="وثيقة", template_content=None)
     story.append(title)
     story.append(Spacer(1, 20))
 
-    if template_content:
-        rendered = render_text_template(template_content, data)
-        for line in rendered.splitlines():
-            text = f"<font name='HYSMyeongJo-Medium'>{escape(str(line))}</font>"
-            story.append(Paragraph(text, styles['BodyText']))
-            story.append(Spacer(1, 8))
-    else:
-        for key, value in (data or {}).items():
-            text = f"<font name='HYSMyeongJo-Medium'>{escape(str(key))}: {escape(str(value))}</font>"
-            story.append(Paragraph(text, styles['BodyText']))
-            story.append(Spacer(1, 10))
+    try:
+        if template_content:
+            rendered = render_text_template(template_content, data)
+            for line in rendered.splitlines():
+                text = f"<font name='HYSMyeongJo-Medium'>{escape(str(line))}</font>"
+                story.append(Paragraph(text, styles['BodyText']))
+                story.append(Spacer(1, 8))
+        else:
+            for key, value in (data or {}).items():
+                text = f"<font name='HYSMyeongJo-Medium'>{escape(str(key))}: {escape(str(value))}</font>"
+                story.append(Paragraph(text, styles['BodyText']))
+                story.append(Spacer(1, 10))
 
-    doc.build(story)
-    return pdf_path
+        doc.build(story)
+        logger.info(f"تم إنشاء ملف PDF: {pdf_path}")
+        return pdf_path
+    except Exception as e:
+        logger.error(f"خطأ في إنشاء ملف PDF: {str(e)}")
+        raise
