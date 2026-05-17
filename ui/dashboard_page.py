@@ -38,7 +38,7 @@ class DashboardPage(ctk.CTkFrame):
 
         subtitle = ctk.CTkLabel(
             welcome,
-            text="ط¨ط±ظ†ط§ظ…ط¬ ظ…ظƒطھط¨ظٹ ظ„ط¥ط¯ط§ط±ط© ط§ظ„ظˆط«ط§ط¦ظ‚طŒ ط§ظ„ظ†ظ…ط§ط°ط¬طŒ ط§ظ„ط£ط±ط´ظٹظپ ظˆط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹط©.",
+            text="برنامج مكتبي لإدارة الوثائق، النماذج، الأرشيف والخدمات الإلكترونية.",
             font=("Segoe UI", 15),
             text_color="#6B7280"
         )
@@ -52,10 +52,10 @@ class DashboardPage(ctk.CTkFrame):
         documents_today = count_documents_today()
         services_today = count_services_today()
 
-        self.stat_card(stats, "ًں“„", "ظˆط«ط§ط¦ظ‚ ط§ظ„ظٹظˆظ…", str(documents_today), 0)
-        self.stat_card(stats, "ًںŒگ", "ط®ط¯ظ…ط§طھ ط§ظ„ظٹظˆظ…", str(services_today), 1)
-        self.stat_card(stats, "ًں—‚ï¸ڈ", "ط§ظ„ط£ط±ط´ظٹظپ", str(archive_count), 2)
-        self.stat_card(stats, "ًں‘¥", "ط§ظ„ط²ط¨ط§ط¦ظ†", str(customers_count), 3)
+        self.stat_card(stats, "📄", "وثائق اليوم", str(documents_today), 0)
+        self.stat_card(stats, "🌐", "خدمات اليوم", str(services_today), 1)
+        self.stat_card(stats, "🗂️", "الأرشيف", str(archive_count), 2)
+        self.stat_card(stats, "👥", "الزبائن", str(customers_count), 3)
 
         shortcuts = ctk.CTkFrame(
             self,
@@ -66,7 +66,7 @@ class DashboardPage(ctk.CTkFrame):
 
         label = ctk.CTkLabel(
             shortcuts,
-            text="ط§ط®طھطµط§ط±ط§طھ ط³ط±ظٹط¹ط©",
+            text="اختصارات سريعة",
             font=("Segoe UI", 22, "bold"),
             text_color="#111827"
         )
@@ -75,9 +75,9 @@ class DashboardPage(ctk.CTkFrame):
         grid = ctk.CTkFrame(shortcuts, fg_color="transparent")
         grid.pack(fill="x", padx=22, pady=10)
 
-        self.shortcut_button(grid, "ًں“„ ظˆط«ظٹظ‚ط© ط¬ط¯ظٹط¯ط©", self.app.show_documents if self.app else None, 0)
-        self.shortcut_button(grid, "ًں—‚ï¸ڈ ظپطھط­ ط§ظ„ط£ط±ط´ظٹظپ", self.app.show_archive if self.app else None, 1)
-        self.shortcut_button(grid, "ًںŒگ ط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹط©", self.app.show_services if self.app else None, 2)
+        self.shortcut_button(grid, "📄 وثيقة جديدة", self.app.show_documents if self.app else None, 0)
+        self.shortcut_button(grid, "🗂️ فتح الأرشيف", self.app.show_archive if self.app else None, 1)
+        self.shortcut_button(grid, "🌐 الخدمات الإلكترونية", self.app.show_services if self.app else None, 2)
 
     def stat_card(self, parent, icon, title, value, col):
 
