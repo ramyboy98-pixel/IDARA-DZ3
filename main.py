@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import customtkinter as ctk
+import logging
 from datetime import datetime
 
 from database import init_database, get_search_suggestions
@@ -13,6 +14,13 @@ from ui.search_page import SearchPage
 from ui.splash_screen import SplashScreen
 from ui.ux_widgets import ToastNotification
 
+# إعداد النظام الداخلي للتسجيل
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 APP_NAME = "IDARA DZ"
 
 ctk.set_appearance_mode("light")
@@ -20,11 +28,20 @@ ctk.set_default_color_theme("blue")
 
 
 class IdaraDZApp(ctk.CTk):
+    """التطبيق الرئيسي لـ IDARA DZ
+    
+    يدير واجهة المستخدم والملاحة بين الصفحات المختلفة
+    """
 
     def __init__(self):
         super().__init__()
 
-        init_database()
+        try:
+            init_database()
+            logger.info("تم تهيئة قاعدة البيانات")
+        except Exception as e:
+            logger.error(f"فشل تهيئة قاعدة البيانات: {str(e)}")
+            raise
 
         self.title(APP_NAME)
         self.geometry("1250x780")
@@ -52,14 +69,20 @@ class IdaraDZApp(ctk.CTk):
         self.bind("<Escape>", lambda e: self.show_dashboard())
 
     def toast(self, message, kind="success"):
-        """عرض إشعار مؤقت"""
+        """عرض إشعار مؤقت
+        
+        Args:
+            message: نص الرسالة
+            kind: نوع الإشعار (success, error, info, warning)
+        """
         try:
             ToastNotification(self, message, kind)
+            logger.debug(f"تم عرض إشعار ({kind}): {message}")
         except Exception as e:
-            print(f"خطأ في عرض الإشعار: {e}")
+            logger.error(f"خطأ في عرض الإشعار: {str(e)}")
 
     def build_ui(self):
-
+        """بناء واجهة المستخدم الرئيسية"""
         self.configure(fg_color="#F5F7FA")
 
         self.root_frame = ctk.CTkFrame(
@@ -94,7 +117,7 @@ class IdaraDZApp(ctk.CTk):
         self.content.pack(fill="both", expand=True, padx=24, pady=(8, 24))
 
     def build_sidebar(self):
-
+        """بناء الشريط الجانبي مع الزر الملاحة"""
         logo = ctk.CTkLabel(
             self.sidebar,
             text="IDARA DZ",
@@ -128,7 +151,13 @@ class IdaraDZApp(ctk.CTk):
 
 
     def add_nav_button(self, key, text, command):
-
+        """إضافة زر ملاحة
+        
+        Args:
+            key: معرف الزر
+            text: نص الزر
+            command: الأمر المراد تنفيذه عند النقر
+        """
         btn = ctk.CTkButton(
             self.sidebar,
             text=text,
@@ -147,7 +176,7 @@ class IdaraDZApp(ctk.CTk):
         self.nav_buttons[key] = btn
 
     def build_topbar(self):
-
+        """بناء شريط القمة مع البحث والساعة"""
         self.topbar = ctk.CTkFrame(
             self.content_wrapper,
             height=74,
@@ -205,6 +234,7 @@ class IdaraDZApp(ctk.CTk):
 
 
     def build_global_suggestions_panel(self):
+        """بناء لوحة الاقتراحات العامة"""
         self.global_suggestions_panel = ctk.CTkFrame(
             self.content_wrapper,
             fg_color="#FFFFFF",
@@ -215,12 +245,17 @@ class IdaraDZApp(ctk.CTk):
         self.global_suggestions_visible = False
 
     def hide_global_suggestions(self):
+        """إخفاء لوحة الاقتراحات"""
         if getattr(self, "global_suggestions_visible", False):
             self.global_suggestions_panel.pack_forget()
             self.global_suggestions_visible = False
 
     def update_global_suggestions(self, event=None):
-        """تحديث قائمة الاقتراحات"""
+        """تحديث قائمة الاقتراحات
+        
+        Args:
+            event: حدث لوحة المفاتيح (اختياري)
+        """
         if event is not None and getattr(event, "keysym", "") in ("Return", "Escape", "Up", "Down"):
             if getattr(event, "keysym", "") == "Escape":
                 self.hide_global_suggestions()
@@ -240,7 +275,7 @@ class IdaraDZApp(ctk.CTk):
         try:
             suggestions = get_search_suggestions(query, limit=7)
         except Exception as e:
-            print(f"خطأ في الحصول على الاقتراحات: {e}")
+            logger.warning(f"خطأ في الحصول على الاقتراحات: {str(e)}")
             suggestions = []
         
         if not suggestions:
@@ -272,7 +307,7 @@ class IdaraDZApp(ctk.CTk):
                 )
                 btn.pack(fill="x", padx=8, pady=3)
             except Exception as e:
-                print(f"خطأ في عرض الاقتراح: {e}")
+                logger.debug(f"خطأ في عرض الاقتراح: {str(e)}")
                 continue
         
         if not self.global_suggestions_visible:
@@ -280,14 +315,19 @@ class IdaraDZApp(ctk.CTk):
             self.global_suggestions_visible = True
 
     def choose_global_suggestion(self, value):
-        """اختيار اقتراح"""
+        """اختيار اقتراح
+        
+        Args:
+            value: قيمة الاقتراح المختار
+        """
         try:
             self.global_search.delete(0, "end")
             self.global_search.insert(0, value)
             self.hide_global_suggestions()
             self.run_global_search()
         except Exception as e:
-            print(f"خطأ في اختيار الاقتراح: {e}")
+            logger.error(f"خطأ في اختيار الاقتراح: {str(e)}")
+            self.toast(f"خطأ: {str(e)}", "error")
 
     def focus_global_search(self):
         """التركيز على حقل البحث"""
@@ -306,14 +346,19 @@ class IdaraDZApp(ctk.CTk):
         self.show_search_results(query)
 
     def show_search_results(self, query):
-        """عرض نتائج البحث"""
+        """عرض نتائج البحث
+        
+        Args:
+            query: كلمة البحث
+        """
         try:
             self.clear_content()
             self.set_active("search", "نتائج البحث")
             page = SearchPage(self.content, query=query, app=self)
             page.pack(fill="both", expand=True)
+            logger.info(f"تم عرض نتائج البحث للكلمة: {query}")
         except Exception as e:
-            print(f"خطأ في عرض نتائج البحث: {e}")
+            logger.error(f"خطأ في عرض نتائج البحث: {str(e)}")
             self.toast(f"خطأ: {str(e)}", "error")
 
     def clear_content(self):
@@ -322,7 +367,12 @@ class IdaraDZApp(ctk.CTk):
             widget.destroy()
 
     def set_active(self, key, title):
-        """تعيين الصفحة النشطة"""
+        """تعيين الصفحة النشطة
+        
+        Args:
+            key: معرف الصفحة
+            title: عنوان الصفحة
+        """
         self.current_page = key
         self.page_title.configure(text=title)
 
@@ -347,8 +397,9 @@ class IdaraDZApp(ctk.CTk):
             self.set_active("dashboard", "الرئيسية")
             page = DashboardPage(self.content, app=self)
             page.pack(fill="both", expand=True)
+            logger.debug("تم عرض لوحة التحكم")
         except Exception as e:
-            print(f"خطأ في عرض لوحة التحكم: {e}")
+            logger.error(f"خطأ في عرض لوحة التحكم: {str(e)}")
             self.toast(f"خطأ: {str(e)}", "error")
 
     def show_documents(self):
@@ -358,8 +409,9 @@ class IdaraDZApp(ctk.CTk):
             self.set_active("documents", "وثائق")
             page = DocumentsPage(self.content)
             page.pack(fill="both", expand=True)
+            logger.debug("تم عرض صفحة الوثائق")
         except Exception as e:
-            print(f"خطأ في عرض الوثائق: {e}")
+            logger.error(f"خطأ في عرض الوثائق: {str(e)}")
             self.toast(f"خطأ: {str(e)}", "error")
 
     def show_services(self):
@@ -369,8 +421,9 @@ class IdaraDZApp(ctk.CTk):
             self.set_active("services", "خدمات إلكترونية")
             page = ServicesPage(self.content, app=self)
             page.pack(fill="both", expand=True)
+            logger.debug("تم عرض صفحة الخدمات")
         except Exception as e:
-            print(f"خطأ في عرض الخدمات: {e}")
+            logger.error(f"خطأ في عرض الخدمات: {str(e)}")
             self.toast(f"خطأ: {str(e)}", "error")
 
     def show_archive(self):
@@ -380,8 +433,9 @@ class IdaraDZApp(ctk.CTk):
             self.set_active("archive", "الأرشيف")
             page = ArchivePage(self.content)
             page.pack(fill="both", expand=True)
+            logger.debug("تم عرض صفحة الأرشيف")
         except Exception as e:
-            print(f"خطأ في عرض الأرشيف: {e}")
+            logger.error(f"خطأ في عرض الأرشيف: {str(e)}")
             self.toast(f"خطأ: {str(e)}", "error")
 
     def show_customers(self):
@@ -391,8 +445,9 @@ class IdaraDZApp(ctk.CTk):
             self.set_active("customers", "الزبائن")
             page = CustomersPage(self.content)
             page.pack(fill="both", expand=True)
+            logger.debug("تم عرض صفحة الزبائن")
         except Exception as e:
-            print(f"خطأ في عرض الزبائن: {e}")
+            logger.error(f"خطأ في عرض الزبائن: {str(e)}")
             self.toast(f"خطأ: {str(e)}", "error")
 
     def show_settings(self):
@@ -402,8 +457,9 @@ class IdaraDZApp(ctk.CTk):
             self.set_active("settings", "الإعدادات")
             page = SettingsPage(self.content)
             page.pack(fill="both", expand=True)
+            logger.debug("تم عرض صفحة الإعدادات")
         except Exception as e:
-            print(f"خطأ في عرض الإعدادات: {e}")
+            logger.error(f"خطأ في عرض الإعدادات: {str(e)}")
             self.toast(f"خطأ: {str(e)}", "error")
 
     def update_clock(self):
@@ -412,11 +468,17 @@ class IdaraDZApp(ctk.CTk):
             now = datetime.now().strftime("%Y/%m/%d  -  %H:%M:%S")
             self.clock_label.configure(text=now)
         except Exception as e:
-            print(f"خطأ في تحديث الساعة: {e}")
+            logger.warning(f"خطأ في تحديث الساعة: {str(e)}")
         finally:
             self.after(1000, self.update_clock)
 
 
 if __name__ == "__main__":
-    app = IdaraDZApp()
-    app.mainloop()
+    try:
+        logger.info("بدء تشغيل تطبيق IDARA DZ")
+        app = IdaraDZApp()
+        app.mainloop()
+        logger.info("إيقاف تطبيق IDARA DZ")
+    except Exception as e:
+        logger.critical(f"خطأ حرج في التطبيق: {str(e)}")
+        raise
