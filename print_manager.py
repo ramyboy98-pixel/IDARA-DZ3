@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 import subprocess
@@ -5,12 +6,13 @@ from tkinter import messagebox
 
 
 def open_file(path):
+    """فتح ملف باستخدام التطبيق الافتراضي للنظام."""
     if not path:
-        messagebox.showerror("ï؟½ï؟½ï؟½", "ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½")
+        messagebox.showerror("خطأ", "لم يتم تحديد مسار الملف")
         return
 
     if not os.path.exists(path):
-        messagebox.showerror("ï؟½ï؟½ï؟½", f"ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½:\n{path}")
+        messagebox.showerror("خطأ", f"الملف غير موجود:\n{path}")
         return
 
     try:
@@ -21,21 +23,21 @@ def open_file(path):
         else:
             subprocess.call(["xdg-open", path])
     except Exception as e:
-        messagebox.showerror("ï؟½ï؟½ï؟½", f"ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½:\n{e}")
+        messagebox.showerror("خطأ", f"فشل فتح الملف:\n{e}")
 
 
 def print_file(path):
     """
-    ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ Windows.
-    ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½.
+    طباعة ملف باستخدام Windows.
+    في الأنظمة الأخرى، يتم فتح الملف بالتطبيق الافتراضي للنظام.
     """
 
     if not path:
-        messagebox.showerror("ï؟½ï؟½ï؟½", "ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½")
+        messagebox.showerror("خطأ", "لم يتم تحديد ملف للطباعة")
         return
 
     if not os.path.exists(path):
-        messagebox.showerror("ï؟½ï؟½ï؟½", f"ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½:\n{path}")
+        messagebox.showerror("خطأ", f"الملف غير موجود:\n{path}")
         return
 
     try:
@@ -46,8 +48,7 @@ def print_file(path):
 
     except Exception as e:
         messagebox.showerror(
-            "ï؟½ï؟½ï؟½",
-            f"ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½:\n{e}\n\nï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½ï؟½."
+            "خطأ",
+            f"فشل في طباعة الملف:\n{e}\n\nسيتم فتح الملف بدلاً من ذلك"
         )
         open_file(path)
-      
