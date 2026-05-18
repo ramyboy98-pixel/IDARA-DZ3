@@ -2,6 +2,7 @@ import os
 import shutil
 import webbrowser
 import customtkinter as ctk
+import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image
 
@@ -148,37 +149,8 @@ class ServicesPage(ctk.CTkFrame):
         card.grid(row=row, column=col, padx=8, pady=8, sticky="n")
         card.grid_propagate(False)
 
-        actions = ctk.CTkFrame(card, fg_color="transparent")
-        actions.pack(fill="x", padx=10, pady=(8, 0))
-
-        edit_btn = ctk.CTkButton(
-            actions,
-            text="✏️",
-            width=34,
-            height=28,
-            corner_radius=10,
-            fg_color="#F3F4F6",
-            hover_color="#E5E7EB",
-            text_color=TEXT,
-            command=lambda: self.open_entity_form(entity_id),
-        )
-        edit_btn.pack(side="left", padx=(0, 4))
-
-        delete_btn = ctk.CTkButton(
-            actions,
-            text="🗑️",
-            width=34,
-            height=28,
-            corner_radius=10,
-            fg_color="#FEE2E2",
-            hover_color="#FECACA",
-            text_color=RED,
-            command=lambda: self.confirm_delete_entity(entity_id, name),
-        )
-        delete_btn.pack(side="left")
-
         logo_widget = self.make_logo_widget(card, logo_path, size=82)
-        logo_widget.pack(pady=(16, 12))
+        logo_widget.pack(pady=(24, 12))
 
         name_label = ctk.CTkLabel(
             card,
@@ -208,8 +180,18 @@ class ServicesPage(ctk.CTkFrame):
                 pass
             widget.bind("<Button-1>", open_card)
 
+        def show_entity_menu(event):
+            menu = tk.Menu(self, tearoff=0)
+            menu.add_command(label="تعديل", command=lambda: self.open_entity_form(entity_id))
+            menu.add_command(label="حذف", command=lambda: self.confirm_delete_entity(entity_id, name))
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+
         for widget in (card, logo_widget, name_label, count_label):
             make_clickable(widget)
+            widget.bind("<Button-3>", show_entity_menu)
 
         def enter(_event=None):
             card.configure(fg_color="#EFF6FF", border_color=BLUE)
@@ -371,40 +353,20 @@ class ServicesPage(ctk.CTkFrame):
             justify="right",
         ).pack(anchor="e", pady=(2, 0))
 
-        actions = ctk.CTkFrame(row, fg_color="transparent")
-        actions.pack(side="left", padx=(8, 0))
-
-        edit_btn = ctk.CTkButton(
-            actions,
-            text="✏️",
-            width=38,
-            height=32,
-            corner_radius=10,
-            fg_color="#F3F4F6",
-            hover_color="#E5E7EB",
-            text_color=TEXT,
-            command=lambda: self.open_link_form(link_id),
-        )
-        edit_btn.pack(side="left", padx=3)
-
-        del_btn = ctk.CTkButton(
-            actions,
-            text="🗑️",
-            width=38,
-            height=32,
-            corner_radius=10,
-            fg_color="#FEE2E2",
-            hover_color="#FECACA",
-            text_color=RED,
-            command=lambda: self.confirm_delete_link(link_id, title),
-        )
-        del_btn.pack(side="left", padx=3)
-
         separator = ctk.CTkFrame(parent, fg_color=BORDER, height=1)
         separator.pack(fill="x", padx=14, pady=(8, 0))
 
         def open_link(_event=None):
             self.open_service_link(title, url)
+
+        def show_link_menu(event):
+            menu = tk.Menu(self, tearoff=0)
+            menu.add_command(label="تعديل", command=lambda: self.open_link_form(link_id))
+            menu.add_command(label="حذف", command=lambda: self.confirm_delete_link(link_id, title))
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
 
         for widget in (row, icon_holder, logo, text_box, title_label):
             try:
@@ -412,6 +374,7 @@ class ServicesPage(ctk.CTkFrame):
             except Exception:
                 pass
             widget.bind("<Button-1>", open_link)
+            widget.bind("<Button-3>", show_link_menu)
 
     def open_service_link(self, title, url):
         try:
