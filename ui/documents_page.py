@@ -272,20 +272,22 @@ class DocumentsPage(ctk.CTkFrame):
 
         grid = ctk.CTkFrame(self.templates_area, fg_color="transparent")
         grid.pack(fill="x", anchor="n", pady=(0, 0))
-        for col in range(2):
+
+        columns_count = 4
+        for col in range(columns_count):
             grid.grid_columnconfigure(col, weight=1, uniform="template_cards")
 
         for index, item in enumerate(templates):
             template_id, name, template_path, created_at, updated_at, template_content = item
-            row, col = divmod(index, 2)
+            row, col = divmod(index, columns_count)
             self.template_card(grid, template_id, name, template_path, template_content, updated_at, row, col)
 
     def template_card(self, parent, template_id, name, template_path, template_content, updated_at, row, col):
         fields = get_template_fields(template_id)
-        card = ctk.CTkFrame(parent, corner_radius=18, fg_color=CARD, border_width=1, border_color=BORDER)
-        card.grid(row=row, column=col, sticky="ew", padx=10, pady=10)
+        card = ctk.CTkFrame(parent, corner_radius=20, fg_color=CARD, border_width=1, border_color=BORDER)
+        card.grid(row=row, column=col, sticky="n", padx=10, pady=10)
         card.grid_propagate(False)
-        card.configure(height=118)
+        card.configure(width=245, height=245)
 
         def open_form(_event=None):
             self.open_fill_form_window(template_id)
@@ -297,39 +299,74 @@ class DocumentsPage(ctk.CTkFrame):
                 pass
             widget.bind("<Button-1>", open_form)
 
-        # أزرار صغيرة في أعلى البطاقة، لا تدفع المحتوى للأسفل.
-        top = ctk.CTkFrame(card, fg_color="transparent")
-        top.pack(fill="x", padx=10, pady=(8, 0))
+        actions = ctk.CTkFrame(card, fg_color="transparent")
+        actions.pack(fill="x", padx=10, pady=(10, 0))
 
         delete_btn = ctk.CTkButton(
-            top, text="🗑️", width=32, height=28, corner_radius=9,
-            fg_color="#FEE2E2", hover_color="#FECACA", text_color="#991B1B",
-            font=("Segoe UI Emoji", 13), command=lambda: self.confirm_delete_template(template_id),
+            actions,
+            text="🗑️",
+            width=30,
+            height=28,
+            corner_radius=9,
+            fg_color="#FEE2E2",
+            hover_color="#FECACA",
+            text_color="#991B1B",
+            font=("Segoe UI Emoji", 12),
+            command=lambda: self.confirm_delete_template(template_id),
         )
         delete_btn.pack(side="left", padx=(0, 4))
 
         edit_btn = ctk.CTkButton(
-            top, text="✏️", width=32, height=28, corner_radius=9,
-            fg_color="#FEF3C7", hover_color="#FDE68A", text_color="#92400E",
-            font=("Segoe UI Emoji", 13), command=lambda: self.open_template_editor(template_id),
+            actions,
+            text="✏️",
+            width=30,
+            height=28,
+            corner_radius=9,
+            fg_color="#FEF3C7",
+            hover_color="#FDE68A",
+            text_color="#92400E",
+            font=("Segoe UI Emoji", 12),
+            command=lambda: self.open_template_editor(template_id),
         )
         edit_btn.pack(side="left", padx=(0, 4))
 
-        icon_label = ctk.CTkLabel(top, text="📄", font=("Segoe UI Emoji", 22), text_color=TEXT)
-        icon_label.pack(side="right", padx=(6, 0))
+        icon_label = ctk.CTkLabel(card, text="📄", font=("Segoe UI Emoji", 38), text_color=TEXT)
+        icon_label.pack(pady=(18, 10))
         make_clickable(icon_label)
 
-        title_label = ctk.CTkLabel(top, text=name, font=("Segoe UI", 16, "bold"), text_color=TEXT, anchor="e")
-        title_label.pack(side="right", fill="x", expand=True)
+        title_label = ctk.CTkLabel(
+            card,
+            text=name,
+            font=("Segoe UI", 16, "bold"),
+            text_color=TEXT,
+            anchor="center",
+            justify="center",
+            wraplength=205,
+        )
+        title_label.pack(fill="x", padx=14, pady=(0, 8))
         make_clickable(title_label)
 
         status_text = "قالب وورد" if template_path else "قالب داخلي" if template_content else "بدون قالب"
-        info_label = ctk.CTkLabel(card, text=f"{status_text}  •  {len(fields)} خانات", font=("Segoe UI", 11), text_color=MUTED, anchor="e")
-        info_label.pack(fill="x", padx=16, pady=(8, 0))
+        info_label = ctk.CTkLabel(
+            card,
+            text=f"{status_text}  •  {len(fields)} خانات",
+            font=("Segoe UI", 11),
+            text_color=MUTED,
+            anchor="center",
+            justify="center",
+        )
+        info_label.pack(fill="x", padx=12, pady=(0, 6))
         make_clickable(info_label)
 
-        date_label = ctk.CTkLabel(card, text=f"آخر تعديل: {updated_at}", font=("Segoe UI", 10), text_color="#9CA3AF", anchor="e")
-        date_label.pack(fill="x", padx=16, pady=(4, 0))
+        date_label = ctk.CTkLabel(
+            card,
+            text=f"آخر تعديل: {updated_at}",
+            font=("Segoe UI", 10),
+            text_color="#9CA3AF",
+            anchor="center",
+            justify="center",
+        )
+        date_label.pack(fill="x", padx=12, pady=(0, 8))
         make_clickable(date_label)
 
         make_clickable(card)
