@@ -115,7 +115,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.add_nav_button("dashboard", "📊 الرئيسية", self.show_dashboard)
         self.add_nav_button("documents", "📄 وثائق", self.show_documents)
-        self.add_nav_button("services", "🔧 خدمات إلكترونية", self.show_services)
+        self.add_nav_button("services", "🌐 خدمات إلكترونية", self.show_services)
         self.add_nav_button("archive", "📁 أرشيف", self.show_archive)
 
         spacer = ctk.CTkFrame(
