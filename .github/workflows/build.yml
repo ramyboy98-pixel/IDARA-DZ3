@@ -25,7 +25,7 @@ jobs:
 
       - name: Build EXE
         run: |
-          pyinstaller --onefile --windowed --name "IDARA_DZ" main.py
+          pyinstaller --onefile --windowed --name "IDARA_DZ" --add-data "assets;assets" main.py
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
