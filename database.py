@@ -35,8 +35,7 @@ def column_exists(cursor, table_name, column_name):
         "archive",
         "customers",
         "service_operations",
-        "electronic_service_entities",
-        "electronic_service_links",
+        "service_links",
     }
 
     if table_name not in allowed_tables:
@@ -155,25 +154,13 @@ def init_database():
         """)
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS electronic_service_entities (
+            CREATE TABLE IF NOT EXISTS service_links (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
-                logo_path TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS electronic_service_links (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                entity_id INTEGER NOT NULL,
+                service_key TEXT NOT NULL,
                 title TEXT NOT NULL,
                 url TEXT NOT NULL,
-                description TEXT,
                 created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                FOREIGN KEY(entity_id) REFERENCES electronic_service_entities(id) ON DELETE CASCADE
+                updated_at TEXT NOT NULL
             )
         """)
 
@@ -182,7 +169,6 @@ def init_database():
         conn.close()
 
     seed_default_categories()
-    seed_default_service_entities()
 
 
 def seed_default_categories():
@@ -578,6 +564,93 @@ def search_service_operations(keyword="", date_from="", date_to=""):
         conn.close()
 
 
+def get_service_links(service_key):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, service_key, title, url, created_at, updated_at
+            FROM service_links
+            WHERE service_key = ?
+            ORDER BY id DESC
+        """, (service_key,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def add_service_link(service_key, title, url):
+    service_key = (service_key or "").strip()
+    title = (title or "").strip()
+    url = (url or "").strip()
+
+    if not service_key or not title or not url:
+        return None
+
+    now = now_text()
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO service_links (service_key, title, url, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (service_key, title, url, now, now))
+        link_id = cursor.lastrowid
+        conn.commit()
+        return link_id
+    finally:
+        conn.close()
+
+
+def update_service_link(link_id, title, url):
+    title = (title or "").strip()
+    url = (url or "").strip()
+
+    if not title or not url:
+        return False
+
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE service_links
+            SET title = ?, url = ?, updated_at = ?
+            WHERE id = ?
+        """, (title, url, now_text(), link_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def delete_service_link(link_id):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM service_links WHERE id = ?", (link_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def search_service_links(keyword="", limit=20):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        like_keyword = f"%{keyword}%"
+        cursor.execute("""
+            SELECT id, service_key, title, url, created_at, updated_at
+            FROM service_links
+            WHERE title LIKE ? OR url LIKE ? OR service_key LIKE ?
+            ORDER BY updated_at DESC, id DESC
+            LIMIT ?
+        """, (like_keyword, like_keyword, like_keyword, limit))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+
 def get_search_suggestions(keyword="", limit=8):
     """
     اقتراحات ذكية موحدة للبحث العام:
@@ -661,226 +734,17 @@ def get_search_suggestions(keyword="", limit=8):
         for service_name, service_url in cursor.fetchall():
             add("خدمة", service_name, service_url or "")
 
+        cursor.execute("""
+            SELECT title, url
+            FROM service_links
+            WHERE title LIKE ? OR url LIKE ? OR service_key LIKE ?
+            ORDER BY updated_at DESC, id DESC
+            LIMIT ?
+        """, (like_keyword, like_keyword, like_keyword, limit))
+
+        for title, url in cursor.fetchall():
+            add("رابط خدمة", title, url or "")
+
         return suggestions[:limit]
-    finally:
-        conn.close()
-
-
-# =========================
-# الخدمات الإلكترونية: مصالح وروابط قابلة للتعديل من البرنامج
-# =========================
-
-def seed_default_service_entities():
-    default_entities = [
-        ("وزارة التعليم العالي", "https://www.mesrs.dz"),
-        ("الوظيف العمومي", "https://www.concours-fonction-publique.gov.dz"),
-        ("وزارة الداخلية", "https://www.interieur.gov.dz"),
-        ("بريد الجزائر", "https://www.poste.dz"),
-        ("الضرائب", "https://www.mfdgi.gov.dz"),
-        ("الضمان الاجتماعي", "https://www.cnas.dz"),
-    ]
-
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        now = now_text()
-        for name, url in default_entities:
-            cursor.execute("""
-                INSERT OR IGNORE INTO electronic_service_entities
-                (name, logo_path, created_at, updated_at)
-                VALUES (?, ?, ?, ?)
-            """, (name, "", now, now))
-
-            cursor.execute("SELECT id FROM electronic_service_entities WHERE name = ?", (name,))
-            row = cursor.fetchone()
-            if not row:
-                continue
-
-            entity_id = row[0]
-            cursor.execute("""
-                SELECT id FROM electronic_service_links
-                WHERE entity_id = ? AND title = ?
-                LIMIT 1
-            """, (entity_id, "الموقع الرسمي"))
-            if not cursor.fetchone():
-                cursor.execute("""
-                    INSERT INTO electronic_service_links
-                    (entity_id, title, url, description, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (entity_id, "الموقع الرسمي", url, "", now, now))
-
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def get_service_entities(keyword=""):
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        keyword = (keyword or "").strip()
-        if keyword:
-            like_keyword = f"%{keyword}%"
-            cursor.execute("""
-                SELECT e.id, e.name, e.logo_path, COUNT(l.id) AS links_count
-                FROM electronic_service_entities e
-                LEFT JOIN electronic_service_links l ON l.entity_id = e.id
-                WHERE e.name LIKE ?
-                GROUP BY e.id, e.name, e.logo_path
-                ORDER BY e.id ASC
-            """, (like_keyword,))
-        else:
-            cursor.execute("""
-                SELECT e.id, e.name, e.logo_path, COUNT(l.id) AS links_count
-                FROM electronic_service_entities e
-                LEFT JOIN electronic_service_links l ON l.entity_id = e.id
-                GROUP BY e.id, e.name, e.logo_path
-                ORDER BY e.id ASC
-            """)
-        return cursor.fetchall()
-    finally:
-        conn.close()
-
-
-def get_service_entity(entity_id):
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT id, name, logo_path, created_at, updated_at
-            FROM electronic_service_entities
-            WHERE id = ?
-        """, (entity_id,))
-        return cursor.fetchone()
-    finally:
-        conn.close()
-
-
-def add_service_entity(name, logo_path=""):
-    name = (name or "").strip()
-    logo_path = (logo_path or "").strip()
-    if not name:
-        return None
-
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        now = now_text()
-        cursor.execute("""
-            INSERT INTO electronic_service_entities
-            (name, logo_path, created_at, updated_at)
-            VALUES (?, ?, ?, ?)
-        """, (name, logo_path, now, now))
-        entity_id = cursor.lastrowid
-        conn.commit()
-        return entity_id
-    finally:
-        conn.close()
-
-
-def update_service_entity(entity_id, name, logo_path=""):
-    name = (name or "").strip()
-    logo_path = (logo_path or "").strip()
-    if not name:
-        return
-
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE electronic_service_entities
-            SET name = ?, logo_path = ?, updated_at = ?
-            WHERE id = ?
-        """, (name, logo_path, now_text(), entity_id))
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def delete_service_entity(entity_id):
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM electronic_service_links WHERE entity_id = ?", (entity_id,))
-        cursor.execute("DELETE FROM electronic_service_entities WHERE id = ?", (entity_id,))
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def get_service_links(entity_id, keyword=""):
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        keyword = (keyword or "").strip()
-        if keyword:
-            like_keyword = f"%{keyword}%"
-            cursor.execute("""
-                SELECT id, entity_id, title, url, description, created_at, updated_at
-                FROM electronic_service_links
-                WHERE entity_id = ? AND (title LIKE ? OR url LIKE ? OR description LIKE ?)
-                ORDER BY id DESC
-            """, (entity_id, like_keyword, like_keyword, like_keyword))
-        else:
-            cursor.execute("""
-                SELECT id, entity_id, title, url, description, created_at, updated_at
-                FROM electronic_service_links
-                WHERE entity_id = ?
-                ORDER BY id DESC
-            """, (entity_id,))
-        return cursor.fetchall()
-    finally:
-        conn.close()
-
-
-def add_service_link(entity_id, title, url, description=""):
-    title = (title or "").strip()
-    url = (url or "").strip()
-    description = (description or "").strip()
-    if not title or not url:
-        return None
-
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        now = now_text()
-        cursor.execute("""
-            INSERT INTO electronic_service_links
-            (entity_id, title, url, description, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (entity_id, title, url, description, now, now))
-        link_id = cursor.lastrowid
-        conn.commit()
-        return link_id
-    finally:
-        conn.close()
-
-
-def update_service_link(link_id, title, url, description=""):
-    title = (title or "").strip()
-    url = (url or "").strip()
-    description = (description or "").strip()
-    if not title or not url:
-        return
-
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE electronic_service_links
-            SET title = ?, url = ?, description = ?, updated_at = ?
-            WHERE id = ?
-        """, (title, url, description, now_text(), link_id))
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def delete_service_link(link_id):
-    conn = connect_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM electronic_service_links WHERE id = ?", (link_id,))
-        conn.commit()
     finally:
         conn.close()
