@@ -87,8 +87,29 @@ class ServicesPage(ctk.CTkFrame):
         self.build_ui()
 
     def resource_path(self, relative_path):
-        base_path = getattr(sys, "_MEIPASS", os.path.abspath(os.getcwd()))
-        return os.path.join(base_path, relative_path)
+        """يعيد مسار الشعار سواء كان البرنامج يعمل من الكود أو من ملف exe."""
+        relative_path = relative_path.replace("/", os.sep).replace("\\", os.sep)
+
+        candidates = []
+
+        # عند تشغيل exe بــ PyInstaller مع --add-data
+        if hasattr(sys, "_MEIPASS"):
+            candidates.append(os.path.join(sys._MEIPASS, relative_path))
+
+        # بجانب ملف exe عند وضع مجلد assets قرب البرنامج
+        if getattr(sys, "frozen", False):
+            candidates.append(os.path.join(os.path.dirname(sys.executable), relative_path))
+
+        # عند التشغيل من المشروع مباشرة
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        candidates.append(os.path.join(project_root, relative_path))
+        candidates.append(os.path.join(os.getcwd(), relative_path))
+
+        for path in candidates:
+            if os.path.exists(path):
+                return path
+
+        return candidates[0] if candidates else relative_path
 
     def get_logo_image(self, relative_path):
         if relative_path in self.logo_cache:
@@ -99,9 +120,9 @@ class ServicesPage(ctk.CTkFrame):
             return None
 
         try:
-            image = Image.open(path)
-            image.thumbnail((112, 112), Image.LANCZOS)
-            logo = ctk.CTkImage(light_image=image, dark_image=image, size=image.size)
+            image = Image.open(path).convert("RGBA")
+            image.thumbnail((96, 96), Image.LANCZOS)
+            logo = ctk.CTkImage(light_image=image, dark_image=image, size=(96, 96))
             self.logo_cache[relative_path] = logo
             return logo
         except Exception:
@@ -200,7 +221,7 @@ class ServicesPage(ctk.CTkFrame):
             return
 
         for col in range(4):
-            self.cards_grid.grid_columnconfigure(col, weight=1, uniform="service_cards")
+            self.cards_grid.grid_columnconfigure(col, weight=1, uniform="service_cards", minsize=220)
 
         for index, service in enumerate(services):
             row, col = divmod(index, 4)
@@ -216,15 +237,15 @@ class ServicesPage(ctk.CTkFrame):
             border_width=1,
             border_color=BORDER,
         )
-        card.grid(row=row, column=col, padx=10, pady=10, sticky="n")
+        card.grid(row=row, column=col, padx=12, pady=12, sticky="n")
         card.grid_propagate(False)
 
         logo = self.get_logo_image(service["logo"])
         if logo:
-            logo_label = ctk.CTkLabel(card, text="", image=logo)
+            logo_label = ctk.CTkLabel(card, text="", image=logo, width=96, height=96)
         else:
-            logo_label = ctk.CTkLabel(card, text="🌐", font=("Segoe UI Emoji", 54), text_color=TEXT)
-        logo_label.pack(pady=(30, 14))
+            logo_label = ctk.CTkLabel(card, text="🌐", font=("Segoe UI Emoji", 54), text_color=TEXT, width=96, height=96)
+        logo_label.pack(pady=(24, 10))
 
         name_label = ctk.CTkLabel(
             card,
