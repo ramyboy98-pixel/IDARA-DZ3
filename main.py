@@ -115,7 +115,7 @@ class IdaraDZApp(ctk.CTk):
 
         self.add_nav_button("dashboard", "📊 الرئيسية", self.show_dashboard)
         self.add_nav_button("documents", "📄 وثائق", self.show_documents)
-        self.add_nav_button("services", "🌐 خدمات إلكترونية", self.show_services)
+        self.add_nav_button("services", "🔧 خدمات إلكترونية", self.show_services)
         self.add_nav_button("archive", "📁 أرشيف", self.show_archive)
 
         spacer = ctk.CTkFrame(
@@ -207,29 +207,12 @@ class IdaraDZApp(ctk.CTk):
     def build_global_suggestions_panel(self):
         self.global_suggestions_panel = ctk.CTkFrame(
             self.content_wrapper,
-            width=340,
-            fg_color="#E5E5E5",
-            corner_radius=0,
-            border_width=0,
+            fg_color="#FFFFFF",
+            corner_radius=14,
+            border_width=1,
+            border_color="#E5E7EB",
         )
         self.global_suggestions_visible = False
-
-    def _place_global_suggestions_panel(self):
-        """وضع الاقتراحات مباشرة تحت خانة البحث كقائمة منسدلة."""
-        try:
-            self.update_idletasks()
-            x = self.global_search.winfo_rootx() - self.content_wrapper.winfo_rootx()
-            y = (
-                self.global_search.winfo_rooty()
-                - self.content_wrapper.winfo_rooty()
-                + self.global_search.winfo_height()
-            )
-            width = self.global_search.winfo_width()
-            self.global_suggestions_panel.place(x=x, y=y, width=width)
-            self.global_suggestions_panel.lift()
-            self.global_suggestions_visible = True
-        except Exception as e:
-            print(f"خطأ في وضع اقتراحات البحث: {e}")
 
     def hide_global_suggestions(self):
         if getattr(self, "global_suggestions_visible", False):
@@ -237,62 +220,72 @@ class IdaraDZApp(ctk.CTk):
             self.global_suggestions_visible = False
 
     def update_global_suggestions(self, event=None):
-        """إظهار اقتراحات البحث الذكية تحت خانة البحث مباشرة."""
-        if event is not None:
-            key = getattr(event, "keysym", "")
-            if key == "Escape":
+        """تحديث قائمة الاقتراحات"""
+        if event is not None and getattr(event, "keysym", "") in ("Return", "Escape", "Up", "Down"):
+            if getattr(event, "keysym", "") == "Escape":
                 self.hide_global_suggestions()
-                return
-            if key in ("Return", "Up", "Down", "Left", "Right"):
-                return
-
+            return
+        
         query = self.global_search.get().strip()
-
+        
+        # حذف الاقتراحات السابقة
         for widget in self.global_suggestions_panel.winfo_children():
             widget.destroy()
-
+        
         if len(query) < 1:
             self.hide_global_suggestions()
             return
-
+        
+        # محاولة الحصول على الاقتراحات
         try:
             suggestions = get_search_suggestions(query, limit=3)
         except Exception as e:
             print(f"خطأ في الحصول على الاقتراحات: {e}")
             suggestions = []
-
+        
         if not suggestions:
             self.hide_global_suggestions()
             return
-
-        for index, item in enumerate(suggestions[:3]):
-            title = str(item.get("title", "")).strip()
-            if not title:
-                continue
-
-            row = ctk.CTkButton(
-                self.global_suggestions_panel,
-                text=title,
-                anchor="e",
-                height=28,
-                corner_radius=0,
-                fg_color="#E5E5E5",
-                hover_color="#D4D4D4",
-                text_color="#111827",
-                font=("Segoe UI", 12),
-                command=lambda value=title: self.choose_global_suggestion(value),
-            )
-            row.pack(fill="x", padx=0, pady=0)
-
-            if index < min(len(suggestions), 3) - 1:
-                line = ctk.CTkFrame(
+        
+        # عرض الاقتراحات
+        for item in suggestions:
+            try:
+                title = item.get("title", "")
+                kind = item.get("type", "")
+                subtitle = item.get("subtitle", "")
+                
+                display = f"{title}  •  {kind}"
+                if subtitle:
+                    display += f"  •  {subtitle}"
+                
+                btn = ctk.CTkButton(
                     self.global_suggestions_panel,
-                    height=1,
-                    fg_color="#D1D5DB",
+                    text=display,
+                    anchor="e",
+                    height=34,
+                    corner_radius=10,
+                    fg_color="transparent",
+                    hover_color="#EFF6FF",
+                    text_color="#111827",
+                    font=("Segoe UI", 13),
+                    command=lambda value=title: self.choose_global_suggestion(value),
                 )
-                line.pack(fill="x")
-
-        self._place_global_suggestions_panel()
+                btn.pack(fill="x", padx=8, pady=3)
+            except Exception as e:
+                print(f"خطأ في عرض الاقتراح: {e}")
+                continue
+        
+        self.update_idletasks()
+        try:
+            x = self.global_search.winfo_rootx() - self.content_wrapper.winfo_rootx()
+            y = self.global_search.winfo_rooty() - self.content_wrapper.winfo_rooty() + self.global_search.winfo_height() + 4
+            self.global_suggestions_panel.place(x=x, y=y, width=340)
+            self.global_suggestions_panel.lift()
+            self.global_suggestions_visible = True
+        except Exception:
+            self.global_suggestions_panel.place(relx=0.5, y=68, anchor="n", width=340)
+            self.global_suggestions_panel.lift()
+            self.global_suggestions_visible = True
 
     def choose_global_suggestion(self, value):
         """اختيار اقتراح"""
