@@ -1,19 +1,19 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 import webbrowser
 import customtkinter as ctk
-from tkinter import Menu, messagebox
+from tkinter import messagebox, Menu
 from PIL import Image
 
 from database import (
     count_services_today,
     log_service_operation,
+    search_service_operations,
     get_service_links,
     add_service_link,
     update_service_link,
     delete_service_link,
-    search_service_operations,
+    search_service_links,
 )
 
 
@@ -23,11 +23,18 @@ TEXT = "#111827"
 MUTED = "#6B7280"
 BORDER = "#E5E7EB"
 BLUE = "#2563EB"
-HOVER = "#EFF6FF"
-GREEN = "#059669"
-RED = "#DC2626"
+GRAY_BTN = "#F3F4F6"
 
-SERVICES = [
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.join(base_path, relative_path)
+
+
+STATIC_SERVICES = [
     {"key": "defense", "name": "وزارة الدفاع الوطني", "logo": "assets/services/defense.png"},
     {"key": "foreign_affairs", "name": "وزارة الخارجية", "logo": "assets/services/foreign_affairs.png"},
     {"key": "interior", "name": "وزارة الداخلية", "logo": "assets/services/interior.png"},
@@ -79,76 +86,28 @@ class ServicesPage(ctk.CTkFrame):
         super().__init__(parent, fg_color="transparent")
         self.app = app
         self.today_label = None
-        self.search_entry = None
         self.cards_grid = None
         self.links_box = None
+        self.search_entry = None
         self.current_service = None
         self.logo_cache = {}
         self.build_ui()
 
-    def resource_path(self, relative_path):
-        """يعيد مسار الشعار سواء كان البرنامج يعمل من الكود أو من ملف exe."""
-        relative_path = relative_path.replace("/", os.sep).replace("\\", os.sep)
-
-        candidates = []
-
-        # عند تشغيل exe بــ PyInstaller مع --add-data
-        if hasattr(sys, "_MEIPASS"):
-            candidates.append(os.path.join(sys._MEIPASS, relative_path))
-
-        # بجانب ملف exe عند وضع مجلد assets قرب البرنامج
-        if getattr(sys, "frozen", False):
-            candidates.append(os.path.join(os.path.dirname(sys.executable), relative_path))
-
-        # عند التشغيل من المشروع مباشرة
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        candidates.append(os.path.join(project_root, relative_path))
-        candidates.append(os.path.join(os.getcwd(), relative_path))
-
-        for path in candidates:
-            if os.path.exists(path):
-                return path
-
-        return candidates[0] if candidates else relative_path
-
-    def get_logo_image(self, relative_path):
-        if relative_path in self.logo_cache:
-            return self.logo_cache[relative_path]
-
-        path = self.resource_path(relative_path)
-        if not os.path.exists(path):
-            return None
-
-        try:
-            image = Image.open(path).convert("RGBA")
-            image.thumbnail((96, 96), Image.LANCZOS)
-            logo = ctk.CTkImage(light_image=image, dark_image=image, size=(96, 96))
-            self.logo_cache[relative_path] = logo
-            return logo
-        except Exception:
-            return None
-
     def build_ui(self):
-        self.render_services_home()
+        self.show_services_home()
 
     def clear_page(self):
         for widget in self.winfo_children():
             widget.destroy()
 
-    def render_services_home(self):
+    def show_services_home(self):
         self.current_service = None
         self.clear_page()
 
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", pady=(10, 14))
+        header.pack(fill="x", pady=(6, 12))
 
-        ctk.CTkLabel(
-            header,
-            text="خدمات إلكترونية",
-            font=("Segoe UI", 30, "bold"),
-            text_color=TEXT,
-        ).pack(anchor="e")
-
+        ctk.CTkLabel(header, text="خدمات إلكترونية", font=("Segoe UI", 30, "bold"), text_color=TEXT).pack(anchor="e")
         ctk.CTkLabel(
             header,
             text="اختر الوزارة أو المصلحة للدخول إلى قائمة الروابط الخاصة بها.",
@@ -162,7 +121,7 @@ class ServicesPage(ctk.CTkFrame):
         self.today_label = ctk.CTkLabel(
             top_bar,
             text=f"خدمات اليوم: {count_services_today()}",
-            font=("Segoe UI", 17, "bold"),
+            font=("Segoe UI", 16, "bold"),
             text_color=TEXT,
         )
         self.today_label.pack(side="right", padx=16, pady=14)
@@ -177,20 +136,19 @@ class ServicesPage(ctk.CTkFrame):
             justify="right",
         )
         self.search_entry.pack(side="right", padx=10, pady=14)
-        self.search_entry.bind("<KeyRelease>", lambda _event=None: self.render_service_cards())
+        self.search_entry.bind("<KeyRelease>", lambda _e=None: self.render_service_cards())
 
-        clear_btn = ctk.CTkButton(
+        ctk.CTkButton(
             top_bar,
             text="مسح",
             width=75,
             height=38,
             corner_radius=13,
-            fg_color="#F3F4F6",
+            fg_color=GRAY_BTN,
             hover_color="#E5E7EB",
             text_color=TEXT,
             command=self.clear_search,
-        )
-        clear_btn.pack(side="left", padx=16, pady=14)
+        ).pack(side="left", padx=16, pady=14)
 
         self.cards_grid = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self.cards_grid.pack(fill="both", expand=True, anchor="n", pady=(0, 8))
@@ -201,6 +159,19 @@ class ServicesPage(ctk.CTkFrame):
             self.search_entry.delete(0, "end")
         self.render_service_cards()
 
+    def service_matches_keyword(self, service, keyword):
+        if not keyword:
+            return True
+        if keyword in service["name"] or keyword in service["key"]:
+            return True
+        try:
+            for _id, _key, title, url, notes, _created, _updated in get_service_links(service["key"]):
+                if keyword in (title or "") or keyword in (url or "") or keyword in (notes or ""):
+                    return True
+        except Exception:
+            pass
+        return False
+
     def render_service_cards(self):
         if not self.cards_grid:
             return
@@ -209,7 +180,7 @@ class ServicesPage(ctk.CTkFrame):
             widget.destroy()
 
         keyword = self.search_entry.get().strip() if self.search_entry else ""
-        services = [s for s in SERVICES if not keyword or keyword in s["name"]]
+        services = [s for s in STATIC_SERVICES if self.service_matches_keyword(s, keyword)]
 
         if not services:
             ctk.CTkLabel(
@@ -221,44 +192,53 @@ class ServicesPage(ctk.CTkFrame):
             return
 
         for col in range(4):
-            self.cards_grid.grid_columnconfigure(col, weight=1, uniform="service_cards", minsize=220)
+            self.cards_grid.grid_columnconfigure(col, weight=1, uniform="service_cards")
 
         for index, service in enumerate(services):
             row, col = divmod(index, 4)
             self.service_card(self.cards_grid, service, row, col)
 
+    def load_logo(self, logo_path):
+        if logo_path in self.logo_cache:
+            return self.logo_cache[logo_path]
+
+        full_path = resource_path(logo_path)
+        if os.path.exists(full_path):
+            try:
+                image = Image.open(full_path)
+                image.thumbnail((86, 86), Image.LANCZOS)
+                ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=(86, 86))
+                self.logo_cache[logo_path] = ctk_image
+                return ctk_image
+            except Exception:
+                pass
+        self.logo_cache[logo_path] = None
+        return None
+
     def service_card(self, parent, service, row, col):
-        card = ctk.CTkFrame(
-            parent,
-            width=210,
-            height=210,
-            corner_radius=24,
-            fg_color=CARD,
-            border_width=1,
-            border_color=BORDER,
-        )
-        card.grid(row=row, column=col, padx=12, pady=12, sticky="n")
+        card = ctk.CTkFrame(parent, width=178, height=178, corner_radius=22, fg_color=CARD, border_width=1, border_color=BORDER)
+        card.grid(row=row, column=col, padx=10, pady=10, sticky="n")
         card.grid_propagate(False)
 
-        logo = self.get_logo_image(service["logo"])
+        logo = self.load_logo(service["logo"])
         if logo:
-            logo_label = ctk.CTkLabel(card, text="", image=logo, width=96, height=96)
+            logo_label = ctk.CTkLabel(card, image=logo, text="")
         else:
-            logo_label = ctk.CTkLabel(card, text="🌐", font=("Segoe UI Emoji", 54), text_color=TEXT, width=96, height=96)
-        logo_label.pack(pady=(24, 10))
+            logo_label = ctk.CTkLabel(card, text="🌐", font=("Segoe UI Emoji", 44), text_color=TEXT)
+        logo_label.pack(pady=(22, 10))
 
         name_label = ctk.CTkLabel(
             card,
             text=service["name"],
-            font=("Segoe UI", 17, "bold"),
+            font=("Segoe UI", 15, "bold"),
             text_color=TEXT,
-            wraplength=180,
+            wraplength=150,
             justify="center",
         )
-        name_label.pack(pady=(0, 8))
+        name_label.pack(padx=10, pady=(0, 6))
 
         def open_card(_event=None):
-            self.open_service_links(service)
+            self.show_service_links(service)
 
         def make_clickable(widget):
             try:
@@ -271,7 +251,7 @@ class ServicesPage(ctk.CTkFrame):
             make_clickable(widget)
 
         def enter(_event=None):
-            card.configure(fg_color=HOVER, border_color=BLUE)
+            card.configure(fg_color="#EFF6FF", border_color=BLUE)
             name_label.configure(text_color=BLUE)
 
         def leave(_event=None):
@@ -282,59 +262,49 @@ class ServicesPage(ctk.CTkFrame):
             widget.bind("<Enter>", enter)
             widget.bind("<Leave>", leave)
 
-    def open_service_links(self, service):
+    def show_service_links(self, service):
         self.current_service = service
         self.clear_page()
 
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", pady=(10, 12))
+        header.pack(fill="x", pady=(6, 12))
 
-        back_btn = ctk.CTkButton(
+        ctk.CTkButton(
             header,
-            text="رجوع ←",
+            text="↩ رجوع",
             width=110,
             height=38,
-            corner_radius=12,
             fg_color="#6B7280",
             hover_color="#4B5563",
-            command=self.render_services_home,
-        )
-        back_btn.pack(side="left")
+            command=self.show_services_home,
+        ).pack(side="left")
 
-        title_frame = ctk.CTkFrame(header, fg_color="transparent")
-        title_frame.pack(side="right", fill="x", expand=True)
-
-        ctk.CTkLabel(
-            title_frame,
-            text=service["name"],
-            font=("Segoe UI", 30, "bold"),
-            text_color=TEXT,
-        ).pack(anchor="e")
-
-        ctk.CTkLabel(
-            title_frame,
-            text="قائمة الروابط الخاصة بهذه المصلحة. اضغط على الرابط لفتحه، واضغط بزر الفأرة الأيمن للتعديل أو الحذف.",
-            font=("Segoe UI", 14),
-            text_color=MUTED,
-        ).pack(anchor="e", pady=(4, 0))
+        title_box = ctk.CTkFrame(header, fg_color="transparent")
+        title_box.pack(side="right")
+        ctk.CTkLabel(title_box, text=service["name"], font=("Segoe UI", 28, "bold"), text_color=TEXT).pack(anchor="e")
+        ctk.CTkLabel(title_box, text="قائمة الروابط الخاصة بهذه المصلحة", font=("Segoe UI", 14), text_color=MUTED).pack(anchor="e", pady=(4, 0))
 
         toolbar = ctk.CTkFrame(self, fg_color=CARD, corner_radius=20, border_width=1, border_color=BORDER)
-        toolbar.pack(fill="x", pady=(0, 14))
+        toolbar.pack(fill="x", pady=(0, 12))
 
-        add_btn = ctk.CTkButton(
+        ctk.CTkButton(
             toolbar,
             text="+ إضافة رابط",
-            height=42,
-            width=160,
+            width=170,
+            height=40,
             corner_radius=14,
-            fg_color=BLUE,
-            hover_color="#1D4ED8",
             font=("Segoe UI", 14, "bold"),
-            command=lambda: self.open_link_dialog(service["key"]),
-        )
-        add_btn.pack(side="right", padx=16, pady=14)
+            command=lambda: self.open_link_editor(service["key"]),
+        ).pack(side="right", padx=16, pady=14)
 
-        self.links_box = ctk.CTkScrollableFrame(self, fg_color=CARD, corner_radius=20, border_width=1, border_color=BORDER)
+        ctk.CTkLabel(
+            toolbar,
+            text="اضغط على الرابط لفتحه. التعديل والحذف بزر الفأرة الأيمن.",
+            font=("Segoe UI", 13),
+            text_color=MUTED,
+        ).pack(side="right", padx=10)
+
+        self.links_box = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self.links_box.pack(fill="both", expand=True)
         self.render_links()
 
@@ -345,60 +315,53 @@ class ServicesPage(ctk.CTkFrame):
         for widget in self.links_box.winfo_children():
             widget.destroy()
 
-        rows = get_service_links(self.current_service["key"])
-
-        if not rows:
-            ctk.CTkLabel(
-                self.links_box,
-                text="لا توجد روابط بعد. اضغط على زر إضافة رابط.",
-                font=("Segoe UI", 16),
-                text_color=MUTED,
-            ).pack(anchor="center", pady=30)
+        links = get_service_links(self.current_service["key"])
+        if not links:
+            empty = ctk.CTkFrame(self.links_box, fg_color=CARD, corner_radius=18, border_width=1, border_color=BORDER)
+            empty.pack(fill="x", pady=8)
+            ctk.CTkLabel(empty, text="لا توجد روابط بعد.", font=("Segoe UI", 18, "bold"), text_color=TEXT).pack(pady=(20, 6))
+            ctk.CTkLabel(empty, text="اضغط على إضافة رابط لإدخال أول رابط.", font=("Segoe UI", 13), text_color=MUTED).pack(pady=(0, 20))
             return
 
-        for row in rows:
-            link_id, service_key, title, url, created_at, updated_at = row
-            self.link_row(link_id, title, url)
+        for link in links:
+            self.link_row(link)
 
-    def link_row(self, link_id, title, url):
-        row = ctk.CTkFrame(self.links_box, fg_color="#FFFFFF", corner_radius=0, height=82)
-        row.pack(fill="x", padx=8, pady=0)
+    def link_row(self, link):
+        link_id, service_key, title, url, notes, created_at, updated_at = link
+        row = ctk.CTkFrame(self.links_box, height=72, fg_color=CARD, corner_radius=14, border_width=1, border_color=BORDER)
+        row.pack(fill="x", pady=5)
         row.pack_propagate(False)
 
-        icon_label = ctk.CTkLabel(row, text="🌐", font=("Segoe UI Emoji", 30), text_color=TEXT)
-        icon_label.pack(side="right", padx=(12, 16))
+        ctk.CTkLabel(row, text="…", font=("Segoe UI", 22, "bold"), text_color=MUTED).pack(side="left", padx=18)
 
         text_box = ctk.CTkFrame(row, fg_color="transparent")
-        text_box.pack(side="right", fill="both", expand=True, padx=6)
+        text_box.pack(side="right", fill="both", expand=True, padx=16, pady=8)
 
-        title_label = ctk.CTkLabel(
-            text_box,
-            text=title,
-            font=("Segoe UI", 20, "bold"),
-            text_color=TEXT,
-            anchor="e",
-        )
-        title_label.pack(anchor="e", pady=(12, 0))
+        title_label = ctk.CTkLabel(text_box, text=title, font=("Segoe UI", 18, "bold"), text_color=TEXT, anchor="e")
+        title_label.pack(fill="x", anchor="e")
 
-        url_label = ctk.CTkLabel(
-            text_box,
-            text=url,
-            font=("Segoe UI", 12),
-            text_color=MUTED,
-            anchor="e",
-        )
-        url_label.pack(anchor="e")
-
-        separator = ctk.CTkFrame(self.links_box, fg_color=BORDER, height=1)
-        separator.pack(fill="x", padx=10)
+        url_label = ctk.CTkLabel(text_box, text=url, font=("Segoe UI", 11), text_color=MUTED, anchor="e")
+        url_label.pack(fill="x", anchor="e", pady=(2, 0))
 
         def open_link(_event=None):
-            self.open_link(title, url)
+            try:
+                log_service_operation(f"{self.current_service['name']} - {title}", url)
+                if self.app:
+                    self.app.toast("تم تسجيل وفتح الخدمة", "success")
+                webbrowser.open(url)
+            except Exception as exc:
+                messagebox.showerror("خطأ", f"تعذر فتح الرابط:\n{exc}")
 
         def show_menu(event):
-            self.show_link_context_menu(event, link_id, title, url)
+            menu = Menu(self, tearoff=0)
+            menu.add_command(label="تعديل", command=lambda: self.open_link_editor(service_key, link))
+            menu.add_command(label="حذف", command=lambda: self.confirm_delete_link(link_id))
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
 
-        for widget in (row, icon_label, text_box, title_label, url_label):
+        for widget in (row, text_box, title_label, url_label):
             try:
                 widget.configure(cursor="hand2")
             except Exception:
@@ -406,100 +369,75 @@ class ServicesPage(ctk.CTkFrame):
             widget.bind("<Button-1>", open_link)
             widget.bind("<Button-3>", show_menu)
 
-    def show_link_context_menu(self, event, link_id, title, url):
-        menu = Menu(self, tearoff=0)
-        menu.add_command(label="تعديل", command=lambda: self.open_link_dialog(self.current_service["key"], link_id, title, url))
-        menu.add_command(label="حذف", command=lambda: self.confirm_delete_link(link_id))
-        menu.tk_popup(event.x_root, event.y_root)
+        def enter(_event=None):
+            row.configure(fg_color="#EFF6FF", border_color=BLUE)
+            title_label.configure(text_color=BLUE)
 
-    def open_link_dialog(self, service_key, link_id=None, title="", url=""):
-        dialog = ctk.CTkToplevel(self)
-        dialog.title("تعديل رابط" if link_id else "إضافة رابط")
-        dialog.geometry("520x300")
-        dialog.resizable(False, False)
-        dialog.grab_set()
+        def leave(_event=None):
+            row.configure(fg_color=CARD, border_color=BORDER)
+            title_label.configure(text_color=TEXT)
 
-        box = ctk.CTkFrame(dialog, fg_color=BG)
+        for widget in (row, text_box, title_label, url_label):
+            widget.bind("<Enter>", enter)
+            widget.bind("<Leave>", leave)
+
+    def open_link_editor(self, service_key, existing=None):
+        is_edit = existing is not None
+        window = ctk.CTkToplevel(self)
+        window.title("تعديل رابط" if is_edit else "إضافة رابط")
+        window.geometry("560x360")
+        window.transient(self.winfo_toplevel())
+        window.focus_force()
+        window.grab_set()
+
+        box = ctk.CTkFrame(window, fg_color=BG)
         box.pack(fill="both", expand=True, padx=18, pady=18)
 
-        ctk.CTkLabel(
-            box,
-            text="اسم الرابط",
-            font=("Segoe UI", 15, "bold"),
-            text_color=TEXT,
-        ).pack(anchor="e", pady=(4, 5))
+        ctk.CTkLabel(box, text="تعديل رابط" if is_edit else "إضافة رابط", font=("Segoe UI", 22, "bold"), text_color=TEXT).pack(anchor="e", pady=(0, 16))
 
-        title_entry = ctk.CTkEntry(box, height=42, justify="right", font=("Segoe UI", 14))
-        title_entry.pack(fill="x")
-        title_entry.insert(0, title or "")
+        title_entry = ctk.CTkEntry(box, height=42, font=("Segoe UI", 14), justify="right", placeholder_text="اسم الرابط")
+        title_entry.pack(fill="x", pady=(0, 10))
 
-        ctk.CTkLabel(
-            box,
-            text="الرابط",
-            font=("Segoe UI", 15, "bold"),
-            text_color=TEXT,
-        ).pack(anchor="e", pady=(14, 5))
+        url_entry = ctk.CTkEntry(box, height=42, font=("Segoe UI", 14), justify="left", placeholder_text="https://...")
+        url_entry.pack(fill="x", pady=(0, 10))
 
-        url_entry = ctk.CTkEntry(box, height=42, justify="left", font=("Segoe UI", 14))
-        url_entry.pack(fill="x")
-        url_entry.insert(0, url or "")
+        notes_entry = ctk.CTkEntry(box, height=42, font=("Segoe UI", 14), justify="right", placeholder_text="ملاحظة اختيارية")
+        notes_entry.pack(fill="x", pady=(0, 18))
+
+        if existing:
+            link_id, _service_key, title, url, notes, _created, _updated = existing
+            title_entry.insert(0, title or "")
+            url_entry.insert(0, url or "")
+            notes_entry.insert(0, notes or "")
+        else:
+            link_id = None
 
         def save():
-            new_title = title_entry.get().strip()
-            new_url = url_entry.get().strip()
-
-            if not new_title or not new_url:
-                messagebox.showwarning("تنبيه", "أدخل اسم الرابط والرابط.")
+            title = title_entry.get().strip()
+            url = url_entry.get().strip()
+            notes = notes_entry.get().strip()
+            if not title or not url:
+                messagebox.showerror("خطأ", "اكتب اسم الرابط والرابط")
                 return
+            if not url.startswith(("http://", "https://")):
+                url = "https://" + url
+            try:
+                if is_edit:
+                    update_service_link(link_id, title, url, notes)
+                else:
+                    add_service_link(service_key, title, url, notes)
+                window.destroy()
+                self.render_links()
+            except Exception as exc:
+                messagebox.showerror("خطأ", f"تعذر حفظ الرابط:\n{exc}")
 
-            if link_id:
-                update_service_link(link_id, new_title, new_url)
-            else:
-                add_service_link(service_key, new_title, new_url)
-
-            dialog.destroy()
-            self.render_links()
-
-        save_btn = ctk.CTkButton(
-            box,
-            text="حفظ",
-            height=42,
-            corner_radius=14,
-            fg_color=GREEN,
-            hover_color="#047857",
-            font=("Segoe UI", 14, "bold"),
-            command=save,
-        )
-        save_btn.pack(side="right", padx=(0, 8), pady=20)
-
-        cancel_btn = ctk.CTkButton(
-            box,
-            text="إلغاء",
-            height=42,
-            corner_radius=14,
-            fg_color="#6B7280",
-            hover_color="#4B5563",
-            font=("Segoe UI", 14, "bold"),
-            command=dialog.destroy,
-        )
-        cancel_btn.pack(side="right", pady=20)
+        ctk.CTkButton(box, text="حفظ", height=44, corner_radius=14, font=("Segoe UI", 15, "bold"), command=save).pack(fill="x")
 
     def confirm_delete_link(self, link_id):
-        if messagebox.askyesno("تأكيد الحذف", "هل تريد حذف هذا الرابط؟"):
+        if not messagebox.askyesno("تأكيد الحذف", "هل تريد حذف هذا الرابط؟"):
+            return
+        try:
             delete_service_link(link_id)
             self.render_links()
-
-    def open_link(self, title, url):
-        try:
-            service_name = self.current_service["name"] if self.current_service else "خدمة إلكترونية"
-            log_service_operation(f"{service_name} - {title}", url)
-            self.refresh_counter()
-            if self.app:
-                self.app.toast(f"تم فتح: {title}", "success")
-            webbrowser.open(url)
         except Exception as exc:
-            messagebox.showerror("خطأ", f"تعذر فتح الرابط:\n{exc}")
-
-    def refresh_counter(self):
-        if self.today_label:
-            self.today_label.configure(text=f"خدمات اليوم: {count_services_today()}")
+            messagebox.showerror("خطأ", f"تعذر حذف الرابط:\n{exc}")
