@@ -454,6 +454,26 @@ def search_customers(keyword=""):
         conn.close()
 
 
+
+
+def get_customer_by_phone(phone):
+    phone = (phone or "").strip()
+    if not phone:
+        return None
+
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, first_name, last_name, address, phone
+            FROM customers
+            WHERE phone = ?
+            LIMIT 1
+        """, (phone,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
 def search_templates_all(keyword=""):
     conn = connect_db()
     try:
@@ -686,66 +706,4 @@ def get_search_suggestions(keyword="", limit=8):
 
     conn = connect_db()
     try:
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            SELECT t.name, c.name
-            FROM document_templates t
-            LEFT JOIN document_categories c ON c.id = t.category_id
-            WHERE t.name LIKE ? OR c.name LIKE ?
-            ORDER BY t.updated_at DESC, t.id DESC
-            LIMIT ?
-        """, (like_keyword, like_keyword, limit))
-
-        for name, category in cursor.fetchall():
-            add("نموذج", name, category or "وثائق")
-
-        cursor.execute("""
-            SELECT customer_name, template_name, phone
-            FROM archive
-            WHERE customer_name LIKE ? OR phone LIKE ? OR document_type LIKE ? OR template_name LIKE ?
-            ORDER BY id DESC
-            LIMIT ?
-        """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
-
-        for customer_name, template_name, phone in cursor.fetchall():
-            subtitle = f"{customer_name or ''} {phone or ''}".strip()
-            add("أرشيف", template_name or customer_name, subtitle)
-
-        cursor.execute("""
-            SELECT first_name, last_name, phone
-            FROM customers
-            WHERE first_name LIKE ? OR last_name LIKE ? OR phone LIKE ? OR address LIKE ?
-            ORDER BY updated_at DESC, id DESC
-            LIMIT ?
-        """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
-
-        for first, last, phone in cursor.fetchall():
-            full_name = f"{first or ''} {last or ''}".strip()
-            add("زبون", full_name, phone or "")
-
-        cursor.execute("""
-            SELECT service_name, service_url
-            FROM service_operations
-            WHERE service_name LIKE ? OR service_url LIKE ? OR customer_name LIKE ? OR phone LIKE ? OR notes LIKE ?
-            ORDER BY id DESC
-            LIMIT ?
-        """, (like_keyword, like_keyword, like_keyword, like_keyword, like_keyword, limit))
-
-        for service_name, service_url in cursor.fetchall():
-            add("خدمة", service_name, service_url or "")
-
-        cursor.execute("""
-            SELECT title, url, service_key
-            FROM service_links
-            WHERE title LIKE ? OR url LIKE ? OR notes LIKE ? OR service_key LIKE ?
-            ORDER BY updated_at DESC, id DESC
-            LIMIT ?
-        """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
-
-        for title, url, service_key in cursor.fetchall():
-            add("رابط خدمة", title, service_key or url or "")
-
-        return suggestions[:limit]
-    finally:
-        conn.close()
+        cursor = 
