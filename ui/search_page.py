@@ -40,7 +40,7 @@ class SearchPage(ctk.CTkFrame):
 
         ctk.CTkLabel(
             header,
-            text="البحث يشمل النماذج، الأرشيف، الخدمات الإلكترونية، والزبائن المحفوظين.",
+            text="البحث يشمل النماذج، الأرشيف، الزبائن، الخدمات الإلكترونية وروابط الخدمات.",
             font=("Segoe UI", 14),
             text_color=MUTED,
         ).pack(anchor="e", pady=(6, 0))
@@ -133,7 +133,7 @@ class SearchPage(ctk.CTkFrame):
             text_color=TEXT
         ).pack(anchor="e")
 
-        source = "قالب وورد" if has_word else "محرر داخلي" if has_text else "بدون قالب"
+        source = "قالب وورد" if has_word else "بدون ملف وورد"
 
         ctk.CTkLabel(
             body,
