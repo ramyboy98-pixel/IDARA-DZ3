@@ -1,7 +1,7 @@
 import os
 import shutil
 import customtkinter as ctk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, Menu
 
 from utils.paths import get_templates_dir
 from database import (
@@ -289,33 +289,25 @@ class DocumentsPage(ctk.CTkFrame):
         def open_form(_event=None):
             self.open_fill_form_window(template_id)
 
+        def show_template_menu(event=None):
+            menu = Menu(self, tearoff=0)
+            menu.add_command(label="تعديل", command=lambda: self.open_template_editor(template_id))
+            menu.add_command(label="حذف", command=lambda: self.confirm_delete_template(template_id))
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+
         def make_clickable(widget):
             try:
                 widget.configure(cursor="hand2")
             except Exception:
                 pass
             widget.bind("<Button-1>", open_form)
-
-        # أزرار صغيرة في أعلى البطاقة، لا تدفع المحتوى للأسفل.
-        top = ctk.CTkFrame(card, fg_color="transparent")
-        top.pack(fill="x", padx=8, pady=(8, 0))
-
-        delete_btn = ctk.CTkButton(
-            top, text="🗑️", width=32, height=28, corner_radius=9,
-            fg_color="#FEE2E2", hover_color="#FECACA", text_color="#991B1B",
-            font=("Segoe UI Emoji", 13), command=lambda: self.confirm_delete_template(template_id),
-        )
-        delete_btn.pack(side="left", padx=(0, 4))
-
-        edit_btn = ctk.CTkButton(
-            top, text="✏️", width=32, height=28, corner_radius=9,
-            fg_color="#FEF3C7", hover_color="#FDE68A", text_color="#92400E",
-            font=("Segoe UI Emoji", 13), command=lambda: self.open_template_editor(template_id),
-        )
-        edit_btn.pack(side="left", padx=(0, 4))
+            widget.bind("<Button-3>", show_template_menu)
 
         icon_label = ctk.CTkLabel(card, text="📄", font=("Segoe UI Emoji", 34), text_color=TEXT)
-        icon_label.pack(pady=(8, 4))
+        icon_label.pack(pady=(28, 4))
         make_clickable(icon_label)
 
         title_label = ctk.CTkLabel(card, text=name, font=("Segoe UI", 15, "bold"), text_color=TEXT, wraplength=145, justify="center")
