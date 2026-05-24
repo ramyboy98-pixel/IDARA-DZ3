@@ -25,6 +25,11 @@ BORDER = "#E5E7EB"
 BLUE = "#2563EB"
 GRAY_BTN = "#F3F4F6"
 
+SERVICE_CARD_SIZE = 178
+SERVICE_LOGO_SIZE = 76
+SERVICE_NAME_HEIGHT = 52
+SERVICE_COLUMNS = 4
+
 
 def resource_path(relative_path):
     try:
@@ -182,6 +187,14 @@ class ServicesPage(ctk.CTkFrame):
         keyword = self.search_entry.get().strip() if self.search_entry else ""
         services = [s for s in STATIC_SERVICES if self.service_matches_keyword(s, keyword)]
 
+        for col in range(SERVICE_COLUMNS):
+            self.cards_grid.grid_columnconfigure(
+                col,
+                weight=0,
+                minsize=SERVICE_CARD_SIZE + 24,
+                uniform="service_cards_fixed",
+            )
+
         if not services:
             ctk.CTkLabel(
                 self.cards_grid,
@@ -191,11 +204,8 @@ class ServicesPage(ctk.CTkFrame):
             ).grid(row=0, column=0, sticky="e", padx=10, pady=18)
             return
 
-        for col in range(4):
-            self.cards_grid.grid_columnconfigure(col, weight=1, uniform="service_cards")
-
         for index, service in enumerate(services):
-            row, col = divmod(index, 4)
+            row, col = divmod(index, SERVICE_COLUMNS)
             self.service_card(self.cards_grid, service, row, col)
 
     def load_logo(self, logo_path):
@@ -205,37 +215,84 @@ class ServicesPage(ctk.CTkFrame):
         full_path = resource_path(logo_path)
         if os.path.exists(full_path):
             try:
-                image = Image.open(full_path)
-                image.thumbnail((86, 86), Image.LANCZOS)
-                ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=(86, 86))
+                image = Image.open(full_path).convert("RGBA")
+                image.thumbnail((SERVICE_LOGO_SIZE, SERVICE_LOGO_SIZE), Image.LANCZOS)
+
+                canvas = Image.new("RGBA", (SERVICE_LOGO_SIZE, SERVICE_LOGO_SIZE), (255, 255, 255, 0))
+                x = (SERVICE_LOGO_SIZE - image.width) // 2
+                y = (SERVICE_LOGO_SIZE - image.height) // 2
+                canvas.paste(image, (x, y), image)
+
+                ctk_image = ctk.CTkImage(
+                    light_image=canvas,
+                    dark_image=canvas,
+                    size=(SERVICE_LOGO_SIZE, SERVICE_LOGO_SIZE),
+                )
                 self.logo_cache[logo_path] = ctk_image
                 return ctk_image
             except Exception:
                 pass
+
         self.logo_cache[logo_path] = None
         return None
 
     def service_card(self, parent, service, row, col):
-        card = ctk.CTkFrame(parent, width=178, height=178, corner_radius=22, fg_color=CARD, border_width=1, border_color=BORDER)
-        card.grid(row=row, column=col, padx=10, pady=10, sticky="n")
+        card = ctk.CTkFrame(
+            parent,
+            width=SERVICE_CARD_SIZE,
+            height=SERVICE_CARD_SIZE,
+            corner_radius=22,
+            fg_color=CARD,
+            border_width=1,
+            border_color=BORDER,
+        )
+        card.grid(row=row, column=col, padx=12, pady=12, sticky="n")
         card.grid_propagate(False)
+        card.pack_propagate(False)
+
+        logo_box = ctk.CTkFrame(
+            card,
+            width=SERVICE_CARD_SIZE,
+            height=98,
+            fg_color="transparent",
+        )
+        logo_box.pack(fill="x", pady=(14, 0))
+        logo_box.pack_propagate(False)
 
         logo = self.load_logo(service["logo"])
         if logo:
-            logo_label = ctk.CTkLabel(card, image=logo, text="")
+            logo_label = ctk.CTkLabel(logo_box, image=logo, text="", width=SERVICE_LOGO_SIZE, height=SERVICE_LOGO_SIZE)
         else:
-            logo_label = ctk.CTkLabel(card, text="🌐", font=("Segoe UI Emoji", 44), text_color=TEXT)
-        logo_label.pack(pady=(22, 10))
+            logo_label = ctk.CTkLabel(
+                logo_box,
+                text="🌐",
+                font=("Segoe UI Emoji", 42),
+                text_color=TEXT,
+                width=SERVICE_LOGO_SIZE,
+                height=SERVICE_LOGO_SIZE,
+            )
+        logo_label.pack(anchor="center", pady=(8, 0))
+
+        name_box = ctk.CTkFrame(
+            card,
+            width=SERVICE_CARD_SIZE,
+            height=SERVICE_NAME_HEIGHT,
+            fg_color="transparent",
+        )
+        name_box.pack(fill="x", padx=8, pady=(4, 0))
+        name_box.pack_propagate(False)
 
         name_label = ctk.CTkLabel(
-            card,
+            name_box,
             text=service["name"],
-            font=("Segoe UI", 15, "bold"),
+            font=("Segoe UI", 14, "bold"),
             text_color=TEXT,
             wraplength=150,
             justify="center",
+            width=154,
+            height=SERVICE_NAME_HEIGHT,
         )
-        name_label.pack(padx=10, pady=(0, 6))
+        name_label.pack(anchor="center")
 
         def open_card(_event=None):
             self.show_service_links(service)
@@ -247,7 +304,7 @@ class ServicesPage(ctk.CTkFrame):
                 pass
             widget.bind("<Button-1>", open_card)
 
-        for widget in (card, logo_label, name_label):
+        for widget in (card, logo_box, logo_label, name_box, name_label):
             make_clickable(widget)
 
         def enter(_event=None):
@@ -258,7 +315,7 @@ class ServicesPage(ctk.CTkFrame):
             card.configure(fg_color=CARD, border_color=BORDER)
             name_label.configure(text_color=TEXT)
 
-        for widget in (card, logo_label, name_label):
+        for widget in (card, logo_box, logo_label, name_box, name_label):
             widget.bind("<Enter>", enter)
             widget.bind("<Leave>", leave)
 
