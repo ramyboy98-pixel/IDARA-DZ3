@@ -20,9 +20,7 @@ from database import (
 )
 from document_engine import (
     generate_word_document,
-    generate_word_from_text_template,
     convert_word_to_pdf,
-    render_text_template,
 )
 from print_manager import open_file, print_file
 
@@ -166,7 +164,7 @@ class DocumentsPage(ctk.CTkFrame):
         header = self.page_title(
             self,
             f"{category_icon} {category_name}",
-            "أنشئ بطاقة لكل نموذج. كل بطاقة لها استمارة خاصة وملف وورد أو محرر داخلي."
+            "أنشئ بطاقة لكل نموذج. كل بطاقة لها استمارة خاصة وملف وورد."
         )
 
         back_btn = ctk.CTkButton(header, text="↩ رجوع", width=110, height=38, fg_color="#6B7280", hover_color="#4B5563", command=self.build_categories_ui)
@@ -227,7 +225,7 @@ class DocumentsPage(ctk.CTkFrame):
         box = ctk.CTkFrame(self.template_suggestions_area, fg_color="#FFFFFF", corner_radius=14, border_width=1, border_color=BORDER)
         box.pack(fill="x", padx=6)
         for template_id, name, template_path, created_at, updated_at, template_content in templates:
-            status = "وورد" if template_path else "داخلي"
+            status = "وورد" if template_path else "بدون ملف وورد"
             btn = ctk.CTkButton(
                 box,
                 text=f"{name}  ·  {status}",
@@ -314,7 +312,7 @@ class DocumentsPage(ctk.CTkFrame):
         title_label.pack(padx=10, pady=(0, 4))
         make_clickable(title_label)
 
-        status_text = "قالب وورد" if template_path else "قالب داخلي" if template_content else "بدون قالب"
+        status_text = "قالب وورد" if template_path else "بدون ملف وورد"
         info_label = ctk.CTkLabel(card, text=f"{status_text} • {len(fields)} خانات", font=("Segoe UI", 11), text_color=MUTED, justify="center")
         info_label.pack(padx=8, pady=(2, 0))
         make_clickable(info_label)
@@ -440,22 +438,22 @@ class DocumentsPage(ctk.CTkFrame):
                 selected_template_path.set(file_path)
                 path_label.configure(text=file_path)
 
-        def clear_word_template():
-            selected_template_path.set("")
-            path_label.configure(text="لم يتم اختيار ملف وورد بعد")
-
         btns = ctk.CTkFrame(template_card, fg_color="transparent")
         btns.pack(fill="x", padx=18, pady=(0, 14))
-        ctk.CTkButton(btns, text="📎 رفع نموذج وورد من الجهاز", height=40, command=choose_word_template).pack(side="right", fill="x", expand=True, padx=(0, 5))
-        ctk.CTkButton(btns, text="إزالة ملف وورد واستعمال المحرر", height=40, fg_color="#6B7280", hover_color="#4B5563", command=clear_word_template).pack(side="left", fill="x", expand=True, padx=(5, 0))
+        ctk.CTkButton(
+            btns,
+            text="📎 رفع نموذج وورد من الجهاز",
+            height=42,
+            font=("Segoe UI", 14, "bold"),
+            command=choose_word_template,
+        ).pack(side="right", fill="x", expand=True)
 
-        ctk.CTkLabel(template_card, text="المحرر الداخلي: استعمل الخانات بالشكل {{الاسم}} أو {{رقم_الهاتف}}", font=("Segoe UI", 13), text_color=MUTED).pack(anchor="e", padx=18)
-        editor = ctk.CTkTextbox(template_card, height=250, font=("Segoe UI", 15))
-        editor.pack(fill="x", padx=18, pady=(8, 18))
-        if existing and existing[6]:
-            editor.insert("end", existing[6])
-        else:
-            editor.insert("end", "اكتب نص النموذج هنا...\n\nأنا الممضي أسفله {{الاسم}} {{اللقب}}\nالساكن بـ {{العنوان}}\nرقم الهاتف: {{رقم_الهاتف}}\n")
+        ctk.CTkLabel(
+            template_card,
+            text="اكتب المتغيرات داخل ملف وورد بنفس أسماء الخانات، مثل: {{الاسم}} أو {{رقم_الهاتف}}",
+            font=("Segoe UI", 13),
+            text_color=MUTED,
+        ).pack(anchor="e", padx=18, pady=(0, 18))
 
         def save_template_action():
             template_name = name_entry.get().strip()
@@ -468,32 +466,29 @@ class DocumentsPage(ctk.CTkFrame):
 
             source_path = selected_template_path.get().strip()
             final_path = existing[3] if existing and existing[3] else None
-            template_content = editor.get("1.0", "end").strip()
+
+            if not source_path and not final_path:
+                messagebox.showerror("خطأ", "يجب رفع ملف وورد لهذا النموذج")
+                return
 
             if source_path:
-                if os.path.exists(source_path) and os.path.abspath(source_path) != os.path.abspath(final_path or ""):
+                if not os.path.exists(source_path):
+                    messagebox.showerror("خطأ", "ملف وورد المحدد غير موجود")
+                    return
+
+                if os.path.abspath(source_path) != os.path.abspath(final_path or ""):
                     final_path = os.path.join(TEMPLATES_FOLDER, f"{safe_template_file_name(template_name)}_{template_id or 'new'}.docx")
                     try:
                         shutil.copy2(source_path, final_path)
                     except Exception as e:
                         messagebox.showerror("خطأ", f"تعذر نسخ ملف وورد:\n{e}")
                         return
-                template_content_to_save = None
-            else:
-                final_path = None
-                template_content_to_save = template_content
-
-            if not final_path and not template_content_to_save:
-                messagebox.showerror("خطأ", "ارفع ملف وورد أو اكتب النموذج داخل المحرر")
-                return
 
             try:
                 if is_edit:
-                    update_template(template_id, template_name, fields_list, final_path, template_content_to_save)
+                    update_template(template_id, template_name, fields_list, final_path, None)
                 else:
-                    new_id = add_template(self.current_category_id, template_name, fields_list, final_path, template_content_to_save)
-                    if final_path and final_path.endswith("_new.docx"):
-                        pass
+                    add_template(self.current_category_id, template_name, fields_list, final_path, None)
                 messagebox.showinfo("تم", "تم حفظ النموذج بنجاح")
                 window.destroy()
                 self.load_templates_cards()
@@ -592,24 +587,18 @@ class DocumentsPage(ctk.CTkFrame):
             ctk.CTkLabel(box, text="معاينة قبل إنشاء الوثيقة", font=("Segoe UI", 22, "bold"), text_color=TEXT).pack(anchor="e", pady=(0, 12))
             text = ctk.CTkTextbox(box, font=("Segoe UI", 15))
             text.pack(fill="both", expand=True)
-            if template_content:
-                text.insert("end", render_text_template(template_content, data))
-            else:
-                text.insert("end", f"النموذج: {template_name}\nالقسم: {self.current_category_name}\n\n")
-                for field_id, field_label, field_key, field_order in fields:
-                    text.insert("end", f"{field_label}: {data.get(field_key, '')}\n")
+            text.insert("end", f"النموذج: {template_name}\nالقسم: {self.current_category_name}\n\n")
+            for field_id, field_label, field_key, field_order in fields:
+                text.insert("end", f"{field_label}: {data.get(field_key, '')}\n")
             text.configure(state="disabled")
 
         def create_document():
             data = collect_data()
-            if not template_path and not template_content:
-                messagebox.showerror("خطأ", "هذا النموذج غير مرتبط بملف وورد ولا يحتوي على نص داخلي.")
+            if not template_path:
+                messagebox.showerror("خطأ", "هذا النموذج غير مرتبط بملف وورد.")
                 return
             try:
-                if template_path:
-                    output_path = generate_word_document(template_path, data, template_name)
-                else:
-                    output_path = generate_word_from_text_template(template_content, data, template_name)
+                output_path = generate_word_document(template_path, data, template_name)
 
                 pdf_path = ""
                 pdf_error = ""
