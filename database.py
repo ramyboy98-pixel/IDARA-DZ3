@@ -25,7 +25,7 @@ def now_text():
 def column_exists(cursor, table_name, column_name):
     """
     فحص وجود عمود داخل جدول.
-    مهم: SQLite لا يقبل استعمال ? داخل PRAGMA table_info
+    SQLite لا يقبل استعمال ? داخل PRAGMA table_info
     لذلك نستعمل اسم الجدول مباشرة بعد التحقق منه.
     """
     allowed_tables = {
@@ -165,6 +165,16 @@ def init_database():
                 updated_at TEXT NOT NULL
             )
         """)
+
+        # إصلاح قواعد البيانات القديمة التي أُنشئت قبل إضافة notes أو updated_at
+        if not column_exists(cursor, "service_links", "notes"):
+            cursor.execute("ALTER TABLE service_links ADD COLUMN notes TEXT")
+
+        if not column_exists(cursor, "service_links", "updated_at"):
+            cursor.execute("ALTER TABLE service_links ADD COLUMN updated_at TEXT")
+
+        if not column_exists(cursor, "service_links", "created_at"):
+            cursor.execute("ALTER TABLE service_links ADD COLUMN created_at TEXT")
 
         conn.commit()
     finally:
