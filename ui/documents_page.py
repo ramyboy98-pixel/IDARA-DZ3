@@ -17,6 +17,7 @@ from database import (
     save_archive,
     save_customer,
     search_customers,
+    get_customer_by_phone,
 )
 from document_engine import (
     generate_word_document,
@@ -528,7 +529,14 @@ class DocumentsPage(ctk.CTkFrame):
         for cid, first, last, address, phone in customers:
             label = f"{first or ''} {last or ''} | {phone or ''}".strip()
             customer_values.append(label)
-            customer_map[label] = {"الاسم": first or "", "اللقب": last or "", "العنوان": address or "", "رقم_الهاتف": phone or "", "الهاتف": phone or ""}
+            customer_map[label] = {
+                "الاسم": first or "",
+                "اللقب": last or "",
+                "العنوان": address or "",
+                "رقم_الهاتف": phone or "",
+                "رقم الهاتف": phone or "",
+                "الهاتف": phone or "",
+            }
 
         if customers:
             choose_card = ctk.CTkFrame(container, fg_color=CARD, corner_radius=18, border_width=1, border_color=BORDER)
@@ -556,6 +564,46 @@ class DocumentsPage(ctk.CTkFrame):
             entry.pack(fill="x", padx=18)
             entries[field_key] = entry
         ctk.CTkFrame(form_card, fg_color="transparent", height=10).pack()
+
+        def fill_entry_by_labels(labels, value):
+            if not value:
+                return
+            for label in labels:
+                key = make_field_key(label)
+                if key in entries:
+                    entries[key].delete(0, "end")
+                    entries[key].insert(0, value)
+                    return
+
+        def auto_fill_customer_by_phone(event=None):
+            phone_entry = None
+            for label in ("رقم الهاتف", "الهاتف", "رقم_الهاتف", "الرقم"):
+                key = make_field_key(label)
+                if key in entries:
+                    phone_entry = entries[key]
+                    break
+            if not phone_entry:
+                return
+            phone = phone_entry.get().strip()
+            if not phone:
+                return
+            try:
+                row = get_customer_by_phone(phone)
+            except Exception:
+                row = None
+            if not row:
+                return
+            _cid, first, last, address, saved_phone = row
+            fill_entry_by_labels(["الاسم", "الإسم", "اسم"], first or "")
+            fill_entry_by_labels(["اللقب"], last or "")
+            fill_entry_by_labels(["العنوان", "الاقامة", "الإقامة", "مكان الإقامة"], address or "")
+
+        for label in ("رقم الهاتف", "الهاتف", "رقم_الهاتف", "الرقم"):
+            key = make_field_key(label)
+            if key in entries:
+                entries[key].bind("<FocusOut>", auto_fill_customer_by_phone)
+                entries[key].bind("<Return>", auto_fill_customer_by_phone)
+                break
 
         def collect_data():
             data = {}
