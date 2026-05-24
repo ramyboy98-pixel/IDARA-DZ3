@@ -266,7 +266,7 @@ class DocumentsPage(ctk.CTkFrame):
             empty = ctk.CTkFrame(self.templates_area, fg_color=CARD, corner_radius=18, border_width=1, border_color=BORDER)
             empty.pack(fill="x", padx=0, pady=(8, 0), anchor="n")
             ctk.CTkLabel(empty, text="لا توجد نماذج مطابقة.", font=("Segoe UI", 18, "bold"), text_color=TEXT).pack(pady=(22, 6))
-            ctk.CTkLabel(empty, text="اضغط على إضافة نموذج جديد لإنشاء استمارة وقالب خاص بها.", font=("Segoe UI", 13), text_color=MUTED).pack(pady=(0, 22))
+            ctk.CTkLabel(empty, text="اضغط على إضافة نموذج جديد لإنشاء استمارة وربطها بملف وورد.", font=("Segoe UI", 13), text_color=MUTED).pack(pady=(0, 22))
             return
 
         grid = ctk.CTkFrame(self.templates_area, fg_color="transparent")
@@ -351,7 +351,7 @@ class DocumentsPage(ctk.CTkFrame):
         try:
             self._open_template_editor(template_id)
         except Exception as e:
-            messagebox.showerror("خطأ", f"تعذر فتح محرر النموذج:\n{e}")
+            messagebox.showerror("خطأ", f"تعذر فتح نافذة النموذج:\n{e}")
 
     def _open_template_editor(self, template_id=None):
         is_edit = template_id is not None
@@ -520,7 +520,7 @@ class DocumentsPage(ctk.CTkFrame):
         container = ctk.CTkScrollableFrame(window, fg_color=BG)
         container.pack(fill="both", expand=True, padx=18, pady=18)
 
-        ctk.CTkLabel(container, text=f"استمارة: {template_name}", font=("Segoe UI", 25, "bold"), text_color=TEXT).pack(anchor="e", pady=(8, 6))
+        ctk.CTkLabel(container, text=f"استمارة {template_name}", font=("Segoe UI", 25, "bold"), text_color=TEXT).pack(anchor="e", pady=(8, 6))
         ctk.CTkLabel(container, text="املأ بيانات الزبون ثم أنشئ الوثيقة. سيتم حفظ الزبون والأرشيف تلقائيا.", font=("Segoe UI", 14), text_color=MUTED).pack(anchor="e", pady=(0, 14))
 
         customers = search_customers("")[:80]
