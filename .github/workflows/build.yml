@@ -3,9 +3,7 @@ name: build
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
 
 jobs:
   build:
@@ -23,48 +21,51 @@ jobs:
       - name: Check project files
         shell: pwsh
         run: |
-          if (!(Test-Path "main.py")) { throw "main.py not found in project root" }
-          if (!(Test-Path "database.py")) { throw "database.py not found in project root" }
-          if (!(Test-Path "utils")) { throw "utils folder not found in project root" }
-          if (!(Test-Path "ui")) { throw "ui folder not found in project root" }
+          if (!(Test-Path "main.py")) { throw "main.py not found in repo root" }
+          if (!(Test-Path "database.py")) { throw "database.py not found in repo root" }
+          if (!(Test-Path "ui")) { throw "ui folder not found in repo root" }
+          if (!(Test-Path "utils")) { throw "utils folder not found in repo root" }
 
       - name: Install dependencies
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path "requirements.txt") {
-            pip install -r requirements.txt
-          }
+          if (Test-Path "requirements.txt") { pip install -r requirements.txt }
           pip install pyinstaller
 
       - name: Build exe
         shell: pwsh
         run: |
           $addData = @()
-          if (Test-Path "assets") { $addData += "--add-data"; $addData += "assets;assets" }
-          if (Test-Path "templates") { $addData += "--add-data"; $addData += "templates;templates" }
-          if (Test-Path "data") { $addData += "--add-data"; $addData += "data;data" }
+          $addData += "--add-data=database.py;."
+          $addData += "--add-data=document_engine.py;."
+          $addData += "--add-data=print_manager.py;."
+          $addData += "--add-data=backup_manager.py;."
+          $addData += "--add-data=ui;ui"
+          $addData += "--add-data=utils;utils"
+          if (Test-Path "assets") { $addData += "--add-data=assets;assets" }
+          if (Test-Path "templates") { $addData += "--add-data=templates;templates" }
 
-          pyinstaller --noconfirm --onefile --windowed `
-            --name "IDARA_DZ" `
-            --hidden-import database `
-            --hidden-import document_engine `
-            --hidden-import print_manager `
-            --hidden-import backup_manager `
-            --hidden-import utils.paths `
-            --hidden-import ui.dashboard_page `
-            --hidden-import ui.documents_page `
-            --hidden-import ui.archive_page `
-            --hidden-import ui.customers_page `
-            --hidden-import ui.services_page `
-            --hidden-import ui.settings_page `
-            --hidden-import ui.search_page `
-            --hidden-import ui.splash_screen `
-            --hidden-import ui.ux_widgets `
-            @addData `
+          pyinstaller --noconfirm --clean --onefile --windowed --name IDARA_DZ `
+            --paths=. `
+            --hidden-import=database `
+            --hidden-import=document_engine `
+            --hidden-import=print_manager `
+            --hidden-import=backup_manager `
+            --hidden-import=utils.paths `
+            --hidden-import=ui.dashboard_page `
+            --hidden-import=ui.documents_page `
+            --hidden-import=ui.archive_page `
+            --hidden-import=ui.customers_page `
+            --hidden-import=ui.services_page `
+            --hidden-import=ui.settings_page `
+            --hidden-import=ui.search_page `
+            --hidden-import=ui.splash_screen `
+            --hidden-import=ui.ux_widgets `
+            $addData `
             main.py
 
-      - name: Upload artifact
+      - name: Upload exe
         uses: actions/upload-artifact@v4
         with:
           name: IDARA_DZ_EXE
