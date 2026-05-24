@@ -2,7 +2,7 @@ import os
 import customtkinter as ctk
 from tkinter import messagebox
 
-from database import search_archive, search_customers, search_templates_all, search_service_operations
+from database import search_archive, search_customers, search_templates_all, search_service_operations, search_service_links
 from print_manager import open_file
 
 BG = "#F5F7FA"
@@ -56,8 +56,9 @@ class SearchPage(ctk.CTkFrame):
         archive = search_archive(self.query)
         customers = search_customers(self.query)
         services = search_service_operations(self.query)
+        service_links = search_service_links(self.query, limit=30)
 
-        total = len(templates) + len(archive) + len(customers) + len(services)
+        total = len(templates) + len(archive) + len(customers) + len(services) + len(service_links)
         if total == 0:
             self.empty_state("لا توجد نتائج مطابقة.")
             return
@@ -82,6 +83,13 @@ class SearchPage(ctk.CTkFrame):
                 self.service_result(results_box, row)
         else:
             self.small_note(results_box, "لا توجد خدمات إلكترونية مطابقة.")
+
+        self.section_title(results_box, f"روابط الخدمات ({len(service_links)})")
+        if service_links:
+            for row in service_links[:20]:
+                self.service_link_result(results_box, row)
+        else:
+            self.small_note(results_box, "لا توجد روابط خدمات مطابقة.")
 
         self.section_title(results_box, f"الزبائن ({len(customers)})")
         if customers:
