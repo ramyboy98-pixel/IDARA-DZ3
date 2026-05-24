@@ -159,6 +159,7 @@ def init_database():
                 service_key TEXT NOT NULL,
                 title TEXT NOT NULL,
                 url TEXT NOT NULL,
+                notes TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
@@ -564,12 +565,13 @@ def search_service_operations(keyword="", date_from="", date_to=""):
         conn.close()
 
 
+
 def get_service_links(service_key):
     conn = connect_db()
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, service_key, title, url, created_at, updated_at
+            SELECT id, service_key, title, url, notes, created_at, updated_at
             FROM service_links
             WHERE service_key = ?
             ORDER BY id DESC
@@ -579,22 +581,22 @@ def get_service_links(service_key):
         conn.close()
 
 
-def add_service_link(service_key, title, url):
+def add_service_link(service_key, title, url, notes=""):
     service_key = (service_key or "").strip()
     title = (title or "").strip()
     url = (url or "").strip()
-
+    notes = (notes or "").strip()
     if not service_key or not title or not url:
-        return None
+        raise ValueError("يجب إدخال اسم الرابط والرابط")
 
     now = now_text()
     conn = connect_db()
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO service_links (service_key, title, url, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
-        """, (service_key, title, url, now, now))
+            INSERT INTO service_links (service_key, title, url, notes, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (service_key, title, url, notes, now, now))
         link_id = cursor.lastrowid
         conn.commit()
         return link_id
@@ -602,23 +604,22 @@ def add_service_link(service_key, title, url):
         conn.close()
 
 
-def update_service_link(link_id, title, url):
+def update_service_link(link_id, title, url, notes=""):
     title = (title or "").strip()
     url = (url or "").strip()
-
+    notes = (notes or "").strip()
     if not title or not url:
-        return False
+        raise ValueError("يجب إدخال اسم الرابط والرابط")
 
     conn = connect_db()
     try:
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE service_links
-            SET title = ?, url = ?, updated_at = ?
+            SET title = ?, url = ?, notes = ?, updated_at = ?
             WHERE id = ?
-        """, (title, url, now_text(), link_id))
+        """, (title, url, notes, now_text(), link_id))
         conn.commit()
-        return cursor.rowcount > 0
     finally:
         conn.close()
 
@@ -629,23 +630,23 @@ def delete_service_link(link_id):
         cursor = conn.cursor()
         cursor.execute("DELETE FROM service_links WHERE id = ?", (link_id,))
         conn.commit()
-        return cursor.rowcount > 0
     finally:
         conn.close()
 
 
 def search_service_links(keyword="", limit=20):
+    keyword = (keyword or "").strip()
+    like_keyword = f"%{keyword}%"
     conn = connect_db()
     try:
         cursor = conn.cursor()
-        like_keyword = f"%{keyword}%"
         cursor.execute("""
-            SELECT id, service_key, title, url, created_at, updated_at
+            SELECT id, service_key, title, url, notes, created_at, updated_at
             FROM service_links
-            WHERE title LIKE ? OR url LIKE ? OR service_key LIKE ?
+            WHERE title LIKE ? OR url LIKE ? OR notes LIKE ? OR service_key LIKE ?
             ORDER BY updated_at DESC, id DESC
             LIMIT ?
-        """, (like_keyword, like_keyword, like_keyword, limit))
+        """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
         return cursor.fetchall()
     finally:
         conn.close()
@@ -735,15 +736,15 @@ def get_search_suggestions(keyword="", limit=8):
             add("خدمة", service_name, service_url or "")
 
         cursor.execute("""
-            SELECT title, url
+            SELECT title, url, service_key
             FROM service_links
-            WHERE title LIKE ? OR url LIKE ? OR service_key LIKE ?
+            WHERE title LIKE ? OR url LIKE ? OR notes LIKE ? OR service_key LIKE ?
             ORDER BY updated_at DESC, id DESC
             LIMIT ?
-        """, (like_keyword, like_keyword, like_keyword, limit))
+        """, (like_keyword, like_keyword, like_keyword, like_keyword, limit))
 
-        for title, url in cursor.fetchall():
-            add("رابط خدمة", title, url or "")
+        for title, url, service_key in cursor.fetchall():
+            add("رابط خدمة", title, service_key or url or "")
 
         return suggestions[:limit]
     finally:
