@@ -96,6 +96,9 @@ class ServicesPage(ctk.CTkFrame):
         self.search_entry = None
         self.current_service = None
         self.logo_cache = {}
+        self.search_after_id = None
+        self.render_after_id = None
+        self.current_links_cache = None
         self.build_ui()
 
     def build_ui(self):
@@ -141,7 +144,7 @@ class ServicesPage(ctk.CTkFrame):
             justify="right",
         )
         self.search_entry.pack(side="right", padx=10, pady=14)
-        self.search_entry.bind("<KeyRelease>", lambda _e=None: self.render_service_cards())
+        self.search_entry.bind("<KeyRelease>", self.schedule_render_service_cards)
 
         ctk.CTkButton(
             top_bar,
@@ -164,22 +167,31 @@ class ServicesPage(ctk.CTkFrame):
             self.search_entry.delete(0, "end")
         self.render_service_cards()
 
+    def schedule_render_service_cards(self, event=None):
+        if self.search_after_id:
+            try:
+                self.after_cancel(self.search_after_id)
+            except Exception:
+                pass
+            self.search_after_id = None
+        self.search_after_id = self.after(180, self.render_service_cards)
+
     def service_matches_keyword(self, service, keyword):
         if not keyword:
             return True
-        if keyword in service["name"] or keyword in service["key"]:
-            return True
-        try:
-            for _id, _key, title, url, notes, _created, _updated in get_service_links(service["key"]):
-                if keyword in (title or "") or keyword in (url or "") or keyword in (notes or ""):
-                    return True
-        except Exception:
-            pass
-        return False
+        keyword = keyword.strip()
+        return keyword in service["name"] or keyword.lower() in service["key"].lower()
 
     def render_service_cards(self):
         if not self.cards_grid:
             return
+
+        if self.render_after_id:
+            try:
+                self.after_cancel(self.render_after_id)
+            except Exception:
+                pass
+            self.render_after_id = None
 
         for widget in self.cards_grid.winfo_children():
             widget.destroy()
@@ -204,9 +216,19 @@ class ServicesPage(ctk.CTkFrame):
             ).grid(row=0, column=0, sticky="e", padx=10, pady=18)
             return
 
-        for index, service in enumerate(services):
-            row, col = divmod(index, SERVICE_COLUMNS)
-            self.service_card(self.cards_grid, service, row, col)
+        def render_chunk(start_index=0):
+            end_index = min(start_index + 8, len(services))
+            for index in range(start_index, end_index):
+                service = services[index]
+                row, col = divmod(index, SERVICE_COLUMNS)
+                self.service_card(self.cards_grid, service, row, col)
+
+            if end_index < len(services):
+                self.render_after_id = self.after(10, lambda: render_chunk(end_index))
+            else:
+                self.render_after_id = None
+
+        render_chunk(0)
 
     def load_logo(self, logo_path):
         if logo_path in self.logo_cache:
@@ -361,6 +383,7 @@ class ServicesPage(ctk.CTkFrame):
             text_color=MUTED,
         ).pack(side="right", padx=10)
 
+        self.current_links_cache = None
         self.links_box = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self.links_box.pack(fill="both", expand=True)
         self.render_links()
@@ -372,7 +395,9 @@ class ServicesPage(ctk.CTkFrame):
         for widget in self.links_box.winfo_children():
             widget.destroy()
 
-        links = get_service_links(self.current_service["key"])
+        if self.current_links_cache is None:
+            self.current_links_cache = get_service_links(self.current_service["key"])
+        links = self.current_links_cache
         if not links:
             empty = ctk.CTkFrame(self.links_box, fg_color=CARD, corner_radius=18, border_width=1, border_color=BORDER)
             empty.pack(fill="x", pady=8)
@@ -484,6 +509,7 @@ class ServicesPage(ctk.CTkFrame):
                 else:
                     add_service_link(service_key, title, url, notes)
                 window.destroy()
+                self.current_links_cache = None
                 self.render_links()
             except Exception as exc:
                 messagebox.showerror("خطأ", f"تعذر حفظ الرابط:\n{exc}")
@@ -495,6 +521,7 @@ class ServicesPage(ctk.CTkFrame):
             return
         try:
             delete_service_link(link_id)
+            self.current_links_cache = None
             self.render_links()
         except Exception as exc:
             messagebox.showerror("خطأ", f"تعذر حذف الرابط:\n{exc}")
