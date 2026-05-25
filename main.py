@@ -360,6 +360,8 @@ class IdaraDZApp(ctk.CTk):
     def show_dashboard(self):
         """عرض صفحة لوحة التحكم"""
         try:
+            if self.current_page == "dashboard":
+                return
             self.clear_content()
             self.set_active("dashboard", "الرئيسية")
             page = DashboardPage(self.content, app=self)
@@ -371,6 +373,8 @@ class IdaraDZApp(ctk.CTk):
     def show_documents(self):
         """عرض صفحة الوثائق"""
         try:
+            if self.current_page == "documents":
+                return
             self.clear_content()
             self.set_active("documents", "وثائق")
             page = DocumentsPage(self.content)
@@ -382,6 +386,8 @@ class IdaraDZApp(ctk.CTk):
     def show_services(self):
         """عرض صفحة الخدمات"""
         try:
+            if self.current_page == "services":
+                return
             self.clear_content()
             self.set_active("services", "خدمات إلكترونية")
             page = ServicesPage(self.content, app=self)
@@ -393,6 +399,8 @@ class IdaraDZApp(ctk.CTk):
     def show_archive(self):
         """عرض صفحة الأرشيف"""
         try:
+            if self.current_page == "archive":
+                return
             self.clear_content()
             self.set_active("archive", "الأرشيف")
             page = ArchivePage(self.content)
@@ -415,6 +423,8 @@ class IdaraDZApp(ctk.CTk):
     def show_settings(self):
         """عرض صفحة الإعدادات"""
         try:
+            if self.current_page == "settings":
+                return
             self.clear_content()
             self.set_active("settings", "الإعدادات")
             page = SettingsPage(self.content)
