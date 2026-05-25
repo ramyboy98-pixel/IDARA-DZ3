@@ -5,7 +5,6 @@ from tkinter import filedialog, messagebox, Menu
 
 from utils.paths import get_templates_dir
 from database import (
-    init_database,
     get_categories,
     search_templates,
     get_template_fields,
@@ -58,7 +57,6 @@ def safe_template_file_name(name):
 class DocumentsPage(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
-        init_database()
         ensure_templates_folder()
         self.current_category_id = None
         self.current_category_name = None
