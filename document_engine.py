@@ -259,6 +259,10 @@ def convert_word_to_pdf(word_path):
         word_app = win32com.client.DispatchEx("Word.Application")
         word_app.Visible = False
         word_app.DisplayAlerts = 0
+        try:
+            word_app.ScreenUpdating = False
+        except Exception:
+            pass
 
         abs_word_path = os.path.abspath(word_path)
         abs_pdf_path = os.path.abspath(pdf_path)
