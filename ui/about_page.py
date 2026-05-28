@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import customtkinter as ctk
+
 
 BG = "#F5F7FA"
 CARD = "#FFFFFF"
@@ -9,112 +11,152 @@ BLUE = "#2563EB"
 
 
 class AboutPage(ctk.CTkFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, app=None):
         super().__init__(parent, fg_color="transparent")
+        self.app = app
         self.build_ui()
 
     def build_ui(self):
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", pady=(10, 18))
+        header.pack(fill="x", pady=(6, 12))
 
         ctk.CTkLabel(
             header,
-            text="ℹ️ حول البرنامج",
+            text="حول البرنامج",
             font=("Segoe UI", 30, "bold"),
             text_color=TEXT,
         ).pack(anchor="e")
 
         ctk.CTkLabel(
             header,
-            text="معلومات البرنامج والمطور.",
+            text="معلومات البرنامج والمطور",
             font=("Segoe UI", 14),
             text_color=MUTED,
-        ).pack(anchor="e", pady=(5, 0))
+        ).pack(anchor="e", pady=(4, 0))
 
-        card = ctk.CTkFrame(
+        # مهم: جعل الصفحة قابلة للتمرير حتى لا تختفي المعلومات السفلية
+        scroll = ctk.CTkScrollableFrame(
             self,
+            fg_color="transparent",
+            scrollbar_button_color="#CBD5E1",
+            scrollbar_button_hover_color="#94A3B8",
+        )
+        scroll.pack(fill="both", expand=True, padx=0, pady=(0, 8))
+
+        main_card = ctk.CTkFrame(
+            scroll,
             fg_color=CARD,
             corner_radius=24,
             border_width=1,
             border_color=BORDER,
         )
-        card.pack(fill="x", pady=(0, 16))
+        main_card.pack(fill="x", padx=4, pady=(0, 16))
 
         ctk.CTkLabel(
-            card,
+            main_card,
             text="IDARA DZ",
             font=("Segoe UI", 34, "bold"),
             text_color=BLUE,
-        ).pack(anchor="e", padx=28, pady=(28, 8))
+        ).pack(anchor="center", pady=(30, 6))
 
         ctk.CTkLabel(
-            card,
+            main_card,
             text="الإصدار: v1.1",
             font=("Segoe UI", 16, "bold"),
             text_color=TEXT,
-        ).pack(anchor="e", padx=28, pady=(0, 10))
+        ).pack(anchor="center", pady=(0, 14))
 
         ctk.CTkLabel(
-            card,
+            main_card,
             text="برنامج مكتبي لإدارة الوثائق الإدارية، النماذج، الأرشيف، والخدمات الإلكترونية.",
             font=("Segoe UI", 15),
             text_color=MUTED,
-            justify="right",
-            wraplength=760,
-        ).pack(anchor="e", padx=28, pady=(0, 24))
+            wraplength=780,
+            justify="center",
+        ).pack(anchor="center", padx=30, pady=(0, 28))
 
-        features = ctk.CTkFrame(card, fg_color="#F9FAFB", corner_radius=18)
-        features.pack(fill="x", padx=24, pady=(0, 24))
-
-        ctk.CTkLabel(
-            features,
-            text="الوظائف الأساسية",
-            font=("Segoe UI", 20, "bold"),
-            text_color=TEXT,
-        ).pack(anchor="e", padx=20, pady=(18, 8))
-
-        features_text = (
-            "• إنشاء وثائق Word و PDF من قوالب ثابتة\n"
-            "• إدارة النماذج والاستمارات\n"
-            "• أرشفة الوثائق والبحث داخلها\n"
-            "• خدمات إلكترونية وروابط رسمية\n"
-            "• مفضلة، آخر العمليات، ونسخ احتياطي تلقائي"
+        self.section(
+            scroll,
+            title="الوظائف الأساسية",
+            lines=[
+                "صناعة وثائق Word و PDF انطلاقًا من نماذج Word.",
+                "إدارة النماذج والاستمارات.",
+                "أرشفة الوثائق والبحث داخلها.",
+                "خدمات إلكترونية وروابط رسمية منظمة حسب الوزارة أو المصلحة.",
+                "مفضلة، آخر العمليات، ونسخ احتياطي تلقائي.",
+            ],
         )
 
-        ctk.CTkLabel(
-            features,
-            text=features_text,
-            font=("Segoe UI", 14),
-            text_color=MUTED,
-            justify="right",
-        ).pack(anchor="e", padx=20, pady=(0, 18))
+        self.section(
+            scroll,
+            title="اختصارات لوحة المفاتيح",
+            lines=[
+                "F1: فتح قسم الوثائق.",
+                "F2 أو Ctrl+F: التركيز على البحث.",
+                "F3 أو Ctrl+P: فتح الأرشيف.",
+                "F4: فتح الخدمات الإلكترونية.",
+                "F5 أو Esc: العودة إلى الرئيسية.",
+                "F6: فتح الإعدادات.",
+                "F7: فتح صفحة حول البرنامج.",
+            ],
+        )
 
-        developer_card = ctk.CTkFrame(
-            self,
+        self.section(
+            scroll,
+            title="معلومات المطور",
+            lines=[
+                "المطور: Mohammed BELKEBIR ABDELKARIM",
+                "Email: iva23605@gmail.com",
+                "Telegram: @Mohamad_Abdelkarim",
+            ],
+        )
+
+        self.section(
+            scroll,
+            title="ملاحظات",
+            lines=[
+                "هذا البرنامج موجّه لتسهيل العمل اليومي في إدارة الوثائق والخدمات الإلكترونية.",
+                "يُنصح بالاحتفاظ بنسخ احتياطية من قاعدة البيانات بشكل دوري.",
+                "يمكن تطوير البرنامج لاحقًا بإضافة روابط وخدمات ونماذج جديدة.",
+            ],
+        )
+
+        footer = ctk.CTkFrame(scroll, fg_color="transparent")
+        footer.pack(fill="x", pady=(0, 20))
+
+        ctk.CTkLabel(
+            footer,
+            text="IDARA DZ © 2026",
+            font=("Segoe UI", 13),
+            text_color=MUTED,
+        ).pack(anchor="center")
+
+    def section(self, parent, title, lines):
+        card = ctk.CTkFrame(
+            parent,
             fg_color=CARD,
-            corner_radius=24,
+            corner_radius=20,
             border_width=1,
             border_color=BORDER,
         )
-        developer_card.pack(fill="x")
+        card.pack(fill="x", padx=4, pady=8)
 
         ctk.CTkLabel(
-            developer_card,
-            text="معلومات المطور",
-            font=("Segoe UI", 22, "bold"),
+            card,
+            text=title,
+            font=("Segoe UI", 20, "bold"),
             text_color=TEXT,
-        ).pack(anchor="e", padx=28, pady=(24, 12))
+        ).pack(anchor="e", padx=22, pady=(18, 8))
 
-        info = (
-            "المطور: Mohammed BELKEBIR ABDELKARIM\n"
-            "Email: iva23605@gmail.com\n"
-            "Telegram: @Mohamad_Abdelkarim"
-        )
+        for line in lines:
+            ctk.CTkLabel(
+                card,
+                text="• " + line,
+                font=("Segoe UI", 14),
+                text_color=MUTED,
+                anchor="e",
+                justify="right",
+                wraplength=820,
+            ).pack(fill="x", anchor="e", padx=26, pady=3)
 
-        ctk.CTkLabel(
-            developer_card,
-            text=info,
-            font=("Segoe UI", 15),
-            text_color=MUTED,
-            justify="right",
-        ).pack(anchor="e", padx=28, pady=(0, 24))
+        ctk.CTkFrame(card, height=10, fg_color="transparent").pack()
