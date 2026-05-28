@@ -171,6 +171,7 @@ def init_database():
         conn.close()
 
     seed_default_categories()
+    seed_default_service_links()
 
 
 def seed_default_categories():
