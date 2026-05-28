@@ -14,6 +14,8 @@ if base_dir not in sys.path:
 import customtkinter as ctk
 from datetime import datetime
 
+from backup_manager import create_auto_backup_if_needed
+
 from database import init_database, get_search_suggestions
 from ui.dashboard_page import DashboardPage
 from ui.documents_page import DocumentsPage
@@ -21,6 +23,7 @@ from ui.archive_page import ArchivePage
 from ui.customers_page import CustomersPage
 from ui.services_page import ServicesPage
 from ui.settings_page import SettingsPage
+from ui.about_page import AboutPage
 from ui.search_page import SearchPage
 from ui.splash_screen import SplashScreen
 from ui.ux_widgets import ToastNotification
@@ -47,6 +50,7 @@ class IdaraDZApp(ctk.CTk):
         self.build_ui()
         self.show_dashboard()
         self.update_clock()
+        self.after(2500, self.run_auto_backup)
 
         SplashScreen(self)
 
@@ -57,11 +61,32 @@ class IdaraDZApp(ctk.CTk):
 
         self.bind("<F1>", lambda e: self.show_documents())
         self.bind("<F2>", lambda e: self.focus_global_search())
-        self.bind("<Alt-Key-1>", lambda e: self.show_documents())
-        self.bind("<Alt-Key-2>", lambda e: self.show_services())
-        self.bind("<Alt-Key-3>", lambda e: self.show_archive())
+        self.bind("<F3>", lambda e: self.show_archive())
+        self.bind("<F4>", lambda e: self.show_services())
+        self.bind("<F5>", lambda e: self.show_dashboard())
+        self.bind("<F6>", lambda e: self.show_settings())
+        self.bind("<F7>", lambda e: self.show_about())
+
+        self.bind("<Control-f>", lambda e: self.focus_global_search())
+        self.bind("<Control-F>", lambda e: self.focus_global_search())
+        self.bind("<Control-n>", lambda e: self.show_documents())
+        self.bind("<Control-N>", lambda e: self.show_documents())
         self.bind("<Control-p>", lambda e: self.show_archive())
+        self.bind("<Control-P>", lambda e: self.show_archive())
+
+        self.bind("<Alt-Key-1>", lambda e: self.show_dashboard())
+        self.bind("<Alt-Key-2>", lambda e: self.show_documents())
+        self.bind("<Alt-Key-3>", lambda e: self.show_services())
+        self.bind("<Alt-Key-4>", lambda e: self.show_archive())
+        self.bind("<Alt-Key-5>", lambda e: self.show_about())
         self.bind("<Escape>", lambda e: self.show_dashboard())
+
+    def run_auto_backup(self):
+        """تشغيل النسخ الاحتياطي التلقائي بصمت"""
+        try:
+            create_auto_backup_if_needed()
+        except Exception as e:
+            print(f"خطأ في النسخ الاحتياطي التلقائي: {e}")
 
     def toast(self, message, kind="success"):
         """عرض إشعار مؤقت"""
@@ -136,6 +161,7 @@ class IdaraDZApp(ctk.CTk):
         )
         spacer.pack(fill="both", expand=True)
 
+        self.add_nav_button("about", "ℹ️ حول البرنامج", self.show_about)
         self.add_nav_button("settings", "⚙️ الإعدادات", self.show_settings)
 
     def add_nav_button(self, key, text, command):
@@ -418,6 +444,19 @@ class IdaraDZApp(ctk.CTk):
             page.pack(fill="both", expand=True)
         except Exception as e:
             print(f"خطأ في عرض الزبائن: {e}")
+            self.toast(f"خطأ: {str(e)}", "error")
+
+    def show_about(self):
+        """عرض صفحة حول البرنامج"""
+        try:
+            if self.current_page == "about":
+                return
+            self.clear_content()
+            self.set_active("about", "حول البرنامج")
+            page = AboutPage(self.content)
+            page.pack(fill="both", expand=True)
+        except Exception as e:
+            print(f"خطأ في عرض حول البرنامج: {e}")
             self.toast(f"خطأ: {str(e)}", "error")
 
     def show_settings(self):

@@ -82,3 +82,32 @@ def list_backups():
         print(f"خطأ في الحصول على قائمة النسخ الاحتياطية: {str(e)}")
     
     return backups
+
+
+def create_auto_backup_if_needed():
+    """
+    إنشاء نسخة احتياطية تلقائية واحدة في اليوم.
+    لا يعرض أي نافذة للمستخدم، ويُستعمل عند تشغيل البرنامج.
+    """
+    os.makedirs(BACKUPS_FOLDER, exist_ok=True)
+    today = datetime.now().strftime("%Y%m%d")
+    prefix = f"IDARA_DZ_AUTO_{today}_"
+
+    try:
+        for file in os.listdir(BACKUPS_FOLDER):
+            if file.startswith(prefix) and file.lower().endswith(".zip"):
+                return None
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_name = f"IDARA_DZ_AUTO_{timestamp}.zip"
+        backup_path = os.path.join(BACKUPS_FOLDER, backup_name)
+
+        with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as backup:
+            add_folder_to_zip(backup, DATA_FOLDER, "data")
+            add_folder_to_zip(backup, TEMPLATES_FOLDER, "templates")
+            add_folder_to_zip(backup, OUTPUT_FOLDER, "output")
+
+        return backup_path
+    except Exception as e:
+        print(f"خطأ في النسخ الاحتياطي التلقائي: {e}")
+        return None

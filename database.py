@@ -36,6 +36,8 @@ def column_exists(cursor, table_name, column_name):
         "customers",
         "service_operations",
         "service_links",
+        "favorites",
+        "app_meta",
     }
 
     if table_name not in allowed_tables:
@@ -166,6 +168,19 @@ def init_database():
             )
         """)
 
+
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS favorites (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_type TEXT NOT NULL,
+                item_key TEXT NOT NULL,
+                title TEXT,
+                subtitle TEXT,
+                created_at TEXT NOT NULL,
+                UNIQUE(item_type, item_key)
+            )
+        """)
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS app_meta (
@@ -380,19 +395,47 @@ def save_archive(customer_name, phone, document_type, template_name, word_path=N
         conn.close()
 
 
-def search_archive(keyword="", date_from="", date_to=""):
+def search_archive(keyword="", date_from="", date_to="", phone="", document_type="", template_name=""):
     conn = connect_db()
     try:
         cursor = conn.cursor()
-        like_keyword = f"%{keyword}%"
+        keyword = (keyword or "").strip()
+        phone = (phone or "").strip()
+        document_type = (document_type or "").strip()
+        template_name = (template_name or "").strip()
 
         query = """
             SELECT id, customer_name, phone, document_type, template_name, word_path, pdf_path, created_at
             FROM archive
-            WHERE (customer_name LIKE ? OR phone LIKE ? OR document_type LIKE ? OR template_name LIKE ?)
+            WHERE 1 = 1
         """
+        params = []
 
-        params = [like_keyword, like_keyword, like_keyword, like_keyword]
+        if keyword:
+            like_keyword = f"%{keyword}%"
+            query += """
+                AND (
+                    customer_name LIKE ?
+                    OR phone LIKE ?
+                    OR document_type LIKE ?
+                    OR template_name LIKE ?
+                    OR word_path LIKE ?
+                    OR pdf_path LIKE ?
+                )
+            """
+            params.extend([like_keyword, like_keyword, like_keyword, like_keyword, like_keyword, like_keyword])
+
+        if phone:
+            query += " AND phone LIKE ?"
+            params.append(f"%{phone}%")
+
+        if document_type:
+            query += " AND document_type LIKE ?"
+            params.append(f"%{document_type}%")
+
+        if template_name:
+            query += " AND template_name LIKE ?"
+            params.append(f"%{template_name}%")
 
         if date_from:
             query += " AND date(created_at) >= date(?)"
@@ -403,13 +446,11 @@ def search_archive(keyword="", date_from="", date_to=""):
             params.append(date_to)
 
         query += " ORDER BY id DESC"
-
         cursor.execute(query, params)
         rows = cursor.fetchall()
         return rows
     finally:
         conn.close()
-
 
 def save_customer(first_name, last_name, address, phone):
     first_name = (first_name or "").strip()
@@ -834,6 +875,153 @@ def get_search_suggestions(keyword="", limit=8):
         for title, service_key, url in cursor.fetchall():
             add("رابط خدمة", title, service_key or url or "")
 
+
+        cursor.execute("""
+            SELECT item_type, title, subtitle
+            FROM favorites
+            WHERE title LIKE ? OR subtitle LIKE ? OR item_key LIKE ?
+            ORDER BY id DESC
+            LIMIT ?
+        """, (like_keyword, like_keyword, like_keyword, limit))
+
+        for item_type, title, subtitle in cursor.fetchall():
+            add("مفضلة", title, subtitle or item_type)
+
         return suggestions[:limit]
+    finally:
+        conn.close()
+
+
+def is_favorite(item_type, item_key):
+    item_type = str(item_type or "").strip()
+    item_key = str(item_key or "").strip()
+    if not item_type or not item_key:
+        return False
+
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id
+            FROM favorites
+            WHERE item_type = ? AND item_key = ?
+            LIMIT 1
+        """, (item_type, item_key))
+        return cursor.fetchone() is not None
+    finally:
+        conn.close()
+
+
+def toggle_favorite(item_type, item_key, title="", subtitle=""):
+    item_type = str(item_type or "").strip()
+    item_key = str(item_key or "").strip()
+    title = str(title or "").strip()
+    subtitle = str(subtitle or "").strip()
+
+    if not item_type or not item_key:
+        return False
+
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id
+            FROM favorites
+            WHERE item_type = ? AND item_key = ?
+            LIMIT 1
+        """, (item_type, item_key))
+        row = cursor.fetchone()
+
+        if row:
+            cursor.execute("DELETE FROM favorites WHERE id = ?", (row[0],))
+            conn.commit()
+            return False
+
+        cursor.execute("""
+            INSERT OR REPLACE INTO favorites
+            (item_type, item_key, title, subtitle, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (item_type, item_key, title, subtitle, now_text()))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def get_favorites(item_type=None, limit=20):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        if item_type:
+            cursor.execute("""
+                SELECT id, item_type, item_key, title, subtitle, created_at
+                FROM favorites
+                WHERE item_type = ?
+                ORDER BY id DESC
+                LIMIT ?
+            """, (item_type, limit))
+        else:
+            cursor.execute("""
+                SELECT id, item_type, item_key, title, subtitle, created_at
+                FROM favorites
+                ORDER BY id DESC
+                LIMIT ?
+            """, (limit,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def get_recent_documents(limit=5):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, customer_name, phone, document_type, template_name, word_path, pdf_path, created_at
+            FROM archive
+            ORDER BY id DESC
+            LIMIT ?
+        """, (limit,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def get_recent_services(limit=5):
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, service_name, service_url, customer_name, phone, notes, created_at
+            FROM service_operations
+            ORDER BY id DESC
+            LIMIT ?
+        """, (limit,))
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def get_archive_filter_values():
+    conn = connect_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT DISTINCT document_type
+            FROM archive
+            WHERE document_type IS NOT NULL AND document_type != ''
+            ORDER BY document_type ASC
+        """)
+        document_types = [row[0] for row in cursor.fetchall()]
+
+        cursor.execute("""
+            SELECT DISTINCT template_name
+            FROM archive
+            WHERE template_name IS NOT NULL AND template_name != ''
+            ORDER BY template_name ASC
+        """)
+        template_names = [row[0] for row in cursor.fetchall()]
+
+        return document_types, template_names
     finally:
         conn.close()
