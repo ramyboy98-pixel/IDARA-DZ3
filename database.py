@@ -733,8 +733,9 @@ def search_service_links(keyword="", limit=20):
 
 def seed_default_service_links():
     """
-    إضافة روابط الخدمات الافتراضية بسرعة.
-    تعمل مرة واحدة فقط ولا تكرر الروابط.
+    إضافة روابط الخدمات الافتراضية بشكل آمن.
+    إذا اختفت الروابط بسبب قاعدة بيانات جديدة أو تحديث مسار البيانات يعيد إدخالها.
+    لا يكرر الروابط الموجودة.
     """
     if "DEFAULT_SERVICE_LINKS" not in globals():
         return
@@ -744,21 +745,14 @@ def seed_default_service_links():
         cursor = conn.cursor()
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS app_meta (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            )
-        """)
-
-        cursor.execute("""
             CREATE UNIQUE INDEX IF NOT EXISTS idx_service_links_unique
             ON service_links(service_key, title, url)
         """)
 
-        cursor.execute("SELECT value FROM app_meta WHERE key = ?", ("service_links_seed_v1",))
-        row = cursor.fetchone()
-        if row and row[0] == "done":
-            return
+        # لا نعتمد فقط على app_meta.
+        # نفحص العدد الحقيقي للروابط داخل الجدول.
+        cursor.execute("SELECT COUNT(*) FROM service_links")
+        current_count = cursor.fetchone()[0] or 0
 
         now = now_text()
         rows = [
@@ -766,11 +760,19 @@ def seed_default_service_links():
             for service_key, title, url in DEFAULT_SERVICE_LINKS
         ]
 
+        # إذا كانت القاعدة فارغة أو ناقصة، نضيف الروابط الناقصة فقط.
         cursor.executemany("""
             INSERT OR IGNORE INTO service_links
             (service_key, title, url, notes, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, rows)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS app_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+        """)
 
         cursor.execute("""
             INSERT OR REPLACE INTO app_meta (key, value)
@@ -780,6 +782,7 @@ def seed_default_service_links():
         conn.commit()
     finally:
         conn.close()
+
 
 def get_search_suggestions(keyword="", limit=8):
     """
