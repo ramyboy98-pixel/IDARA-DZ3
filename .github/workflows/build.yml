@@ -59,6 +59,7 @@ jobs:
             --hidden-import=ui.customers_page `
             --hidden-import=ui.services_page `
             --hidden-import=ui.settings_page `
+            --hidden-import=ui.about_page `
             --hidden-import=ui.search_page `
             --hidden-import=ui.splash_screen `
             --hidden-import=ui.ux_widgets `
