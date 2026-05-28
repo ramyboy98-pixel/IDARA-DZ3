@@ -371,6 +371,14 @@ class ServicesPage(ctk.CTkFrame):
             widget.bind("<Enter>", enter)
             widget.bind("<Leave>", leave)
 
+    def open_service_by_key(self, service_key):
+        for service in STATIC_SERVICES:
+            if service.get("key") == service_key:
+                self.show_service_links(service)
+                return
+        if self.app:
+            self.app.toast("لم يتم العثور على الخدمة", "error")
+
     def show_service_links(self, service):
         self.current_service = service
         self.clear_page()
