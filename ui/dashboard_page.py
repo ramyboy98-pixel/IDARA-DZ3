@@ -1,211 +1,347 @@
-import os
+# -*- coding: utf-8 -*-
 import customtkinter as ctk
+import webbrowser
 
 from database import (
-    search_archive,
-    search_customers,
     count_documents_today,
     count_services_today,
-    get_recent_documents,
-    get_recent_services,
+    search_archive,
+    search_service_operations,
     get_favorites,
 )
-from print_manager import open_file
+
+
+BG = "#F5F7FA"
+CARD = "#FFFFFF"
+TEXT = "#111827"
+MUTED = "#6B7280"
+BORDER = "#E5E7EB"
+BLUE = "#2563EB"
+GRAY_BTN = "#F3F4F6"
 
 
 class DashboardPage(ctk.CTkFrame):
-
     def __init__(self, parent, app=None):
         super().__init__(parent, fg_color="transparent")
         self.app = app
         self.build_ui()
 
     def build_ui(self):
+        self.hero()
+        self.stats()
+        self.quick_actions()
+        self.recent_and_favorites()
 
-        top = ctk.CTkFrame(self, fg_color="transparent")
-        top.pack(fill="x", pady=(4, 18))
-
-        welcome = ctk.CTkFrame(
-            top,
+    def hero(self):
+        box = ctk.CTkFrame(
+            self,
+            fg_color=CARD,
             corner_radius=22,
-            fg_color="#FFFFFF"
+            border_width=1,
+            border_color=BORDER,
         )
-        welcome.pack(fill="x")
+        box.pack(fill="x", pady=(0, 20))
 
-        title = ctk.CTkLabel(
-            welcome,
+        ctk.CTkLabel(
+            box,
             text="IDARA DZ",
-            font=("Segoe UI", 28, "bold"),
-            text_color="#111827"
-        )
-        title.pack(anchor="e", padx=26, pady=(20, 6))
+            font=("Segoe UI", 30, "bold"),
+            text_color=TEXT,
+        ).pack(anchor="e", padx=24, pady=(22, 4))
 
-        subtitle = ctk.CTkLabel(
-            welcome,
+        ctk.CTkLabel(
+            box,
             text="برنامج مكتبي لإدارة الوثائق، النماذج، الأرشيف والخدمات الإلكترونية.",
             font=("Segoe UI", 15),
-            text_color="#6B7280"
-        )
-        subtitle.pack(anchor="e", padx=26, pady=(0, 20))
+            text_color=MUTED,
+        ).pack(anchor="e", padx=24, pady=(0, 22))
 
-        stats = ctk.CTkFrame(self, fg_color="transparent")
-        stats.pack(fill="x", pady=(0, 18))
+    def stats(self):
+        row = ctk.CTkFrame(self, fg_color="transparent")
+        row.pack(fill="x", pady=(0, 20))
 
-        archive_count = len(search_archive(""))
-        customers_count = len(search_customers(""))
-        documents_today = count_documents_today()
-        services_today = count_services_today()
+        stats = [
+            ("📄", "وثائق اليوم", str(self.safe_count(count_documents_today))),
+            ("🌐", "خدمات اليوم", str(self.safe_count(count_services_today))),
+        ]
 
-        self.stat_card(stats, "📄", "وثائق اليوم", str(documents_today), 0)
-        self.stat_card(stats, "🌐", "خدمات اليوم", str(services_today), 1)
-        self.stat_card(stats, "🗂️", "الأرشيف", str(archive_count), 2)
-        self.stat_card(stats, "👥", "الزبائن", str(customers_count), 3)
+        for icon, label, value in stats:
+            card = ctk.CTkFrame(row, fg_color=CARD, corner_radius=20, border_width=1, border_color=BORDER)
+            card.pack(side="right", fill="x", expand=True, padx=8)
 
-        shortcuts = ctk.CTkFrame(self, corner_radius=22, fg_color="#FFFFFF")
-        shortcuts.pack(fill="x", pady=(0, 16))
+            ctk.CTkLabel(card, text=icon, font=("Segoe UI Emoji", 30), text_color=TEXT).pack(anchor="e", padx=18, pady=(16, 2))
+            ctk.CTkLabel(card, text=value, font=("Segoe UI", 25, "bold"), text_color=TEXT).pack(anchor="e", padx=18)
+            ctk.CTkLabel(card, text=label, font=("Segoe UI", 14), text_color=MUTED).pack(anchor="e", padx=18, pady=(0, 16))
 
-        label = ctk.CTkLabel(
-            shortcuts,
-            text="اختصارات سريعة",
-            font=("Segoe UI", 22, "bold"),
-            text_color="#111827"
-        )
-        label.pack(anchor="e", padx=26, pady=(18, 12))
-
-        grid = ctk.CTkFrame(shortcuts, fg_color="transparent")
-        grid.pack(fill="x", padx=22, pady=(0, 18))
-
-        self.shortcut_button(grid, "📄 وثيقة جديدة", self.app.show_documents if self.app else None, 0)
-        self.shortcut_button(grid, "🗂️ فتح الأرشيف", self.app.show_archive if self.app else None, 1)
-        self.shortcut_button(grid, "🌐 الخدمات الإلكترونية", self.app.show_services if self.app else None, 2)
-
-        lists = ctk.CTkFrame(self, fg_color="transparent")
-        lists.pack(fill="both", expand=True)
-
-        lists.grid_columnconfigure(0, weight=1)
-        lists.grid_columnconfigure(1, weight=1)
-        lists.grid_columnconfigure(2, weight=1)
-
-        self.recent_documents_card(lists, 0)
-        self.recent_services_card(lists, 1)
-        self.favorites_card(lists, 2)
-
-    def stat_card(self, parent, icon, title, value, col):
-
-        card = ctk.CTkFrame(
-            parent,
-            height=120,
+    def quick_actions(self):
+        box = ctk.CTkFrame(
+            self,
+            fg_color=CARD,
             corner_radius=22,
-            fg_color="#FFFFFF"
+            border_width=1,
+            border_color=BORDER,
         )
-        card.grid(row=0, column=col, sticky="nsew", padx=9)
-        parent.grid_columnconfigure(col, weight=1)
-        card.grid_propagate(False)
+        box.pack(fill="x", pady=(0, 20))
 
-        icon_label = ctk.CTkLabel(
-            card,
-            text=icon,
-            font=("Segoe UI Emoji", 26)
-        )
-        icon_label.pack(anchor="e", padx=18, pady=(15, 0))
+        ctk.CTkLabel(
+            box,
+            text="اختصارات سريعة",
+            font=("Segoe UI", 24, "bold"),
+            text_color=TEXT,
+        ).pack(anchor="e", padx=24, pady=(20, 14))
 
-        value_label = ctk.CTkLabel(
-            card,
-            text=value,
-            font=("Segoe UI", 22, "bold"),
-            text_color="#111827"
-        )
-        value_label.pack(anchor="e", padx=18)
+        buttons = ctk.CTkFrame(box, fg_color="transparent")
+        buttons.pack(fill="x", padx=24, pady=(0, 24))
 
-        title_label = ctk.CTkLabel(
-            card,
-            text=title,
-            font=("Segoe UI", 14),
-            text_color="#6B7280"
-        )
-        title_label.pack(anchor="e", padx=18)
+        self.action_button(buttons, "📄 وثيقة جديدة", self.goto_documents).pack(side="right", fill="x", expand=True, padx=7)
+        self.action_button(buttons, "📁 فتح الأرشيف", self.goto_archive).pack(side="right", fill="x", expand=True, padx=7)
+        self.action_button(buttons, "🌐 الخدمات الإلكترونية", self.goto_services).pack(side="right", fill="x", expand=True, padx=7)
 
-    def shortcut_button(self, parent, text, command, col):
-
-        btn = ctk.CTkButton(
+    def action_button(self, parent, text, command):
+        return ctk.CTkButton(
             parent,
             text=text,
-            height=52,
-            corner_radius=16,
+            height=46,
+            corner_radius=15,
             font=("Segoe UI", 15, "bold"),
-            fg_color="#F3F4F6",
+            fg_color=GRAY_BTN,
             hover_color="#E5E7EB",
-            text_color="#111827",
-            command=command
+            text_color=TEXT,
+            command=command,
         )
-        btn.grid(row=0, column=col, sticky="nsew", padx=10, pady=6)
-        parent.grid_columnconfigure(col, weight=1)
 
-    def panel(self, parent, title, col):
-        card = ctk.CTkFrame(parent, corner_radius=22, fg_color="#FFFFFF")
-        card.grid(row=0, column=col, sticky="nsew", padx=8)
+    def recent_and_favorites(self):
+        row = ctk.CTkFrame(self, fg_color="transparent")
+        row.pack(fill="both", expand=True)
+
+        recent_card = ctk.CTkFrame(row, fg_color=CARD, corner_radius=22, border_width=1, border_color=BORDER)
+        recent_card.pack(side="right", fill="both", expand=True, padx=(8, 0))
+
+        fav_card = ctk.CTkFrame(row, fg_color=CARD, corner_radius=22, border_width=1, border_color=BORDER)
+        fav_card.pack(side="right", fill="both", expand=True, padx=(0, 8))
+
+        self.fill_recent(recent_card)
+        self.fill_favorites(fav_card)
+
+    def fill_recent(self, parent):
         ctk.CTkLabel(
-            card,
+            parent,
+            text="آخر العمليات",
+            font=("Segoe UI", 22, "bold"),
+            text_color=TEXT,
+        ).pack(anchor="e", padx=20, pady=(18, 10))
+
+        items = []
+
+        # آخر الوثائق
+        try:
+            archive_rows = search_archive("", "", "")[:4]
+        except Exception:
+            archive_rows = []
+
+        for row in archive_rows:
+            _id, customer, phone, doc_type, template_name, word_path, pdf_path, created_at = row
+            title = template_name or doc_type or "وثيقة"
+            subtitle = f"{customer or ''}  •  {phone or ''}  •  {created_at or ''}".strip(" •")
+            items.append({
+                "icon": "📄",
+                "title": title,
+                "subtitle": subtitle,
+                "command": self.goto_archive,
+            })
+
+        # آخر الخدمات المفتوحة
+        try:
+            service_rows = search_service_operations("", "", "")[:4]
+        except Exception:
+            service_rows = []
+
+        for row in service_rows:
+            service_id, service_name, service_url, customer_name, phone, notes, created_at = row
+            title = service_name or "خدمة إلكترونية"
+            subtitle = f"{created_at or ''}  •  {service_url or ''}".strip(" •")
+
+            if service_url:
+                command = lambda url=service_url: self.open_url(url)
+            else:
+                command = self.goto_services
+
+            items.append({
+                "icon": "🌐",
+                "title": title,
+                "subtitle": subtitle,
+                "command": command,
+            })
+
+        if not items:
+            self.empty_label(parent, "لا توجد عمليات حديثة.")
+            return
+
+        for item in items[:8]:
+            self.info_row(
+                parent,
+                item["icon"],
+                item["title"],
+                item["subtitle"],
+                command=item["command"],
+            )
+
+    def fill_favorites(self, parent):
+        ctk.CTkLabel(
+            parent,
+            text="المفضلة ⭐",
+            font=("Segoe UI", 22, "bold"),
+            text_color=TEXT,
+        ).pack(anchor="e", padx=20, pady=(18, 10))
+
+        try:
+            favorites = get_favorites(limit=8)
+        except Exception:
+            favorites = []
+
+        if not favorites:
+            self.empty_label(parent, "لا توجد مفضلة بعد. أضف نجمة من الوثائق أو الخدمات.")
+            return
+
+        for fav in favorites:
+            # يدعم أكثر من شكل راجع من قاعدة البيانات
+            favorite_id = fav[0] if len(fav) > 0 else None
+            item_type = fav[1] if len(fav) > 1 else ""
+            item_key = fav[2] if len(fav) > 2 else ""
+            title = fav[3] if len(fav) > 3 else ""
+            subtitle = fav[4] if len(fav) > 4 else ""
+
+            icon = self.favorite_icon(item_type)
+            command = lambda t=item_type, k=item_key, title=title: self.open_favorite(t, k, title)
+            self.info_row(parent, icon, title or item_key, subtitle or item_type, command=command)
+
+    def info_row(self, parent, icon, title, subtitle="", command=None):
+        row = ctk.CTkFrame(parent, fg_color="#F9FAFB", corner_radius=14)
+        row.pack(fill="x", padx=16, pady=5)
+
+        ctk.CTkLabel(row, text=icon, font=("Segoe UI Emoji", 19), text_color=TEXT).pack(side="right", padx=(12, 6), pady=10)
+
+        text_box = ctk.CTkFrame(row, fg_color="transparent")
+        text_box.pack(side="right", fill="x", expand=True, padx=(4, 8), pady=8)
+
+        title_label = ctk.CTkLabel(
+            text_box,
             text=title,
-            font=("Segoe UI", 18, "bold"),
-            text_color="#111827"
-        ).pack(anchor="e", padx=18, pady=(16, 10))
-        return card
+            font=("Segoe UI", 14, "bold"),
+            text_color=TEXT,
+            anchor="e",
+        )
+        title_label.pack(fill="x")
+
+        if subtitle:
+            ctk.CTkLabel(
+                text_box,
+                text=subtitle,
+                font=("Segoe UI", 11),
+                text_color=MUTED,
+                anchor="e",
+            ).pack(fill="x", pady=(2, 0))
+
+        if command:
+            for widget in (row, text_box, title_label):
+                try:
+                    widget.configure(cursor="hand2")
+                except Exception:
+                    pass
+                widget.bind("<Button-1>", lambda _e=None, cmd=command: cmd())
+
+            def enter(_e=None):
+                row.configure(fg_color="#EFF6FF")
+
+            def leave(_e=None):
+                row.configure(fg_color="#F9FAFB")
+
+            for widget in (row, text_box, title_label):
+                widget.bind("<Enter>", enter)
+                widget.bind("<Leave>", leave)
 
     def empty_label(self, parent, text):
         ctk.CTkLabel(
             parent,
             text=text,
-            font=("Segoe UI", 13),
-            text_color="#9CA3AF"
-        ).pack(anchor="e", padx=18, pady=(4, 14))
+            font=("Segoe UI", 14),
+            text_color=MUTED,
+            wraplength=360,
+            justify="center",
+        ).pack(anchor="center", padx=20, pady=26)
 
-    def item_button(self, parent, text, command=None):
-        btn = ctk.CTkButton(
-            parent,
-            text=text,
-            anchor="e",
-            height=34,
-            corner_radius=10,
-            fg_color="#F9FAFB",
-            hover_color="#EFF6FF",
-            text_color="#111827",
-            font=("Segoe UI", 12),
-            command=command,
-        )
-        btn.pack(fill="x", padx=14, pady=4)
+    def favorite_icon(self, item_type):
+        item_type = str(item_type or "").lower()
+        if "service_link" in item_type or "رابط" in item_type:
+            return "🔗"
+        if "service" in item_type or "خدمة" in item_type:
+            return "🌐"
+        if "template" in item_type or "document" in item_type or "نموذج" in item_type:
+            return "📄"
+        return "⭐"
 
-    def recent_documents_card(self, parent, col):
-        card = self.panel(parent, "آخر الوثائق", col)
-        rows = get_recent_documents(5)
-        if not rows:
-            self.empty_label(card, "لا توجد وثائق حديثة.")
+    def open_url(self, url):
+        url = str(url or "").strip()
+        if not url:
+            self.goto_services()
+            return
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+        webbrowser.open(url)
+
+    def open_favorite(self, item_type, item_key, title=""):
+        item_type = str(item_type or "").lower()
+        item_key = str(item_key or "").strip()
+
+        # رابط خدمة: افتح الرابط مباشرة إذا كان item_key رابطًا
+        if "service_link" in item_type or item_key.startswith(("http://", "https://")):
+            if item_key.startswith(("http://", "https://")):
+                webbrowser.open(item_key)
+            else:
+                self.goto_services()
             return
 
-        for _id, customer, phone, document_type, template, word_path, pdf_path, created_at in rows:
-            title = template or document_type or "وثيقة"
-            subtitle = customer or phone or created_at
-            text = f"{title}  —  {subtitle}"
-            self.item_button(card, text, lambda path=pdf_path or word_path: open_file(path) if path else None)
-
-    def recent_services_card(self, parent, col):
-        card = self.panel(parent, "آخر الخدمات", col)
-        rows = get_recent_services(5)
-        if not rows:
-            self.empty_label(card, "لا توجد خدمات حديثة.")
+        # خدمة/وزارة: افتح صفحة الخدمات
+        if "service" in item_type:
+            self.goto_services()
+            try:
+                # بعد تحميل صفحة الخدمات، افتح الخدمة المحددة إذا كان المفتاح هو service_key
+                if self.app and hasattr(self.app, "content"):
+                    self.after(120, lambda: self.try_open_service_key(item_key))
+            except Exception:
+                pass
             return
 
-        for _id, service_name, service_url, customer, phone, notes, created_at in rows:
-            text = service_name or service_url or "خدمة"
-            self.item_button(card, text, self.app.show_services if self.app else None)
-
-    def favorites_card(self, parent, col):
-        card = self.panel(parent, "المفضلة ⭐", col)
-        rows = get_favorites(limit=6)
-        if not rows:
-            self.empty_label(card, "لم تضف عناصر إلى المفضلة بعد.")
+        # نموذج/وثيقة: افتح قسم الوثائق
+        if "template" in item_type or "document" in item_type:
+            self.goto_documents()
             return
 
-        for _id, item_type, item_key, title, subtitle, created_at in rows:
-            text = f"⭐ {title or item_key}"
-            self.item_button(card, text)
+        self.goto_services()
+
+    def try_open_service_key(self, service_key):
+        try:
+            for widget in self.app.content.winfo_children():
+                if hasattr(widget, "open_service_by_key"):
+                    widget.open_service_by_key(service_key)
+                    return
+        except Exception:
+            pass
+
+    def goto_documents(self):
+        if self.app and hasattr(self.app, "show_documents"):
+            self.app.show_documents()
+
+    def goto_services(self):
+        if self.app and hasattr(self.app, "show_services"):
+            self.app.show_services()
+
+    def goto_archive(self):
+        if self.app and hasattr(self.app, "show_archive"):
+            self.app.show_archive()
+
+    def safe_count(self, fn):
+        try:
+            return fn()
+        except Exception:
+            return 0
