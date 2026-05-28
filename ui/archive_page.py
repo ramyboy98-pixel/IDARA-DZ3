@@ -212,7 +212,7 @@ class ArchivePage(ctk.CTkFrame):
         }
 
         for key, text in headings.items():
-            self.tree.heading(key, text)
+            self.tree.heading(key, text=text)
             self.tree.column(key, anchor="center")
 
         self.tree.column("customer", width=200)
