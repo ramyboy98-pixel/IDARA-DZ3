@@ -14,6 +14,8 @@ from database import (
     update_service_link,
     delete_service_link,
     search_service_links,
+    is_favorite,
+    toggle_favorite,
 )
 
 
@@ -199,6 +201,11 @@ class ServicesPage(ctk.CTkFrame):
         keyword = self.search_entry.get().strip() if self.search_entry else ""
         services = [s for s in STATIC_SERVICES if self.service_matches_keyword(s, keyword)]
 
+        try:
+            services.sort(key=lambda s: 0 if is_favorite("service", s["key"]) else 1)
+        except Exception:
+            pass
+
         for col in range(SERVICE_COLUMNS):
             self.cards_grid.grid_columnconfigure(
                 col,
@@ -271,6 +278,29 @@ class ServicesPage(ctk.CTkFrame):
         card.grid(row=row, column=col, padx=12, pady=12, sticky="n")
         card.grid_propagate(False)
         card.pack_propagate(False)
+
+        fav_text = "⭐" if is_favorite("service", service["key"]) else "☆"
+
+        def toggle_service_favorite():
+            try:
+                new_state = toggle_favorite("service", service["key"], service["name"], "خدمات إلكترونية")
+                fav_btn.configure(text="⭐" if new_state else "☆")
+            except Exception as exc:
+                messagebox.showerror("خطأ", f"تعذر تعديل المفضلة:\n{exc}")
+
+        fav_btn = ctk.CTkButton(
+            card,
+            text=fav_text,
+            width=30,
+            height=26,
+            corner_radius=9,
+            fg_color="transparent",
+            hover_color="#FEF3C7",
+            text_color="#F59E0B",
+            font=("Segoe UI Emoji", 16),
+            command=toggle_service_favorite,
+        )
+        fav_btn.place(x=8, y=8)
 
         logo_box = ctk.CTkFrame(
             card,
@@ -414,7 +444,36 @@ class ServicesPage(ctk.CTkFrame):
         row.pack(fill="x", pady=5)
         row.pack_propagate(False)
 
-        ctk.CTkLabel(row, text="…", font=("Segoe UI", 22, "bold"), text_color=MUTED).pack(side="left", padx=18)
+        fav_key = str(link_id)
+        fav_text = "⭐" if is_favorite("service_link", fav_key) else "☆"
+
+        def toggle_link_favorite():
+            try:
+                new_state = toggle_favorite(
+                    "service_link",
+                    fav_key,
+                    title,
+                    self.current_service["name"] if self.current_service else "خدمات إلكترونية"
+                )
+                fav_btn.configure(text="⭐" if new_state else "☆")
+            except Exception as exc:
+                messagebox.showerror("خطأ", f"تعذر تعديل المفضلة:\n{exc}")
+
+        fav_btn = ctk.CTkButton(
+            row,
+            text=fav_text,
+            width=32,
+            height=32,
+            corner_radius=10,
+            fg_color="transparent",
+            hover_color="#FEF3C7",
+            text_color="#F59E0B",
+            font=("Segoe UI Emoji", 16),
+            command=toggle_link_favorite,
+        )
+        fav_btn.pack(side="left", padx=(8, 0))
+
+        ctk.CTkLabel(row, text="…", font=("Segoe UI", 22, "bold"), text_color=MUTED).pack(side="left", padx=12)
 
         text_box = ctk.CTkFrame(row, fg_color="transparent")
         text_box.pack(side="right", fill="both", expand=True, padx=16, pady=8)

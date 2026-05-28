@@ -2,7 +2,7 @@ import os
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 
-from database import search_archive
+from database import search_archive, get_archive_filter_values
 from print_manager import open_file, print_file
 
 BG = "#F5F7FA"
@@ -37,7 +37,7 @@ class ArchivePage(ctk.CTkFrame):
 
         ctk.CTkLabel(
             title_box,
-            text="بحث، فلترة، فتح وإعادة طباعة الوثائق المحفوظة.",
+            text="بحث متقدم، فلترة، فتح وإعادة طباعة الوثائق المحفوظة.",
             font=("Segoe UI", 14),
             text_color=MUTED
         ).pack(anchor="e", pady=(5, 0))
@@ -45,46 +45,91 @@ class ArchivePage(ctk.CTkFrame):
         filters = ctk.CTkFrame(self, corner_radius=20, fg_color=CARD, border_width=1, border_color=BORDER)
         filters.pack(fill="x", pady=(0, 8), anchor="n")
 
+        row1 = ctk.CTkFrame(filters, fg_color="transparent")
+        row1.pack(fill="x", padx=14, pady=(14, 6))
+
         self.search_entry = ctk.CTkEntry(
-            filters,
-            placeholder_text="بحث باسم الزبون أو الوثيقة أو الهاتف...",
-            width=340,
-            height=40,
-            font=("Segoe UI", 14)
+            row1,
+            placeholder_text="بحث عام: الزبون، الوثيقة، النموذج، المسار...",
+            width=350,
+            height=38,
+            font=("Segoe UI", 13),
+            justify="right"
         )
-        self.search_entry.pack(side="right", padx=14, pady=14)
+        self.search_entry.pack(side="right", padx=5)
         self.search_entry.bind("<KeyRelease>", self.on_search_key)
 
+        self.phone_entry = ctk.CTkEntry(
+            row1,
+            placeholder_text="رقم الهاتف",
+            width=150,
+            height=38,
+            font=("Segoe UI", 13),
+            justify="right"
+        )
+        self.phone_entry.pack(side="right", padx=5)
+        self.phone_entry.bind("<KeyRelease>", lambda e: self.load_archive())
+
         self.date_from_entry = ctk.CTkEntry(
-            filters,
-            placeholder_text="من تاريخ YYYY-MM-DD",
-            width=165,
-            height=40,
+            row1,
+            placeholder_text="من YYYY-MM-DD",
+            width=145,
+            height=38,
             font=("Segoe UI", 13)
         )
-        self.date_from_entry.pack(side="right", padx=5, pady=14)
+        self.date_from_entry.pack(side="right", padx=5)
         self.date_from_entry.bind("<KeyRelease>", lambda e: self.load_archive())
 
         self.date_to_entry = ctk.CTkEntry(
-            filters,
-            placeholder_text="إلى تاريخ YYYY-MM-DD",
-            width=165,
-            height=40,
+            row1,
+            placeholder_text="إلى YYYY-MM-DD",
+            width=145,
+            height=38,
             font=("Segoe UI", 13)
         )
-        self.date_to_entry.pack(side="right", padx=5, pady=14)
+        self.date_to_entry.pack(side="right", padx=5)
         self.date_to_entry.bind("<KeyRelease>", lambda e: self.load_archive())
 
+        row2 = ctk.CTkFrame(filters, fg_color="transparent")
+        row2.pack(fill="x", padx=14, pady=(0, 14))
+
+        try:
+            document_types, template_names = get_archive_filter_values()
+        except Exception:
+            document_types, template_names = [], []
+
+        self.document_type_combo = ctk.CTkComboBox(
+            row2,
+            values=["كل الأقسام"] + document_types,
+            width=230,
+            height=38,
+            font=("Segoe UI", 13),
+            command=lambda _v=None: self.load_archive()
+        )
+        self.document_type_combo.set("كل الأقسام")
+        self.document_type_combo.pack(side="right", padx=5)
+
+        self.template_combo = ctk.CTkComboBox(
+            row2,
+            values=["كل النماذج"] + template_names,
+            width=260,
+            height=38,
+            font=("Segoe UI", 13),
+            command=lambda _v=None: self.load_archive()
+        )
+        self.template_combo.set("كل النماذج")
+        self.template_combo.pack(side="right", padx=5)
+
         clear_btn = ctk.CTkButton(
-            filters,
+            row2,
             text="مسح الفلتر",
             width=115,
-            height=40,
+            height=38,
             fg_color="#6B7280",
             hover_color="#4B5563",
             command=self.clear_filters
         )
-        clear_btn.pack(side="left", padx=14, pady=14)
+        clear_btn.pack(side="left", padx=5)
 
         self.suggestions_box = None
 
@@ -133,10 +178,7 @@ class ArchivePage(ctk.CTkFrame):
             border_color=BORDER
         )
 
-        # جدول الأرشيف مثبت مباشرة تحت الأزرار، بدون تمدد يدفعه للأسفل.
-        container.pack(fill="x", expand=False, anchor="n", pady=(0, 0))
-        container.configure(height=430)
-        container.pack_propagate(False)
+        container.pack(fill="both", expand=True, anchor="n", pady=(0, 0))
 
         style = ttk.Style()
         try:
@@ -170,7 +212,7 @@ class ArchivePage(ctk.CTkFrame):
         }
 
         for key, text in headings.items():
-            self.tree.heading(key, text=text)
+            self.tree.heading(key, text)
             self.tree.column(key, anchor="center")
 
         self.tree.column("customer", width=200)
@@ -186,78 +228,27 @@ class ArchivePage(ctk.CTkFrame):
         scrollbar.pack(side="right", fill="y", pady=18, padx=(0, 18))
 
         self.tree.bind("<Double-1>", lambda e: self.open_selected_word())
+        self.tree.bind("<Return>", lambda e: self.open_selected_word())
 
     def on_search_key(self, event=None):
         self.load_archive_suggestions()
         self.load_archive()
 
     def load_archive_suggestions(self):
-        if not self.suggestions_box:
-            return
-
-        for widget in self.suggestions_box.winfo_children():
-            widget.destroy()
-
-        keyword = self.search_entry.get().strip()
-
-        if not keyword:
-            return
-
-        try:
-            rows = search_archive(keyword)[:6]
-        except Exception:
-            rows = []
-
-        if not rows:
-            return
-
-        box = ctk.CTkFrame(
-            self.suggestions_box,
-            fg_color="#FFFFFF",
-            corner_radius=14,
-            border_width=1,
-            border_color=BORDER
-        )
-        box.pack(fill="x")
-
-        for row in rows:
-            _id, customer_name, phone, document_type, template_name, word_path, pdf_path, created_at = row
-            title = template_name or customer_name or phone
-            subtitle = f"{customer_name or ''} {phone or ''}".strip()
-
-            btn = ctk.CTkButton(
-                box,
-                text=f"{title}  —  {subtitle}",
-                anchor="e",
-                height=32,
-                corner_radius=10,
-                fg_color="transparent",
-                hover_color="#EFF6FF",
-                text_color=TEXT,
-                font=("Segoe UI", 13),
-                command=lambda value=title: self.choose_archive_suggestion(value),
-            )
-            btn.pack(fill="x", padx=8, pady=3)
+        return
 
     def choose_archive_suggestion(self, value):
         self.search_entry.delete(0, "end")
         self.search_entry.insert(0, value)
-
-        if self.suggestions_box:
-            self.suggestions_box.destroy()
-            self.suggestions_box = None
-
         self.load_archive()
 
     def clear_filters(self):
         self.search_entry.delete(0, "end")
+        self.phone_entry.delete(0, "end")
         self.date_from_entry.delete(0, "end")
         self.date_to_entry.delete(0, "end")
-
-        if self.suggestions_box:
-            self.suggestions_box.destroy()
-            self.suggestions_box = None
-
+        self.document_type_combo.set("كل الأقسام")
+        self.template_combo.set("كل النماذج")
         self.load_archive()
 
     def load_archive(self):
@@ -265,10 +256,25 @@ class ArchivePage(ctk.CTkFrame):
             self.tree.delete(item)
 
         keyword = self.search_entry.get().strip()
+        phone = self.phone_entry.get().strip()
         date_from = self.date_from_entry.get().strip()
         date_to = self.date_to_entry.get().strip()
+        document_type = self.document_type_combo.get().strip()
+        template_name = self.template_combo.get().strip()
 
-        rows = search_archive(keyword, date_from, date_to)
+        if document_type == "كل الأقسام":
+            document_type = ""
+        if template_name == "كل النماذج":
+            template_name = ""
+
+        rows = search_archive(
+            keyword=keyword,
+            date_from=date_from,
+            date_to=date_to,
+            phone=phone,
+            document_type=document_type,
+            template_name=template_name,
+        )
 
         self.archive_rows = {}
 

@@ -17,6 +17,8 @@ from database import (
     save_customer,
     search_customers,
     get_customer_by_phone,
+    is_favorite,
+    toggle_favorite,
 )
 from document_engine import (
     generate_word_document,
@@ -260,6 +262,11 @@ class DocumentsPage(ctk.CTkFrame):
             messagebox.showerror("خطأ", f"تعذر تحميل النماذج:\n{e}")
             templates = []
 
+        try:
+            templates.sort(key=lambda item: 0 if is_favorite("template", str(item[0])) else 1)
+        except Exception:
+            pass
+
         if not templates:
             empty = ctk.CTkFrame(self.templates_area, fg_color=CARD, corner_radius=18, border_width=1, border_color=BORDER)
             empty.pack(fill="x", padx=0, pady=(8, 0), anchor="n")
@@ -282,6 +289,35 @@ class DocumentsPage(ctk.CTkFrame):
         card = ctk.CTkFrame(parent, width=178, height=178, corner_radius=20, fg_color=CARD, border_width=1, border_color=BORDER)
         card.grid(row=row, column=col, sticky="n", padx=10, pady=10)
         card.grid_propagate(False)
+
+        fav_key = str(template_id)
+        fav_text = "⭐" if is_favorite("template", fav_key) else "☆"
+
+        def toggle_template_favorite():
+            try:
+                new_state = toggle_favorite(
+                    "template",
+                    fav_key,
+                    name,
+                    self.current_category_name or "وثائق"
+                )
+                fav_btn.configure(text="⭐" if new_state else "☆")
+            except Exception as exc:
+                messagebox.showerror("خطأ", f"تعذر تعديل المفضلة:\n{exc}")
+
+        fav_btn = ctk.CTkButton(
+            card,
+            text=fav_text,
+            width=30,
+            height=26,
+            corner_radius=9,
+            fg_color="transparent",
+            hover_color="#FEF3C7",
+            text_color="#F59E0B",
+            font=("Segoe UI Emoji", 16),
+            command=toggle_template_favorite,
+        )
+        fav_btn.place(x=8, y=8)
 
         def open_form(_event=None):
             self.open_fill_form_window(template_id)
