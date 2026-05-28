@@ -22,6 +22,13 @@ def get_app_base_dir():
     return Path(__file__).resolve().parent.parent
 
 
+def get_base_dir():
+    """
+    توافق مع الملفات القديمة التي تستدعي get_base_dir.
+    """
+    return str(get_app_base_dir())
+
+
 def get_user_data_dir():
     """
     مسار بيانات المستخدم.
@@ -64,3 +71,10 @@ def get_backups_dir():
 def get_asset_path(relative_path):
     base = get_app_base_dir()
     return str(base / relative_path)
+
+
+def resource_path(relative_path):
+    """
+    توافق إضافي مع أي ملف قديم يستعمل resource_path.
+    """
+    return get_asset_path(relative_path)
