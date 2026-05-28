@@ -24,23 +24,36 @@ class DashboardPage(ctk.CTkFrame):
     def __init__(self, parent, app=None):
         super().__init__(parent, fg_color="transparent")
         self.app = app
+        self.body = None
         self.build_ui()
 
     def build_ui(self):
+        # جعل الرئيسية قابلة للتمرير حتى يمكن النزول قليلاً عند صغر الشاشة
+        self.body = ctk.CTkScrollableFrame(
+            self,
+            fg_color="transparent",
+            scrollbar_button_color="#CBD5E1",
+            scrollbar_button_hover_color="#94A3B8",
+        )
+        self.body.pack(fill="both", expand=True)
+
         self.hero()
         self.stats()
         self.quick_actions()
         self.recent_and_favorites()
 
+        # مسافة سفلية بسيطة حتى لا تلتصق آخر البطاقات بأسفل الشاشة
+        ctk.CTkFrame(self.body, height=28, fg_color="transparent").pack(fill="x")
+
     def hero(self):
         box = ctk.CTkFrame(
-            self,
+            self.body,
             fg_color=CARD,
             corner_radius=22,
             border_width=1,
             border_color=BORDER,
         )
-        box.pack(fill="x", pady=(0, 20))
+        box.pack(fill="x", pady=(0, 20), padx=2)
 
         ctk.CTkLabel(
             box,
@@ -57,8 +70,8 @@ class DashboardPage(ctk.CTkFrame):
         ).pack(anchor="e", padx=24, pady=(0, 22))
 
     def stats(self):
-        row = ctk.CTkFrame(self, fg_color="transparent")
-        row.pack(fill="x", pady=(0, 20))
+        row = ctk.CTkFrame(self.body, fg_color="transparent")
+        row.pack(fill="x", pady=(0, 20), padx=2)
 
         stats = [
             ("📄", "وثائق اليوم", str(self.safe_count(count_documents_today))),
@@ -75,13 +88,13 @@ class DashboardPage(ctk.CTkFrame):
 
     def quick_actions(self):
         box = ctk.CTkFrame(
-            self,
+            self.body,
             fg_color=CARD,
             corner_radius=22,
             border_width=1,
             border_color=BORDER,
         )
-        box.pack(fill="x", pady=(0, 20))
+        box.pack(fill="x", pady=(0, 20), padx=2)
 
         ctk.CTkLabel(
             box,
@@ -111,8 +124,8 @@ class DashboardPage(ctk.CTkFrame):
         )
 
     def recent_and_favorites(self):
-        row = ctk.CTkFrame(self, fg_color="transparent")
-        row.pack(fill="both", expand=True)
+        row = ctk.CTkFrame(self.body, fg_color="transparent")
+        row.pack(fill="both", expand=True, padx=2)
 
         recent_card = ctk.CTkFrame(row, fg_color=CARD, corner_radius=22, border_width=1, border_color=BORDER)
         recent_card.pack(side="right", fill="both", expand=True, padx=(8, 0))
@@ -133,7 +146,6 @@ class DashboardPage(ctk.CTkFrame):
 
         items = []
 
-        # آخر الوثائق
         try:
             archive_rows = search_archive("", "", "")[:4]
         except Exception:
@@ -150,7 +162,6 @@ class DashboardPage(ctk.CTkFrame):
                 "command": self.goto_archive,
             })
 
-        # آخر الخدمات المفتوحة
         try:
             service_rows = search_service_operations("", "", "")[:4]
         except Exception:
@@ -204,8 +215,6 @@ class DashboardPage(ctk.CTkFrame):
             return
 
         for fav in favorites:
-            # يدعم أكثر من شكل راجع من قاعدة البيانات
-            favorite_id = fav[0] if len(fav) > 0 else None
             item_type = fav[1] if len(fav) > 1 else ""
             item_key = fav[2] if len(fav) > 2 else ""
             title = fav[3] if len(fav) > 3 else ""
@@ -293,26 +302,19 @@ class DashboardPage(ctk.CTkFrame):
         item_type = str(item_type or "").lower()
         item_key = str(item_key or "").strip()
 
-        # رابط خدمة: افتح الرابط مباشرة إذا كان item_key رابطًا
         if "service_link" in item_type or item_key.startswith(("http://", "https://")):
-            if item_key.startswith(("http://", "https://")):
-                webbrowser.open(item_key)
-            else:
-                self.goto_services()
+            self.open_url(item_key)
             return
 
-        # خدمة/وزارة: افتح صفحة الخدمات
         if "service" in item_type:
             self.goto_services()
             try:
-                # بعد تحميل صفحة الخدمات، افتح الخدمة المحددة إذا كان المفتاح هو service_key
                 if self.app and hasattr(self.app, "content"):
                     self.after(120, lambda: self.try_open_service_key(item_key))
             except Exception:
                 pass
             return
 
-        # نموذج/وثيقة: افتح قسم الوثائق
         if "template" in item_type or "document" in item_type:
             self.goto_documents()
             return
